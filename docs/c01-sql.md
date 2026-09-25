@@ -265,7 +265,8 @@ amount / NULLIF(quantity, 0)
 
 ---
 
-## 1.6. WHERE
+## 1.6. WHERE, BETWEEN, IN
+### WHERE
 
 Operators:
 
@@ -288,7 +289,7 @@ WHERE salary = 10000;
 
 ---
 
-## BETWEEN
+### BETWEEN
 
 ```sql
 WHERE salary BETWEEN 5000 AND 10000
@@ -305,7 +306,7 @@ The limits are included.
 
 ---
 
-## IN
+### IN
 
 ```sql
 WHERE department_id IN (10, 20, 30)
