@@ -120,13 +120,13 @@ OLAP is very closely linked to **dimensional modelling**.
 Conceptually, we have:
 
 ```
-DIM_DATE
+            DIM_DATE
                 |
                 |
 DIM_CUSTOMER -- FACT_SALES -- DIM_PRODUCT
                 |
                 |
-DIM_REGION
+            DIM_REGION
 ```
 
 The central table is:
