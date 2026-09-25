@@ -70,37 +70,37 @@ A simplified architecture:
 
 ```
                    ┌──────────────┐
-♪ Core Banking ♪
+                   ♪ Core Banking ♪
                    └──────┬───────┘
                           │
                    ┌──────▼───────┐
-CRM
+                         CRM
                    └──────┬───────┘
                           │
                    ┌──────▼───────┐
-External Data
+                     External Data
                    └──────┬───────┘
                           │
                           ▼
                  ┌─────────────────┐
-* STAGING AREA *
+                   * STAGING AREA *
                  └────────┬────────┘
                           │
-ETL / ELT
+                      ETL / ELT
                           │
                           ▼
                 ┌──────────────────┐
-* ENTERPRISE DWH *
+                 * ENTERPRISE DWH *
                 └────────┬─────────┘
                          │
               ┌──────────┼──────────┐
               ▼          ▼          ▼
-Finance Risk Sales
-Date Mart Date Mart
+          Finance       Risk       Sales
+          Data Mart   Data Mart  Data Mart
               │          │          │
               └──────────┼──────────┘
                          ▼
-BI / Reporting
+                 BI / Reporting
 ```
 
 In practice you will frequently meet the following layers:
@@ -335,13 +335,13 @@ account_key + date_key
 The most commonly used dimensional model.
 
 ```
-DIM_DATE
+                      DIM_DATE
                         |
                         |
 DIM_CUSTOMER --- FACT_TRANSACTION --- DIM_ACCOUNT
                         |
                         |
-DIM_PRODUCT
+                   DIM_PRODUCT
 ```
 
 Advantages:
@@ -439,8 +439,8 @@ Because the same entity may have several historical versions.
 ```
 customer_key source_id segment
 ------------ --------- --------
-101 C100 RETAIL
-245 C100 PREMIUM
+101      C100       RETAIL
+245      C100       PREMIUM
 ```
 
 This is one of the foundations of **Slowly Changing Dimensions**.
