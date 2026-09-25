@@ -10,7 +10,7 @@ sidebar_position: 1
 
 This chapter provides a compact but comprehensive course on **SQL from fundamentals to advanced**, with a strong Oracle focus and practical relevance for **Data Developer / Oracle / ETL / DWH** work.
 
-# 1. SQL from Fundamentals to Advanced
+## 1. SQL from Fundamentals to Advanced
 
 SQL is the language used to query, transform, and modify data in a relational database. In Oracle, a Data Developer must understand not only the syntax, but also **how Oracle interprets a query** and how that affects performance.
 
