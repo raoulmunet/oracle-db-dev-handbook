@@ -8,9 +8,9 @@ sidebar_position: 9
 
 <div className="chapter-kicker">Chapter C09 · Complete course</div>
 
-## 9. Data Quality › Oracle DB / ETL / DWH
+## 9. Data Quality > Oracle DB / ETL / DWH
 
-Data Quality means to ensure that the data entering and circulating through the system are correct, complete, consistent, valid and usable**. In a Data Warehouse, data quality is not just a technical problem: an error in a custodian\ _ id, a wrong currency or a duplicate transaction can produce KPI-uri and incorrect business reports.
+Data Quality means ensuring that data entering and moving through the system is **correct, complete, consistent, valid, and usable**. In a Data Warehouse, data quality is not just a technical problem: an error in a `customer_id`, an incorrect currency, or a duplicate transaction can produce incorrect KPIs and business reports.
 
 In a typical stream:
 
@@ -37,20 +37,20 @@ DATA MART / REPORTING
 
 ---
 
-# 1. What is the meaning of high quality data
+## 1. What high-quality data means
 
 The most important dimensions are:
 
 ♪ ♪ ♪
 ♪ ♪ ♪ ♪ ♪
-Is **Complementess** missing mandatory values?
+Is **Completeness** missing mandatory values?
 Does **Validity** respect accepted format and domain values?
-Does **Accuracy** represent reality?
+Does **Accuracy** reflect reality?
 Is **Consistency** information consistent between systems?
-Are there any duplicates?
-Are **Integrity** Relations PK/FK correct?
+Is the data **Unique**, without unintended duplicates?
+Does **Integrity** preserve valid PK/FK relationships?
 Is **Timeliness** still recent?
-Does **Consistency** respect the common standard of representation?
+Does **Standardization** use a consistent representation?
 Is **Reconciliation** the number and totals consistent with the source?
 
 Example:
@@ -66,13 +66,13 @@ salary = -5000 - "business route"
 
 ---
 
-# 2. Data Profiling
+## 2. Data profiling
 
-Before you clean the data, you have to understand what's in it.
+Before cleaning data, you need to understand what it contains.
 
 Suppose:
 
-```
+```sql
 CREATE TABLE stg_customer (
 source_customer_id VARCHAR2 (50),
 customer_name VARCHAR2 (200),
@@ -84,39 +84,39 @@ country_code VARCHAR2 (10)
 
 First profiling:
 
-```
+```sql
 SELECT
-COUNT (*) total_rows,
-COUNT (source_customer_id) id_populated
-COUNT (DISTINCT source_customer_id) distinct_ids
+COUNT(*) total_rows,
+COUNT(source_customer_id) id_populated
+COUNT(DISTINCT source_customer_id) distinct_ids
 FROM stg_customer;
 ```
 
-NULL-uri:
+NULL values:
 
-```
+```sql
 SELECT
-SUM (CASE WHEN source_customer_id IS NULL THEN 1 ELSE 0 END) null_id,
-SUM (CASE WHEN customer_name IS NULL THEN 1 ELSE 0 END) null_name,
-SUM (CASE WHEN email IS NULL THEN 1 ELSE 0 END) null_email
+SUM(CASE WHEN source_customer_id IS NULL THEN 1 ELSE 0 END) null_id,
+SUM(CASE WHEN customer_name IS NULL THEN 1 ELSE 0 END) null_name,
+SUM(CASE WHEN email IS NULL THEN 1 ELSE 0 END) null_email
 FROM stg_customer;
 ```
 
 Distribution of values:
 
-```
-SELECT country_code COUNT (*)
+```sql
+SELECT country_code COUNT(*)
 FROM stg_customer
-GROUPQ1QX country_code
-ORDER BY COUNT (*) DESC;
+GROUP country_code
+ORDER BY COUNT(*) DESC;
 ```
 
 Suspicious lengths:
 
-```
-SELECT LENGTH (source_customer_id), COUNT (*)
+```sql
+SELECT LENGTH(source_customer_id), COUNT(*)
 FROM stg_customer
-GROUP BY LENGTH (source_customer_id)
+GROUP BY LENGTH(source_customer_id)
 ORDER BY 1;
 ```
 
@@ -131,7 +131,7 @@ NULL
 R0
 ```
 
-although the businessman believes that all should be:
+although the business expects all values to be:
 
 ```
 RO
@@ -139,38 +139,38 @@ RO
 
 ---
 
-# 3. Complaineness
+## 3. Completeness
 
 A simple rule:
 
-> Each customer must have source\ _ custodian\ _ id.
+> Each customer must have `source_customer_id`.
 
-```
+```sql
 SELECT *
 FROM stg_customer
 WHERE source_customer_id IS NULL;
 ```
 
-Just like our exercise:
+Example rule:
 
-> **DQ-002 Find customers without source\ _ custodian\ _ id.**
+> **DQ-002 Find customers without `source_customer_id`.**
 
-We can also calculate KPI-:
+We can also calculate KPI:
 
-```
+```sql
 SELECT
-COUNT (*) total_rows,
-SUM (CASE
+COUNT(*) total_rows,
+SUM(CASE
 WHEN source_customer_id IS NULL THEN 1
 ELSE 0
 END) invalid_rows,
-ROUND (
+ROUND(
 100 *
-SUM (CASE
+SUM(CASE
 WHEN source_customer_id IS NOT NULL THEN 1
 ELSE 0
 END)
-/ COUNT (*)
+/ COUNT(*)
 2
 ) quality_pct
 FROM stg_customer;
@@ -179,16 +179,16 @@ FROM stg_customer;
 Possible result:
 
 ```
-TOTAL_ROWSQ1QX QUALITY_PCT
+TOTAL_ROWS QUALITY_PCT
 ---------- ------------ -----------
 100000 250 99.75
 ```
 
 ---
 
-# 4. Validity
+## 4. Validity
 
-A value may exist, but to be invalid.
+A value may be present but still be invalid.
 
 Example:
 
@@ -199,9 +199,9 @@ AMOUNT = ABC
 DATE = 2026-15-76
 ```
 
-For numerical values in Modern Oracle:
+For numeric values in modern Oracle:
 
-```
+```sql
 SELECT *
 FROM staging_transactions
 WHERE validate_conversion (amount_txt AS NUMBER) returns 0;
@@ -217,7 +217,7 @@ ABC
 12X - invalid
 ```
 
-VALIDATE\ _ CONVERSION allows verification without generation:
+`VALIDATE_CONVERSION` allows validation without raising:
 
 ```
 ORA-01722: invalid number
@@ -225,9 +225,9 @@ ORA-01722: invalid number
 
 Example:
 
-```
+```sql
 SELECT amount_txt,
-VALIDATE_CONVERSION (amount_txt AS NUMBER)
+VALIDATE_CONVERSION(amount_txt AS NUMBER)
 FROM staging_transactions;
 ```
 
@@ -242,27 +242,27 @@ ABC 0
 
 ---
 
-# 5. Safe Conversion
+## 5. Safe conversion
 
 A very important technique in ETL is:
 
-> **validated before convert**
+> **validate before converting**
 
 No:
 
-```
-SELECT TO_NUMBER (amount_txt)
+```sql
+SELECT TO_NUMBER(amount_txt)
 FROM staging_transactions;
 ```
 
-if the external data can be dirty.
+when external data may be dirty.
 
 Safer:
 
-```
+```sql
 SELECT CASE
-WHEN VALIDATE_CONVERSION (amount_txt AS NUMBER) = 1
-THEN TO_NUMBER (amount_txt)
+WHEN VALIDATE_CONVERSION(amount_txt AS NUMBER) = 1
+THEN TO_NUMBER(amount_txt)
 END amount
 FROM staging_transactions;
 ```
@@ -270,7 +270,7 @@ FROM staging_transactions;
 In modern Oracle versions we can also use:
 
 ```
-TO_NUMBER (
+TO_NUMBER(
 amount_txt
 DEFAULT NULL ON CONVERSION ERROR
 )
@@ -279,48 +279,48 @@ DEFAULT NULL ON CONVERSION ERROR
 Thus:
 
 ```
-'125.30' - › 125.30
-'ABC' - EXCIPIENTS NULL
+'125.30' - > 125.30
+'ABC' -> NULL
 ```
 
 This pattern is very useful in ETL.
 
 ---
 
-# 6. Detection of duplicates
+## 6. Detecting duplicates
 
 One of the most common DQ problems.
 
-```
+```sql
 SELECT source_customer_id,
-COUNT (*)
+COUNT(*)
 FROM stg_customer
-GROUPQ1QX source_customer_id
-HAVING COUNT (*)
+GROUP source_customer_id
+HAVING COUNT(*) > 1
 ```
 
 To see the lines:
 
-```
+```sql
 SELECT *
 FROM (
 SELECT c. *
-COUNT (*) OVER (
-PARTITIONQ1QX source_customer_id
+COUNT(*) OVER (
+PARTITION source_customer_id
 ) cnt
 FROM stg_customer c
 )
-WHERE cnt ^ 1;
+WHERE cnt > 1;
 ```
 
 Or:
 
-```
+```sql
 SELECT *
 FROM (
 SELECT c. *
-ROW_NUMBER () OVER
-PARTITIONQ1QX source_customer_id
+ROW_NUMBER() OVER
+PARTITION source_customer_id
 ORDER BY load_timestamp DESC
 ) rn
 FROM stg_customer c
@@ -339,7 +339,7 @@ This is one of the most important ETL squares.
 
 ---
 
-# 7. Data Standardisation
+## 7. Data Standardisation
 
 The data may be semantically identical but represented differently.
 
@@ -355,7 +355,7 @@ ROU
 
 Simple standardization:
 
-```
+```sql
 UPDATE stg_customer
 SET country_code =
 CASE UPPER (TRIM (country_code))
@@ -381,7 +381,7 @@ FRA FR
 
 Table:
 
-```
+```sql
 CREATE TABLE map_country (
 source_value VARCHAR2 (50),
 country_code VARCHAR2 (2)
@@ -390,7 +390,7 @@ country_code VARCHAR2 (2)
 
 Transformation:
 
-```
+```sql
 SELECT c. *
 m.country_code
 FROM stg_customer c
@@ -401,7 +401,7 @@ ON UPPER (TRIM (c.country_code))
 
 ---
 
-# 8. Referential Integrity
+## 8. Referential Integrity
 
 Example:
 
@@ -418,7 +418,7 @@ customer_id
 
 We can find transactions without a client:
 
-```
+```sql
 SELECT t *
 FROM stg_transaction
 LEFT JOIN custodian c
@@ -428,7 +428,7 @@ WHERE c.customer_id IS NULL;
 
 Or:
 
-```
+```sql
 SELECT *
 FROM stg_transaction
 WHERE NOT EXISTS (
@@ -442,7 +442,7 @@ In DWH, this test is extremely important before loading invoices into a fact tab
 
 ---
 
-# 9. Business Rules
+## 9. Business Rules
 
 Data Quality does not just mean SQL types and constraints.
 
@@ -462,7 +462,7 @@ account_status, ACTIVE, CLOSED, BLOCKED
 
 Example:
 
-```
+```sql
 SELECT *
 FROM stg_account
 WHERE balance
@@ -477,7 +477,7 @@ This is an DQ roule.
 
 ---
 
-# 10. Cross-Colour Rules
+## 10. Cross-Colour Rules
 
 Sometimes the columns are individually valid, but the combination is impossible.
 
@@ -490,7 +490,7 @@ close_date = NULL
 
 Test:
 
-```
+```sql
 SELECT *
 FROM account
 WHERE status = 'CLOSED'
@@ -499,7 +499,7 @@ AND close_date IS NULL;
 
 Other example:
 
-```
+```sql
 SELECT *
 FROM contract
 WHERE valid_to
@@ -507,7 +507,7 @@ WHERE valid_to
 
 ---
 
-# 11. Cross-Table Rules
+## 11. Cross-Table Rules
 
 Example:
 
@@ -523,7 +523,7 @@ CUSTOMER.customer_id
 
 Test:
 
-```
+```sql
 SELECT t.customer_id
 FROM transaction_stage
 WHERE NOT EXISTS (
@@ -537,7 +537,7 @@ This type of verification is permanently found in ETL DWH.
 
 ---
 
-# 12. Error / Subject Table
+## 12. Error / Subject Table
 
 In ETL it is not recommended to simply throw away invalid data.
 
@@ -556,7 +556,7 @@ STAGING
 
 Example:
 
-```
+```sql
 CREATE TABLE etl_error (
 error_id NUMBER GENERATED ALWAYS AS IDENTITY,
 batch_id NUMBER,
@@ -571,7 +571,7 @@ created_at TIMESTAMP DEFAULT SYSTIMESTAMP
 
 Insert:
 
-```
+```sql
 INSERT INTO etl_error (
 batch_id,
 source_table,
@@ -588,12 +588,12 @@ transaction_id,
 'Amount cannot be converted to NUMBER',
 amount_txt
 FROM stg_transaction
-WHERE VALIDATE_CONVERSION (amount_txt AS NUMBER) returns 0;
+WHERE VALIDATE_CONVERSION(amount_txt AS NUMBER) returns 0;
 ```
 
 ---
 
-# 13. Quarantine Patterson
+## 13. Quarantine Patterson
 
 A very useful pattern:
 
@@ -620,13 +620,13 @@ Invalid data does not block the entire batch.
 
 ---
 
-# 14. DBMS\ _ ERRLOG
+## 14. DBMS_ERRLOG
 
 Oracle offers a very useful mechanism for DML error logging.
 
 Suppose:
 
-```
+```sql
 CREATE TABLE target_customer (
 customer_id NUMBER PRIMARY KEY,
 VARCHAR2 (100) NOT NULL
@@ -635,7 +635,7 @@ VARCHAR2 (100) NOT NULL
 
 We create the error table logging:
 
-```
+```sql
 BEGIN
 DBMS_ERRLOG.CREATE_ERROR_LOG (
 dml_table_name = = 'TARGET_CUSTOMER'
@@ -652,8 +652,8 @@ ERR$_TARGET_CUSTOMER
 
 Then:
 
-```
-INSERTQ1QX target_customer
+```sql
+INSERT target_customer
 SELECT...
 FROM staging_customer
 LOG ERRORS INTO err $_target_customer
@@ -664,7 +664,7 @@ Advantage:
 
 a single invalid record does not stop the entire:
 
-```
+```sql
 INSERT
 MERGE
 UPDATE
@@ -673,7 +673,7 @@ DELETE
 
 ---
 
-# 15. Technical errors vs Data Quality errors
+## 15. Technical errors vs Data Quality errors
 
 The distinction is important.
 
@@ -703,7 +703,7 @@ These two categories must be treated differently.
 
 ---
 
-# 16. Hard Reject vs. Soft Warning
+## 16. Hard Reject vs. Soft Warning
 
 Not every problem has to block the record.
 
@@ -740,11 +740,11 @@ INFO
 
 ---
 
-# 17. DQ Rule Table
+## 17. DQ Rule Table
 
 In mature systems, rules can be metamorized.
 
-```
+```sql
 CREATE TABLE dq_rule (
 rule_id NUMBER,
 rule_code VARCHAR2 (50),
@@ -758,16 +758,16 @@ active_flag CHAR (1)
 Examples:
 
 ```
-DQ001Q1QX ERROR
-DQ002Q1QX WARNING
-DQ003Q1QX ERROR
-DQ004Q1QX ERROR
-DQ005Q1QX ERROR
+DQ001 ERROR
+DQ002 WARNING
+DQ003 ERROR
+DQ004 ERROR
+DQ005 ERROR
 ```
 
 ---
 
-# 18. Auditing the execution of DQ
+## 18. Auditing the execution of DQ
 
 We need to know:
 
@@ -781,7 +781,7 @@ how many errors
 
 Example:
 
-```
+```sql
 CREATE TABLE dq_result (
 run_id NUMBER,
 rule_id NUMBER,
@@ -805,7 +805,7 @@ Invalid email 100000 341
 
 ---
 
-# 19. Data Quality Score
+## 19. Data Quality Score
 
 We can calculate:
 
@@ -835,7 +835,7 @@ Thus a simple percentage of valid rows is not always sufficient.
 
 ---
 
-# 20. Reconciliation
+## 20. Reconciliation
 
 One of the most important ETL checks.
 
@@ -874,25 +874,25 @@ But we also need to check the values.
 
 Example:
 
-```
+```sql
 SELECT
-COUNT (*) row_count,
-SUM (amount) total_amount
+COUNT(*) row_count,
+SUM(amount) total_amount
 FROM source_transaction;
 ```
 
 compared to:
 
-```
+```sql
 SELECT
-COUNT (*) row_count,
-SUM (amount) total_amount
+COUNT(*) row_count,
+SUM(amount) total_amount
 FROM fact_transaction;
 ```
 
 ---
 
-# 21. Control Totals
+## 21. Control Totals
 
 In banking and financial systems it is very important.
 
@@ -905,19 +905,19 @@ COUNT *
 but also:
 
 ```
-SUM (amount)
+SUM(amount)
 MIN (data)
 MAX (data)
-COUNT (DISTINCT account)
+COUNT(DISTINCT account)
 ```
 
 Example:
 
-```
+```sql
 SELECT
-COUNT (*) row_count,
-SUM (amount) total_amount,
-COUNT (DISTINCT account_id) accounts,
+COUNT(*) row_count,
+SUM(amount) total_amount,
+COUNT(DISTINCT account_id) accounts,
 MIN (transaction_date) min_date
 MAX (transaction_date) max_date
 FROM stg_transaction;
@@ -925,7 +925,7 @@ FROM stg_transaction;
 
 ---
 
-# 22. Data Quality and SCD
+## 22. Data Quality and SCD
 
 DQ is closely related to SCD.
 
@@ -958,7 +958,7 @@ DQ must be executed before the dimensions are updated.
 
 ---
 
-# 23. Data Quality and ETL
+## 23. Data Quality and ETL
 
 A mature pipeline can look like this:
 
@@ -994,7 +994,7 @@ RECONCILIATION
 
 ---
 
-# 24. Recommended order of checks
+## 24. Recommended order of checks
 
 In general:
 
@@ -1078,10 +1078,10 @@ transaction_id amount
 
 Code ETL:
 
-```
-INSERTQ1QX fact_transaction
+```sql
+INSERT fact_transaction
 SELECT transaction_id,
-TO_NUMBER (amount)
+TO_NUMBER(amount)
 FROM staging_transaction;
 ```
 
@@ -1095,29 +1095,29 @@ ORA-01722
 
 First we identify:
 
-```
+```sql
 SELECT *
 FROM staging_transaction
-WHERE VALIDATE_CONVERSION (amount AS NUMBER) returns 0;
+WHERE VALIDATE_CONVERSION(amount AS NUMBER) returns 0;
 ```
 
 then we separate:
 
-```
+```sql
 INSERT INTO fact_transaction (
 transaction_id,
 % 1
 )
 SELECT
 transaction_id,
-TO_NUMBER (amount)
+TO_NUMBER(amount)
 FROM staging_transaction
-WHERE VALIDATE_CONVERSION (amount AS NUMBER) returns 1;
+WHERE VALIDATE_CONVERSION(amount AS NUMBER) returns 1;
 ```
 
 and errors:
 
-```
+```sql
 INSERT INTO etl_error (
 source_key,
 error_code,
@@ -1128,14 +1128,14 @@ transaction_id,
 'INVALID_AMOUNT',
 % 1
 FROM staging_transaction
-WHERE VALIDATE_CONVERSION (amount AS NUMBER) returns 0;
+WHERE VALIDATE_CONVERSION(amount AS NUMBER) returns 0;
 ```
 
 This is a much more robust approach than letting the entire batch fail.
 
 ---
 
-# 27. Data Quality and Performance
+## 27. Data Quality and Performance
 
 For very large volumes, we avoid running the same check ten times.
 
@@ -1150,26 +1150,26 @@ COUNT invalid country
 
 we can calculate in a single scan:
 
-```
+```sql
 SELECT
-COUNT (*) total_rows,
+COUNT(*) total_rows,
 
-SUM (
+SUM(
 CASE
 WHEN customer_id IS NULL THEN 1
 ELSE 0
 END
 ) missing_customer,
 
-SUM (
+SUM(
 CASE
-WHEN VALIDATE_CONVERSION (amount_txt AS NUMBER) = 0
+WHEN VALIDATE_CONVERSION(amount_txt AS NUMBER) = 0
 THEN 1
 ELSE 0
 END
 ) invalid_amount,
 
-SUM (
+SUM(
 CASE
 WHEN country_code NOT IN ('RO', 'FR', 'DE', 'IT')
 THEN 1
@@ -1184,7 +1184,7 @@ For hundreds of millions of rows, this is becoming important.
 
 ---
 
-# 28. DQ vs Constraints
+## 28. DQ vs Constraints
 
 The Oracle Constraints are the last line of defense:
 
@@ -1198,9 +1198,9 @@ CHECK
 
 Example:
 
-```
+```sql
 ALTER TABLE custodian
-ADDQ1QX chk_customer_status
+ADD chk_customer_status
 CHECK (IN status ('ACTIVE', 'INACTIVE', 'BLOCKED'));
 ```
 
@@ -1232,7 +1232,7 @@ is the safer solution.
 
 ---
 
-# 29. Data Quality Framework
+## 29. Data Quality Framework
 
 In a more mature DWH project we can have:
 
@@ -1297,9 +1297,9 @@ You should be able to respond quickly to these:
 
 ---
 
-# 31. Oracle Exercises 26ai
+## 31. Oracle Exercises 26ai
 
-For our lab DEV\ _ LAB, I would do the following series:
+For our lab DEV_LAB, I would do the following series:
 
 ### DQ-001 = NULL values
 
@@ -1310,7 +1310,7 @@ Find the nameless customers.
 Find:
 
 ```
-source_customer_idQ1QX NULL
+source_customer_id NULL
 ```
 
 ### DQ-003
@@ -1319,13 +1319,13 @@ Use:
 
 ```
 GROUP BY
-HAVING COUNT (*)
+HAVING COUNT(*) > 1
 ```
 
 then also resolve with:
 
 ```
-ROW_NUMBER ()
+ROW_NUMBER()
 ```
 
 ### DQ-004
@@ -1369,7 +1369,7 @@ close_date - open_date
 
 ### DQ-009
 
-Create ETL\ _ ERROR and insert the rejectures.
+Create ETL_ERROR and insert the rejectures.
 
 ### DQ-010
 
@@ -1383,7 +1383,7 @@ REJECT
 
 ---
 
-# 32. What to remember for the role of Oracle Data Developer
+## 32. What to remember for the role of Oracle Data Developer
 
 It is not necessary to memorize dozens of functions. More important is to understand this pattern:
 
@@ -1392,7 +1392,7 @@ DATA QUALITY
                  │
        ┌─────────┼─────────┐
        │         │         │
-PROFILEQ1QX RECONCILE
+PROFILE RECONCILE
        │         │         │
        ▼         ▼         ▼
 understand detect verify
