@@ -8,9 +8,9 @@ sidebar_position: 2
 
 <div className="chapter-kicker">Chapter C02 · Complete course</div>
 
-Below you have a short but comprehensive PL/SQL** course, thought mainly for real work with Oracle, ETL/DWH and Oracle Data Developer interviews. The central idea: **PL/SQL = SQL + procedural logic**. SQL works ideally set-based; PL/SQL comes into play when you need flow control, error treatment, modulation, batch processing or procedural logic close to data.
+This chapter provides a concise but comprehensive PL/SQL course focused on real-world Oracle work, ETL/DWH, and Oracle Data Developer scenarios. The central idea is: **PL/SQL = SQL + procedural logic**. SQL is ideally set-based; PL/SQL is useful when you need flow control, error handling, modularization, batch processing, or procedural logic close to the data.
 
-# 2. PL/SQL is fundamentally → advanced
+## 2. PL/SQL from Fundamentals to Advanced
 
 ## 1. What PL/SQL is
 
@@ -18,21 +18,22 @@ PL/SQL is the Oracle procedural extension for SQL.
 
 SQL says mainly **what data you want**:
 
-```
-SELECT employee_id salary
-FROM
+```sql
+SELECT employee_id,
+       salary
+FROM employees
 WHERE department_id = 50;
 ```
 
-PL/SQL allows you to say **as well as how** logic should be performed:
+PL/SQL also lets you define **how** the logic should be executed:
 
-```
+```sql
 BEGIN
 UPDATE
 SET salary = salary * 1.05
 WHERE department_id = 50;
 
-DBMS_OUTPUT.PUT_LINE (SQL% ROWCOUNT; ' employees updated');
+DBMS_OUTPUT.PUT_LINE(SQL%ROWCOUNT; ' employees updated');
 END;
 /
 ```
@@ -46,37 +47,37 @@ PL/SQL introduces:
 - cursors;
 - exceptions;
 - procedures;
-- functions;
-- the packages,
+- functionss;
+- packages;
 - collections,
 - bulk processing;
-- Dynamic SQL;
-- Triggers.
+- dynamic SQL;
+- triggers.
 
 A very important principle:
 
-> If a problem can be effectively solved by a single SQL, do not unnecessarily turn it into an PL/SQL loop.
+> If a problem can be solved efficiently with a single SQL statement, do not unnecessarily turn it into a PL/SQL loop.
 
-I mean:
+For example:
 
-```
-UPDATE
+```sql
+UPDATE employees
 SET salary = salary * 1.10
 WHERE department_id = 50;
 ```
 
 is almost always preferable to:
 
-```
-FOR r IN
-SELECT employee_id
-FROM
-WHERE department_id = 50
+```sql
+FOR r IN (
+    SELECT employee_id
+    FROM employees
+    WHERE department_id = 50
 )
 LOOP
-UPDATE
-SET salary = salary * 1.10
-WHERE employee_id = r.employee_id;
+    UPDATE employees
+    SET salary = salary * 1.10
+    WHERE employee_id = r.employee_id;
 END LOOP;
 ```
 
@@ -86,84 +87,84 @@ This is the reason for the expression:
 
 ---
 
-# 2. Structure of an PL/SQL Block
+## 2. Structure of a PL/SQL block
 
 General form:
 
-```
+```sql
 DECLARE
--- statements
+-- declarations
 BEGIN
 -- executable code
 EXCEPTION
--- treatment of errors
+-- exception handling
 END;
 /
 ```
 
 Example:
 
-```
+```sql
 DECLARE
-v_salary NUMBER;
+    v_salary NUMBER;
 BEGIN
-SELECT salary
-INTO v_salary
-FROM
-WHERE employee_id = 100;
+    SELECT salary
+    INTO v_salary
+    FROM employees
+    WHERE employee_id = 100;
 
-DBMS_OUTPUT.PUT_LINE ('Salary = ');
+    DBMS_OUTPUT.PUT_LINE('Salary = ' || v_salary);
 
 EXCEPTION
-WHENQ1QX THEN
-DBMS_OUTPUT.PUT_LINE ('Employee not found');
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Employee not found');
 END;
 /
 ```
 
-The three areas are:
+The three sections are:
 
-```
-DECLARE optional
-Mandatory BEGIN
-EXCEPTION optional
+```sql
+DECLARE -- optional
+BEGIN   -- mandatory
+EXCEPTION -- optional
 END;
 ```
 
 A block without declarations:
 
-```
+```sql
 BEGIN
-DBMS_OUTPUT.PUT_LINE ('Hello PL/SQL');
+DBMS_OUTPUT.PUT_LINE('Hello PL/SQL');
 END;
 /
 ```
 
 ---
 
-# 3. Variables and data types
+## 3. Variables and data types
 
 Simple example:
 
-```
+```sql
 DECLARE
-v_name VARCHAR2 (100);
-v_salary NUMBER (10.2);
-v_date DATE;
-v_active BOOLEAN;
+    v_name   VARCHAR2(100);
+    v_salary NUMBER(10,2);
+    v_date   DATE;
+    v_active BOOLEAN;
 BEGIN
-v_name: = 'John';
-v_salary: = 5000;
-v_date: = SYSDATE;
-v_active: = TRUE;
+    v_name   := 'John';
+    v_salary := 5000;
+    v_date   := SYSDATE;
+    v_active := TRUE;
 END;
 /
 ```
 
-The award operator shall be:
+The assignment operator is:
 
 ```
-: =
+:=
 ```
 
 No:
@@ -174,59 +175,59 @@ No:
 
 ---
 
-# 4.% TYPE
+## 4. %TYPE
 
 Very important in real Oracle code.
 
 Instead of:
 
 ```
-v_salary NUMBER (10.2);
+v_salary NUMBER(10.2);
 ```
 
 you can write:
 
-```
-v_salary employees.salary% TYPE;
+```sql
+v_salary employees.salary%TYPE;
 ```
 
 The advantage is that the variable inherits the type of column.
 
-If the definition of column changes, the code shall not necessarily be changed.
+If the column definition changes, the PL/SQL variable automatically follows the column type, reducing maintenance.
 
 Example:
 
-```
+```sql
 DECLARE
-v_salary employees.salary% TYPE;
+    v_salary employees.salary%TYPE;
 BEGIN
-SELECT salary
-INTO v_salary
-FROM
-WHERE employee_id = 100;
+    SELECT salary
+    INTO v_salary
+    FROM employees
+    WHERE employee_id = 100;
 END;
 /
 ```
 
-It's a highly recommended pattern.
+This is a highly recommended pattern.
 
 ---
 
-# 5.% ROWTYPE
+## 5. %ROWTYPE
 
-Allows the definition of a variable with the structure of a whole row.
+Allows you to define a record variable with the structure of an entire table row.
 
-```
+```sql
 DECLARE
-v_emp employees% ROWTYPE;
+    v_emp employees%ROWTYPE;
 BEGIN
-SELECT *
-INTO v_emp
-FROM
-WHERE employee_id = 100;
+    SELECT *
+    INTO v_emp
+    FROM employees
+    WHERE employee_id = 100;
 
-DBMS_OUTPUT.PUT_LINE (v_emp.first_name);
-DBMS_OUTPUT.PUT_LINE (v_emp.salary);
+    DBMS_OUTPUT.PUT_LINE(v_emp.first_name);
+    DBMS_OUTPUT.PUT_LINE(v_emp.salary);
 END;
 /
 ```
@@ -243,11 +244,11 @@ v_emp.department_id
 
 ---
 
-# 6. SELECT INTO
+## 6. SELECT INTO
 
-In PL/SQL, an SELECT that has to bring values into variables uses:
+In PL/SQL, a `SELECT` that retrieves values into variables uses:
 
-```
+```sql
 SELECT...
 INTO...
 FROM...
@@ -255,28 +256,30 @@ FROM...
 
 Example:
 
-```
+```sql
 DECLARE
-v_name employees.last_name% TYPE;
-v_salary employees.salary% TYPE;
+    v_name   employees.last_name%TYPE;
+    v_salary employees.salary%TYPE;
 BEGIN
-SELECT last_name salary
-INTO v_name, v_salary
-FROM
-WHERE employee_id = 100;
+    SELECT last_name,
+           salary
+    INTO v_name,
+         v_salary
+    FROM employees
+    WHERE employee_id = 100;
 END;
 /
 ```
 
-But SELECT INTO expects **exactly one row**.
+`SELECT INTO` expects **exactly one row**.
 
-If he finds nothing:
+If it finds no rows:
 
 ```
 NO_DATA_FOUND
 ```
 
-If he finds several lines:
+If he finds multiple rows:
 
 ```
 TOO_MANY_ROWS
@@ -284,24 +287,24 @@ TOO_MANY_ROWS
 
 Example:
 
-```
+```sql
 EXCEPTION
-WHENQ1QX THEN
-DBMS_OUTPUT.PUT_LINE ('No employee');
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('No employee');
 
-WHENQ1QX THEN
-DBMS_OUTPUT.PUT_LINE ('Multiple employees');
+    WHEN TOO_MANY_ROWS THEN
+        DBMS_OUTPUT.PUT_LINE('Multiple employees');
 ```
 
-This is a very common subject of the technical discussion.
+This is a very common PL/SQL topic.
 
 ---
 
-# 7. Control flow - IF
+## 7. Control flow - IF
 
 Syntax:
 
-```
+```sql
 IF condition THEN
     ...
 ELSIF condition THEN
@@ -313,96 +316,89 @@ END IF;
 
 Example:
 
-```
-IF v_salary
-v_level: = 'LOW';
-
-ELSIF v_salary
-v_level: = 'MEDIUM';
-
+```sql
+IF v_salary < 5000 THEN
+    v_level := 'LOW';
+ELSIF v_salary < 10000 THEN
+    v_level := 'MEDIUM';
 ELSE
-v_level: = 'HIGH';
+    v_level := 'HIGH';
 END IF;
 ```
 
 ---
 
-# 8.CASE
+## 8. CASE
 
-It can be more elegant than many ELSIF.
+It can be more elegant than a long chain of `ELSIF` branches.
 
-```
+```sql
 CASE
-WHEN v_salary
-v_level: = 'LOW';
-
-WHEN v_salary
-v_level: = 'MEDIUM';
-
-ELSE
-v_level: = 'HIGH';
+    WHEN v_salary < 5000 THEN
+        v_level := 'LOW';
+    WHEN v_salary < 10000 THEN
+        v_level := 'MEDIUM';
+    ELSE
+        v_level := 'HIGH';
 END CASE;
 ```
 
 Or:
 
-```
+```sql
 CASE v_status
-WHENQ1QX THEN
-DBMS_OUTPUT.PUT_LINE ('New');
-
-WHENQ1QX THEN
-DBMS_OUTPUT.PUT_LINE ('Processed');
-
-WHENQ1QX THEN
-DBMS_OUTPUT.PUT_LINE ('Error');
+    WHEN 'NEW' THEN
+        DBMS_OUTPUT.PUT_LINE('New');
+    WHEN 'PROCESSED' THEN
+        DBMS_OUTPUT.PUT_LINE('Processed');
+    WHEN 'ERROR' THEN
+        DBMS_OUTPUT.PUT_LINE('Error');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Unknown status');
 END CASE;
 ```
 
 ---
 
-# 9. Loops PL/SQL
+## 9. PL/SQL loops
 
 ## Basic LOOP
 
-```
+```sql
 LOOP
-v_counter: = v_counter + 1;
-
-EXIT WHEN v_counter
+    v_counter := v_counter + 1;
+    EXIT WHEN v_counter >= 10;
 END LOOP;
 ```
 
 ## WHILE
 
-```
-WHILE v_counter
-
-v_counter: = v_counter + 1;
-
+```sql
+WHILE v_counter < 10 LOOP
+    v_counter := v_counter + 1;
 END LOOP;
 ```
 
 ## FOR
 
-```
-FOR i IN 1.. 10 LOOP
-DBMS_OUTPUT.PUT_LINE (i);
+```sql
+FOR i IN 1..10 LOOP
+    DBMS_OUTPUT.PUT_LINE(i);
 END LOOP;
 ```
 
-Very simple and very used.
+Simple and commonly used.
 
 ---
 
-# 10. Default Cursor
+## 10. Implicit cursor
 
-Oracle automatically creates a cursor for the executed SQL-s.
+Oracle automatically creates an implicit cursor for each executed SQL statement.
 
 After:
 
-```
-UPDATE
+```sql
+UPDATE employees
 SET salary = salary * 1.05
 WHERE department_id = 50;
 ```
@@ -416,52 +412,45 @@ SQL
 Example:
 
 ```
-DBMS_OUTPUT.PUT_LINE (
-SQL% ROWCOUNT
+DBMS_OUTPUT.PUT_LINE(
+SQL%ROWCOUNT
 );
 ```
 
-There are also:
+Other useful implicit cursor attributes are:
 
-```
-SQL
-SQL
-SQL
-SQL
+```text
+SQL%FOUND
+SQL%NOTFOUND
+SQL%ROWCOUNT
+SQL%ISOPEN
 ```
 
 ---
 
-# 11. Explicit Cursor
+## 11. Explicit cursor
 
-A cursor is a result set that you process.
+A cursor represents a query result set that PL/SQL can process row by row.
 
-```
+```sql
 DECLARE
-
-CURSORQ1QX IS
-SELECT employee_id,
-last_name,
-salary
-FROM
-WHERE department_id = 50;
-
+    CURSOR c_emp IS
+        SELECT employee_id,
+               last_name,
+               salary
+        FROM employees
+        WHERE department_id = 50;
 BEGIN
-
-FOR r IN c_emp LOOP
-
-DBMS_OUTPUT.PUT_LINE (
-r.employee_id
-r.last_name
-);
-
-END LOOP;
-
+    FOR r IN c_emp LOOP
+        DBMS_OUTPUT.PUT_LINE(
+            r.employee_id || ' ' || r.last_name
+        );
+    END LOOP;
 END;
 /
 ```
 
-The advantage of FOR cursor LOOP is that Oracle automatically manages:
+The advantage of a cursor `FOR` loop is that Oracle automatically manages:
 
 ```
 OPEN
@@ -471,9 +460,9 @@ CLOSE
 
 ---
 
-# 12. Classic version OPEN / FETCH / CLOSE
+## 12. Classic OPEN / FETCH / CLOSE pattern
 
-```
+```sql
 OPEN c_emp;
 
 LOOP
@@ -481,7 +470,7 @@ LOOP
 FETCH c_emp
 INTO v_id, v_name;
 
-EXIT WHEN c_emp% NOTFOUND;
+EXIT WHEN c_emp%NOTFOUND;
 
     ...
 
@@ -490,86 +479,85 @@ END LOOP;
 CLOSE c_emp;
 ```
 
-You must understand this mechanism even if FOR LOOP is often more comfortable.
+You should understand this mechanism even though a cursor `FOR` loop is usually simpler.
 
 ---
 
-# 13. Parametrized Cursors
+## 13. Parameterized cursors
 
 Very useful:
 
-```
+```sql
 CURSOR c_emp (p_department_id NUMBER) IS
-
-SELECT employee_id,
-last_name,
-salary
-FROM
-WHERE department_id = p_department_id;
+    SELECT employee_id,
+           last_name,
+           salary
+    FROM employees
+    WHERE department_id = p_department_id;
 ```
 
 Use:
 
-```
+```sql
 FOR r IN c_emp (50) LOOP
     ...
 END LOOP;
 ```
 
-You can then reuse the cursor.
+This allows the cursor definition to be reused for different parameter values.
 
 ---
 
-# 14. Exception handling
+## 14. Exception handling
 
 Structure:
 
-```
+```sql
 BEGIN
 
     ...
 
 EXCEPTION
 
-WHENQ1QX THEN
+WHEN  THEN
         ...
 
-WHENQ1QX THEN
+WHEN  THEN
         ...
 
-WHENQ1QX THEN
+WHEN  THEN
         ...
 
 END;
 /
 ```
 
-WHEN OTHERS means:
+`WHEN OTHERS` means:
 
-> any exception that has not already been treated.
+> any exception that has not already been handled.
 
 Example:
 
-```
+```sql
 EXCEPTION
-WHENQ1QX THEN
-DBMS_OUTPUT.PUT_LINE (SQLERRM);
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE(SQLERRM);
 ```
 
-But in a real system it's not good to swallow the error.
+In a real system, swallowing an error is usually a bad practice.
 
 This is a dangerous practice:
 
-```
-WHENQ1QX THEN
-NULL;
+```sql
+WHEN OTHERS THEN
+    NULL;
 ```
 
-Because the error completely disappears.
+Because the error is silently ignored.
 
 ---
 
-# 15. SQLCODE and SQLERRM
+## 15. SQLCODE and SQLERRM
 
 In an exception handler you can find out:
 
@@ -585,55 +573,45 @@ SQLERRM
 
 Example:
 
-```
+```sql
 EXCEPTION
-WHENQ1QX THEN
-
-DBMS_OUTPUT.PUT_LINE (
-'Code: ' - SQLCODE
-);
-
-DBMS_OUTPUT.PUT_LINE (
-'Message: ' - SQLERRM
-);
-
-RAISE;
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Code: ' || SQLCODE);
+        DBMS_OUTPUT.PUT_LINE('Message: ' || SQLERRM);
+        RAISE;
 END;
 /
 ```
 
-Very useful for login.
+Very useful for logging.
 
-In practice, values must be captured in the context of the exception.
+In practice, these values should be captured inside the exception handler.
 
 For example:
 
-```
+```sql
 EXCEPTION
-WHENQ1QX THEN
-log_error (
-SQLCODE,
-SQLERRM
-);
-
-RAISE;
+    WHEN OTHERS THEN
+        log_error(
+            SQLCODE,
+            SQLERRM
+        );
+        RAISE;
 ```
 
 ---
 
-# 16. RAISE
+## 16. RAISE
 
-RAISE triggers or reproaches an exception.
+`RAISE` raises a new exception or re-raises the current exception.
 
 Very important:
 
-```
+```sql
 EXCEPTION
-WHENQ1QX THEN
-
-log_error (...);
-
-RAISE;
+    WHEN OTHERS THEN
+        log_error(...);
+        RAISE;
 END;
 ```
 
@@ -641,58 +619,51 @@ In this case:
 
 1. the error occurs;
 2. you record it;
-3. RAISE sends the same error above to the caller.
+3. `RAISE` propagates the same exception to the caller.
 
 No:
 
-```
+```sql
 RAISE;
 ```
 
-The procedure could appear to be successful.
+Without re-raising the exception, the procedure may appear to have completed successfully.
 
 This pattern is very important for ETL.
 
 ---
 
-# 17. Exceptions defined by the programmer
+## 17. User-defined exceptions
 
-```
+```sql
 DECLARE
-
-e_invalid_salary EXCEPTION;
-
+    e_invalid_salary EXCEPTION;
 BEGIN
-
-IF v_salary
-RAISE e_invalid_salary;
-END IF;
+    IF v_salary < 0 THEN
+        RAISE e_invalid_salary;
+    END IF;
 
 EXCEPTION
-
-WHENQ1QX THEN
-DBMS_OUTPUT.PUT_LINE (
-'Salary cannot be negative'
-);
-
+    WHEN e_invalid_salary THEN
+        DBMS_OUTPUT.PUT_LINE('Salary cannot be negative');
 END;
 /
 ```
 
 ---
 
-# 18. RAISE\ _ APPLICATION\ _ ERROR
+## 18. RAISE_APPLICATION_ERROR
 
-Allows the generation of an Oracle error of its own.
+Allows application code to raise a custom Oracle error.
 
-```
-RAISE_APPLICATION_ERROR (
+```sql
+RAISE_APPLICATION_ERROR(
 -20001,
 'Salary cannot be negative'
 );
 ```
 
-Standard interval for customa errors:
+The standard range for application-defined errors is:
 
 ```
 -20,000... -20999
@@ -700,74 +671,69 @@ Standard interval for customa errors:
 
 Example:
 
-```
-IF p_amount
-
-RAISE_APPLICATION_ERROR (
--20001,
-'Amount must be positive'
-);
-
+```sql
+IF p_amount <= 0 THEN
+    RAISE_APPLICATION_ERROR(
+        -20001,
+        'Amount must be positive'
+    );
 END IF;
 ```
 
-Very used in applications.
+Commonly used in applications.
 
 ---
 
-# 19. Procedure
+## 19. Procedures
 
-A procedure runs an operation.
+A procedure performs an operation.
 
-```
+```sql
 CREATE OR REPLACE PROCEDURE increase_salary (
-p_employee_id IN NUMBER,
-p_percentQ1QX NUMBER
+    p_employee_id IN NUMBER,
+    p_percent     IN NUMBER
 )
 IS
 BEGIN
-
-UPDATE
-SET salary =
-salary * (1 + p_percent / 100)
-WHERE employee_id = p_employee_id;
-
+    UPDATE employees
+    SET salary = salary * (1 + p_percent / 100)
+    WHERE employee_id = p_employee_id;
 END;
 /
 ```
 
 Call:
 
-```
+```sql
 BEGIN
-increase_salary (100.5);
+    increase_salary(100, 5);
 END;
 /
 ```
 
 ---
 
-# 20. IN, OUT, IN OUT parameters
+## 20. IN, OUT, and IN OUT parameters
 
 ## IN
 
-Entry value.
+Input value.
 
-```
-p_employee_idQ1QX NUMBER
+```sql
+p_employee_id IN NUMBER
 ```
 
 ## OUT
 
 The procedure returns a value:
 
-```
-p_salaryQ1QX NUMBER
+```sql
+p_salary OUT NUMBER
 ```
 
 ## IN OUT
 
-Receive and modify the same variable:
+Receives and can modify the same variable:
 
 ```
 p_value IN OUT NUMBER
@@ -775,52 +741,48 @@ p_value IN OUT NUMBER
 
 Example:
 
-```
+```sql
 CREATE OR REPLACE PROCEDURE get_salary (
-p_employee_id IN NUMBER,
-p_salaryQ1QX NUMBER
+    p_employee_id IN  NUMBER,
+    p_salary      OUT NUMBER
 )
 IS
 BEGIN
-
-SELECT salary
-INTO p_salary
-FROM
-WHERE employee_id = p_employee_id;
-
+    SELECT salary
+    INTO p_salary
+    FROM employees
+    WHERE employee_id = p_employee_id;
 END;
 /
 ```
 
 ---
 
-# 21. Functions
+## 21. Functions
 
-A function returns a value.
+A functions returns a value.
 
-```
+```sql
 CREATE OR REPLACE FUNCTION get_salary (
-p_employee_id NUMBER
+    p_employee_id NUMBER
 )
 RETURN NUMBER
 IS
-v_salary employees.salary% TYPE;
+    v_salary employees.salary%TYPE;
 BEGIN
+    SELECT salary
+    INTO v_salary
+    FROM employees
+    WHERE employee_id = p_employee_id;
 
-SELECT salary
-INTO v_salary
-FROM
-WHERE employee_id = p_employee_id;
-
-RETURN v_salary;
-
+    RETURN v_salary;
 END;
 /
 ```
 
 Call:
 
-```
+```sql
 SELECT get_salary (100)
 FROM dual;
 ```
@@ -835,22 +797,22 @@ Function
 calculate and return a value
 ```
 
-Although procedural things can be much more complex.
+In practice, both procedures and functionss can be much more complex.
 
 ---
 
-# 22. Packages
+## 22. Packages
 
 Packages are extremely important in Oracle.
 
-A pack groups:
+A package groups:
 
 ```
-procedus
-function
+procedures
+functions
 variables
 constants
-Types
+types
 cursors
 exceptions
 ```
@@ -864,11 +826,11 @@ PACKAGE BODY
 
 ---
 
-# 23. Package specification
+## 23. Package specification
 
 Public interface:
 
-```
+```sql
 CREATE OR REPLACE PACKAGE pkg_employee
 IS
 
@@ -890,11 +852,11 @@ Everything in the specification is public.
 
 ---
 
-# 24. Package Body
+## 24. Package body
 
 Implementation:
 
-```
+```sql
 CREATE OR REPLACE PACKAGE BODY pkg_employee
 IS
 
@@ -917,7 +879,7 @@ p_employee_id NUMBER
 )
 RETURN NUMBER
 IS
-v_salary employees.salary% TYPE;
+v_salary employees.salary%TYPE;
 BEGIN
 
 SELECT salary
@@ -935,7 +897,7 @@ END pkg_employee;
 
 Call:
 
-```
+```sql
 BEGIN
 pkg_employee.increase_salary (100.5);
 END;
@@ -944,7 +906,7 @@ END;
 
 ---
 
-# 25. Public and Private Members in Package
+## 25. Public and private package members
 
 If a procedure occurs only in:
 
@@ -952,53 +914,55 @@ If a procedure occurs only in:
 PACKAGE BODY
 ```
 
-But not in specification, it's private.
+but not in the package specification, it is private.
 
 Example:
 
-```
-PACKAGEQ1QX pkg_employee
+```sql
+CREATE OR REPLACE PACKAGE BODY pkg_employee
 IS
-
-PROCEDURE write_log (...) IS
-BEGIN
-       ...
-END;
+    PROCEDURE write_log (...)
+    IS
+    BEGIN
+        ...
+    END write_log;
+END pkg_employee;
+/
 ```
 
-Write\ _ log can be used internally, but not by caller.
+`write_log` can be used internally by the package body but cannot be called from outside the package.
 
 This is an encapsulation mechanism.
 
 ---
 
-# 26. Package State
+## 26. Package state
 
 A package can have global variables:
 
-```
-CREATEQ1QX pkg_session
+```sql
+CREATE OR REPLACE PACKAGE pkg_session
 IS
-g_user_id NUMBER;
-END;
+    g_user_id NUMBER;
+END pkg_session;
 /
 ```
 
-The amount may remain available for the duration of the Oracle session.
+The value may remain available for the duration of the Oracle session.
 
 This is called:
 
-**pack state**.
+**package state**.
 
-It should be used carefully because it introduces state in session.
+It should be used carefully because it introduces session-specific state.
 
 ---
 
-# 27. Collections
+## 27. Collections
 
 PL/SQL allows collections.
 
-The three main types:
+The three main collection types are:
 
 ```
 Associative Array
@@ -1017,50 +981,45 @@ v_ids t_ids;
 
 Then:
 
-```
-v_ids (1): = 100;
-v_ids (2): = 101;
-v_ids (3): = 102;
+```sql
+v_ids(1) := 100;
+v_ids(2) := 101;
+v_ids(3) := 102;
 ```
 
 ---
 
-# 28. BULK COLLECT
+## 28. BULK COLLECT
 
-Allows loading several rows into collections.
+Allows multiple rows to be fetched into PL/SQL collections.
 
-Instead of doing a lot of fetchies:
+Instead of fetching rows one by one:
 
-```
+```sql
 SELECT employee_id
 BULK COLLECT INTO v_ids
-FROM
+FROM employees
 WHERE department_id = 50;
 ```
 
 Example:
 
-```
+```sql
 DECLARE
-
-TYPE t_ids IS TABLE OF employees.employee_id% TYPE;
-
-v_ids t_ids;
-
+    TYPE t_ids IS TABLE OF employees.employee_id%TYPE;
+    v_ids t_ids;
 BEGIN
-
-SELECT employee_id
-BULK COLLECT INTO v_ids
-FROM
-WHERE department_id = 50;
-
+    SELECT employee_id
+    BULK COLLECT INTO v_ids
+    FROM employees
+    WHERE department_id = 50;
 END;
 /
 ```
 
 Main advantage:
 
-reduce the number of context switches between:
+reduces the number of context switches between:
 
 ```
 PL/SQL engine
@@ -1070,33 +1029,30 @@ SQL engine
 
 ---
 
-# 29. FORALL
+## 29. FORALL
 
-FORALL runs DML in bulk.
+`FORALL` executes DML statements in bulk using collection elements.
 
 Example:
 
-```
-FORALL i IN 1.. v_ids.COUNT
-
-UPDATE
-SET salary = salary * 1.05
-WHERE employee_id = v_ids (i);
+```sql
+FORALL i IN 1..v_ids.COUNT
+    UPDATE employees
+    SET salary = salary * 1.05
+    WHERE employee_id = v_ids(i);
 ```
 
 Compared to:
 
-```
-FOR i IN 1.. v_ids.COUNT LOOP
-
-UPDATE
-SET salary = salary * 1.05
-WHERE employee_id = v_ids (i);
-
+```sql
+FOR i IN 1..v_ids.COUNT LOOP
+    UPDATE employees
+    SET salary = salary * 1.05
+    WHERE employee_id = v_ids(i);
 END LOOP;
 ```
 
-FORALL is usually much more effective.
+`FORALL` is usually much more efficient.
 
 Common:
 
@@ -1110,25 +1066,25 @@ FORALL
 INSERT / UPDATE / DELETE
 ```
 
-Very important to ETL.
+Very important in ETL.
 
 ---
 
-# 30. Attention to memory with BULK COLLECT
+## 30. Memory considerations with BULK COLLECT
 
 This can be dangerous:
 
-```
+```sql
 SELECT *
 BULK COLLECT INTO v_data
 FROM gigantic_table;
 ```
 
-Because he's trying to upload everything in memory of the process.
+Because it attempts to load the entire result set into PGA memory.
 
-The batch processing is often used:
+For large data sets, batch processing with `LIMIT` is often used:
 
-```
+```sql
 FETCH c_data
 BULK COLLECT INTO v_data
 LIMIT 1000;
@@ -1136,7 +1092,7 @@ LIMIT 1000;
 
 Conceptual example:
 
-```
+```sql
 LOOP
 
 FETCH c_data
@@ -1154,13 +1110,13 @@ This is an important pattern for large volumes.
 
 ---
 
-# 31. Dynamic SQL
+## 31. dynamic SQL
 
-Sometimes SQL- is not fully known when compiling.
+Sometimes the SQL statement is not fully known at compile time.
 
 Example:
 
-```
+```sql
 EXECUTE IMMEDIATE
 'DELETE FROM staging_transactions';
 ```
@@ -1173,155 +1129,148 @@ v_sql:
 SET salary = salary *: 1
 WHERE department_id =: 2
 
-EXECUTEQ1QX v_sql
+EXECUTE  v_sql
 USING 1.05, 50;
 ```
 
 ---
 
-# 32. Bind Variables
+## 32. Bind variables
 
-He prefers:
+Prefer:
 
-```
-WHERE department_id =: 1
-```
-
-for concatenation:
-
-```
-'WHERE department_id = ' - p_department_id
+```sql
+WHERE department_id = :1
 ```
 
-Bind Variables offers benefits related to:
+instead of concatenation such as:
+
+```sql
+'WHERE department_id = ' || p_department_id
+```
+
+Bind variables provide benefits related to:
 
 ```
 security
-overhead parse
-cursor failed
+parse overhead
+cursor reuse
 SQL injection
 ```
 
-Especially for outside strings, uncontrolled concatenation is dangerous.
+Especially with external input, uncontrolled string concatenation is dangerous.
 
 ---
 
-# 33.SQL injection
+## 33. SQL injection
 
 Problem code:
 
-```
-v_sql:
-*
-FROM customers
-WHERE
-"p_name 'is replaced by the following:
+```sql
+v_sql := '
+    SELECT *
+    FROM customers
+    WHERE customer_name = ''' || p_name || '''';
 ```
 
-A manipulated input may alter SQL-.
+A maliciously crafted input may alter the intended SQL statement.
 
 Safer:
 
-```
-v_sql:
-*
-FROM customers
-WHERE
+```sql
+v_sql := '
+    SELECT *
+    FROM customers
+    WHERE customer_name = :1';
 ```
 
 and:
 
-```
-EXECUTEQ1QX v_sql
-...
+```sql
+EXECUTE IMMEDIATE v_sql
 USING p_name;
 ```
 
 ---
 
-# 34. Dynamic SQL with INTO
+## 34. dynamic SQL with INTO
 
 Example:
 
-```
+```sql
 EXECUTE IMMEDIATE
-*)
-FROM = v_table_name
+    'SELECT COUNT(*) FROM ' || v_table_name
 INTO v_count;
 ```
 
 Important remark:
 
-values can be bind variables.
+values can be supplied through bind variables.
 
-The names of objects, such as:
+Object names, such as:
 
 ```
-backtables
-color
+tables
+columns
 ```
 
-I can't be bind variables in the same way.
+cannot be bind variables in the same way.
 
-That's why Dynamic SQL that builds object names must be validated very carefully.
+That is why dynamic SQL that constructs object names must validate them very carefully.
 
 ---
 
-# 35. Triggers
+## 35. Triggers
 
-Trigger is PL/SQL code executed automatically at an event.
+A trigger is PL/SQL code that executes automatically when a specified database event occurs.
 
 Example:
 
-```
+```sql
 CREATE OR REPLACE TRIGGER trg_employee_salary
 BEFORE UPDATE OF salary
-ON
-FORQ1QX ROW
+ON employees
+FOR EACH ROW
 BEGIN
-
-IF: NEW.salary; OLD.salary THEN
-
-RAISE_APPLICATION_ERROR (
--20001,
-'Salary cannot decrease'
-);
-
-END IF;
-
+    IF :NEW.salary < :OLD.salary THEN
+        RAISE_APPLICATION_ERROR(
+            -20001,
+            'Salary cannot decrease'
+        );
+    END IF;
 END;
 /
 ```
 
 ---
 
-# 36.: OLD and: NEW
+## 36. :OLD and :NEW
 
 In a row trigger:
 
 ```
-: OLD
+:OLD
 ```
 
 represents the old value.
 
 ```
-: NEW
+:NEW
 ```
 
-is the new value.
+represents the new value.
 
 Example:
 
-```
-IF: NEW.salary; OLD.salary THEN
+```sql
+IF :NEW.salary < :OLD.salary THEN
     ...
 END IF;
 ```
 
 ---
 
-# 37. BEFORE / AFTER
+## 37. BEFORE / AFTER
 
 You can have:
 
@@ -1344,27 +1293,27 @@ BEFORE INSERT OR UPDATE
 
 ---
 
-# 38. Row Trigger vs Statement Trigger
+## 38. Row trigger vs. statement trigger
 
 With:
 
-```
-FORQ1QX ROW
+```sql
+FOR EACH ROW
 ```
 
-Trigger runs for each row.
+The trigger runs once for each affected row.
 
 No:
 
-```
-FORQ1QX ROW
+```sql
+FOR EACH ROW
 ```
 
-run a date for the statement.
+the trigger runs once for the entire SQL statement.
 
 If:
 
-```
+```sql
 UPDATE
 SET salary = salary * 1.05;
 ```
@@ -1377,7 +1326,7 @@ row trigger:
 10,000 executions
 ```
 
-Trigger statement:
+Statement-level trigger:
 
 ```
 1 execution
@@ -1387,13 +1336,13 @@ The difference is very important.
 
 ---
 
-# 39. Triggers; carefully used
+## 39. Triggers: use with care
 
-Triggers can create hidden logic.
+Triggers can introduce hidden side effects and implicit logic.
 
 For example:
 
-```
+```sql
 UPDATE CUSTOMER
 ```
 
@@ -1404,7 +1353,7 @@ TRIGGER
    ↓
 UPDATE ACCOUNT
    ↓
-other TRIGGER
+another TRIGGER
    ↓
 INSERT AUDIT
 ```
@@ -1413,7 +1362,7 @@ For this reason, in many systems explicit logic is preferred in:
 
 ```
 packages
-procedus
+procedures
 ETL
 application layer
 ```
@@ -1422,11 +1371,11 @@ where possible.
 
 ---
 
-# 40. Transactions in PL/SQL
+## 40. Transactions in PL/SQL
 
 The main commands are:
 
-```
+```sql
 COMMIT;
 ROLLBACK;
 SAVEPOINT;
@@ -1434,48 +1383,45 @@ SAVEPOINT;
 
 Example:
 
-```
+```sql
 BEGIN
+    UPDATE accounts
+    SET balance = balance - 100
+    WHERE account_id = 1;
 
-UPDATE accounts
-SET balance = balance - 100
-WHERE account_id = 1;
+    UPDATE accounts
+    SET balance = balance + 100
+    WHERE account_id = 2;
 
-UPDATE accounts
-SET balance = balance + 100
-WHERE account_id = 2;
-
-COMMIT;
+    COMMIT;
 
 EXCEPTION
-
-WHENQ1QX THEN
-ROLLBACK;
-RAISE;
-
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
 END;
 /
 ```
 
 ---
 
-# 41. SAVEPOINT
+## 41. SAVEPOINT
 
-```
+```sql
 SAVEPOINT before_step2;
 ```
 
 Then:
 
-```
+```sql
 ROLLBACK TO before_step2;
 ```
 
-You can only return to a certain point in the transaction.
+You can roll back only to a defined point in the current transaction.
 
 ---
 
-# 42. Who should give COMMIT?
+## 42. Who should control COMMIT?
 
 This is an important subject of design.
 
@@ -1489,50 +1435,45 @@ procedure_b
 procedure_c
 ```
 
-If the procedure\ _ b does:
+If the procedure_b does:
 
-```
+```sql
 COMMIT;
 ```
 
-then the caller loses the opportunity to make rollback on the respective changes.
+then the caller loses the ability to roll back those changes as part of a larger transaction.
 
 Therefore, in many architectures:
 
-> internal procedures do not do COMMIT; the transaction is controlled by the higher level.
+> internal procedures often avoid `COMMIT`; transaction control is handled at a higher level.
 
 It's not an absolute rule, but it's a very important practice.
 
 ---
 
-# 43. Pattern ETL - Logging + Error Propagation
+## 43. ETL pattern - logging + error propagation
 
 A simplified pattern:
 
-```
+```sql
 BEGIN
-
-INSERT INTO target_table (...)
-SELECT...
-FROM staging_table;
+    INSERT INTO target_table (...)
+    SELECT ...
+    FROM staging_table;
 
 EXCEPTION
-
-WHENQ1QX THEN
-
-log_error (
-p_process = = 'LOAD_CUSTOMERS',
-p_code = = SQLCODE,
-p_message = = SQLERRM
-);
-
-RAISE;
-
+    WHEN OTHERS THEN
+        log_error(
+            p_process => 'LOAD_CUSTOMERS',
+            p_code    => SQLCODE,
+            p_message => SQLERRM
+        );
+        RAISE;
 END;
 /
 ```
 
-Flux:
+Flow:
 
 ```
 ETL step
@@ -1545,21 +1486,21 @@ log error
    ↓
 RAISE
    ↓
-ETL framework sees FAIL
+ETL framework detects failure
 ```
 
 This is a much healthier pattern than:
 
-```
-WHENQ1QX THEN
-NULL;
+```sql
+WHEN OTHERS THEN
+    NULL;
 ```
 
 ---
 
-# 44. Error stack
+## 44. Error stack
 
-For serious debugging, SQLERRM is not always enough.
+For serious debugging, `SQLERRM` alone is not always sufficient.
 
 Oracle offers:
 
@@ -1575,63 +1516,60 @@ DBMS_UTILITY.FORMAT_ERROR_BACKTRACE
 
 Example:
 
-```
+```sql
 EXCEPTION
-WHENQ1QX THEN
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE(
+            DBMS_UTILITY.FORMAT_ERROR_STACK
+        );
 
-DBMS_OUTPUT.PUT_LINE (
-DBMS_UTILITY.FORMAT_ERROR_STACK
-);
+        DBMS_OUTPUT.PUT_LINE(
+            DBMS_UTILITY.FORMAT_ERROR_BACKTRACE
+        );
 
-DBMS_OUTPUT.PUT_LINE (
-DBMS_UTILITY.FORMAT_ERROR_BACKTRACE
-);
-
-RAISE;
+        RAISE;
 END;
 /
 ```
 
-FORMAT\ _ ERROR\ _ BACKTRACE is very useful because it can show the line in the code where the problem actually occurred.
+`FORMAT_ERROR_BACKTRACE` is particularly useful because it can identify the line where the exception originated.
 
 ---
 
-# 45. A good login pattern
+## 45. A good logging pattern
 
 For example:
 
-```
+```sql
 EXCEPTION
-WHENQ1QX THEN
-
-pkg_log.write_error (
-p_process = = 'LOAD_ACCOUNTS',
-p_sqlcode = = SQLCODE,
-p_sqlerrm = = SQLERRM,
-p_stack = = DBMS_UTILITY.FORMAT_ERROR_STACK,
-p_backtrace = = DBMS_UTILITY.FORMAT_ERROR_BACKTRACE
-);
-
-RAISE;
+    WHEN OTHERS THEN
+        pkg_log.write_error(
+            p_process   => 'LOAD_ACCOUNTS',
+            p_sqlcode   => SQLCODE,
+            p_sqlerrm   => SQLERRM,
+            p_stack     => DBMS_UTILITY.FORMAT_ERROR_STACK,
+            p_backtrace =>> DBMS_UTILITY.FORMAT_ERROR_BACKTRACE
+        );
+        RAISE;
 ```
 
 For DWH/ETL systems, this is an extremely useful pattern.
 
 ---
 
-# 46. Autonomous Transaction
+## 46. Autonomous transaction
 
-There are cases where the logger must keep the error even if the main transaction makes rollback.
+There are cases where a logging routine must preserve the log entry even if the main transaction rolls back.
 
 Use:
 
-```
+```sql
 PRAGMA AUTONOMOUS_TRANSACTION;
 ```
 
 Conceptual example:
 
-```
+```sql
 CREATE PROCEDURE log_error (...)
 IS
 PRAGMA AUTONOMOUS_TRANSACTION;
@@ -1651,15 +1589,15 @@ business transaction → ROLLBACK
 logging transaction → COMMIT
 ```
 
-But autonomous transactions must be used in a controlled manner.
+Autonomous transactions should be used carefully and deliberately.
 
 ---
 
-# 47. Complete example of ETL procedure
+## 47. Complete ETL procedure example
 
 A realistic example:
 
-```
+```sql
 CREATE OR REPLACE PROCEDURE load_customers
 IS
 BEGIN
@@ -1680,19 +1618,19 @@ FROM dwh_customer d
 WHERE d.customer_id = s.customer_id
 );
 
-DBMS_OUTPUT.PUT_LINE (
-SQL% ROWCOUNT
+DBMS_OUTPUT.PUT_LINE(
+SQL%ROWCOUNT
 );
 
 EXCEPTION
 
-WHENQ1QX THEN
+WHEN  THEN
 
 pkg_log.write_error (
-p_process = = 'LOAD_CUSTOMERS',
-p_sqlcode = = SQLCODE,
-p_sqlerrm = = SQLERRM,
-p_backtrace =
+p_process => 'LOAD_CUSTOMERS',
+p_sqlcode => SQLCODE,
+p_sqlerrm => SQLERRM,
+p_backtrace =>
 DBMS_UTILITY.FORMAT_ERROR_BACKTRACE
 );
 
@@ -1704,7 +1642,7 @@ END;
 
 Note that insertion is:
 
-```
+```sql
 INSERT INTO...
 SELECT...
 ```
@@ -1720,7 +1658,7 @@ cursor
 ...
 ```
 
-It's exactly the difference between:
+This illustrates the difference between:
 
 ```
 set-based processing
@@ -1734,34 +1672,32 @@ row-by-row processing
 
 ---
 
-# 48. Set-based vs procedural
+## 48. Set-based vs. procedural processing
 
 This is one of the most important ideas for an Oracle developer.
 
-### Weak
+### Less efficient
 
-```
-FOR r IN
-SELECT *
-FROM staging_customer
+```sql
+FOR r IN (
+    SELECT *
+    FROM staging_customer
 )
 LOOP
-
-INSERT INTO custodian (...)
-VALUES (...);
-
+    INSERT INTO customer (...)
+    VALUES (...);
 END LOOP;
 ```
 
-### Preferably
+### Preferred
 
-```
-INSERT INTO custodian (...)
-SELECT...
+```sql
+INSERT INTO customer (...)
+SELECT ...
 FROM staging_customer;
 ```
 
-If, however, for each row, complex procedural logic must be executed, then you can reach:
+If complex procedural logic must be executed for each row, then consider:
 
 ```
 BULK COLLECT
@@ -1771,27 +1707,27 @@ FORALL
 
 ---
 
-# 49. Correct mental order when solving the problem
+## 49. Correct decision order
 
-In Oracle, he thinks about it this way:
+A useful Oracle decision process is:
 
 ```
 1. Can I do everything in one SQL?
 
 ↓ no
 
-2. Can I make bulk processing?
+2. Can I use bulk processing?
 
 ↓ no
 
-3. I need PL/SQL row-by-row?
+3. Do I really need row-by-row PL/SQL?
 ```
 
 Not the other way around.
 
 ---
 
-# 50. Procedure vs function vs package
+## 50. Procedure vs functions vs package
 
 A simple representation:
 
@@ -1802,7 +1738,7 @@ PACKAGE
 Returns value
 │
 − PROCEDURE
-He's performing an operation.
+Performs an operation
 │
 − TYPES
 − CONSTANTS
@@ -1811,7 +1747,7 @@ He's performing an operation.
 − PRIVATE HELPERS
 ```
 
-In mature Oracle projects, much of the logic of PL/SQL is organized in packages.
+In mature Oracle projects, much of the PL/SQL logic is organized into packages.
 
 ---
 
@@ -1823,8 +1759,8 @@ For an Oracle / Data Developer role, I would consider it mandatory to be able to
 PL/SQL block
 DECLARE / BEGIN / EXCEPTION / END
 
-% TYPE
-% ROWTYPE
+%TYPE
+%ROWTYPE
 
 SELECT INTO
 NO_DATA_FOUND
@@ -1833,16 +1769,16 @@ TOO_MANY_ROWS
 IF / CASE
 LOOP / FOR / WHILE
 
-default cursor
+implicit cursor
 explicit cursor
-Parametrized cursor
+parameterized cursor
 
 procedure
-function
+functions
 package specification
-pack body
+package body
 public / private members
-Package State
+package state
 
 exception handling
 SQLCODE
@@ -1860,26 +1796,26 @@ BULK COLLECT
 FORALL
 LIMIT
 
-Dynamic SQL
+dynamic SQL
 EXECUTE IMMEDIATE
 bind variables
 SQL injection
 
 triggers
 BEFORE / AFTER
-row / statement
-: OLD /: NEW
+row-level / statement-level
+:OLD /:NEW
 ```
 
 ---
 
 ## Questions and answers
 
-### What is the difference between procedure and function?
+### What is the difference between procedure and functions?
 
-The function must return a value through RETURN; the procedure is mainly directed at performing an operation and can return information through OUT parameters.
+The functions must return a value through RETURN; the procedure is mainly directed at performing an operation and can return information through OUT parameters.
 
-### What if SELECT INTO finds nothing?
+### What happens if SELECT INTO finds no rows?
 
 ```
 NO_DATA_FOUND
@@ -1893,17 +1829,17 @@ TOO_MANY_ROWS
 
 ### What's RAISE doing?
 
-Trigger an exception or, in a handler, propagate the current exception to the caller.
+It raises an exception or, inside an exception handler, re-raises the current exception to the caller.
 
 ### Why BULK COLLECT?
 
-Reduce the number of transfers between PL/SQL engine and SQL engine.
+It reduces the number of context switches between the PL/SQL engine and SQL engine.
 
 ### Why FORALL?
 
-Allows bulk execution of DML collection operations.
+It allows bulk execution of DML using collection elements.
 
-### # Package spec vs body?
+### Package specification vs. package body?
 
 Spec:
 
@@ -1914,12 +1850,12 @@ public interface
 Body:
 
 ```
-Implementation + Private Members
+Implementation + private members
 ```
 
-### Why are they playing variables in Dynamic SQL?
+### Why use bind variables in dynamic SQL?
 
-For security, reuse of the cursor and reduction of overhead parse.
+For security, reuse of the cursor and reduction of parse overhead.
 
 ### What problem is there with WHEN OTHERS THEN NULL?
 
@@ -1927,16 +1863,16 @@ It completely hides the error.
 
 ---
 
-# 53. Important Traps
+## 53. Important traps
 
 Remember in particular these:
 
 ```
-1. SELECT INTO demands exactly one line.
+1. `SELECT INTO` requires exactly one row.
 
 2. WHEN OTHERS THEN NULL is almost always a bad idea.
 
-3. COMMIT in lowlevel procedures can destroy transaction control.
+3. `COMMIT` in low-level procedures can break higher-level transaction control.
 
 4. Cursor + loop for millions of rows can be very slow.
 
@@ -1944,18 +1880,18 @@ Remember in particular these:
 
 6. BULK COLLECT without LIMIT can consume a lot of memory.
 
-7. Dynamic SQL by concatenation can produce SQL injection.
+7. dynamic SQL built by unsafe string concatenation can enable SQL injection.
 
 8. Triggers can hide important logic.
 
-9. The logic of an error without RAISE can transform an apparent FAIL into an SUCCESS.
+9. Handling an error without re-raising it can turn a real failure into an apparent success.
 
-10. % TYPE and% ROWTYPE reduce dependence on manual type definition.
+10. `%TYPE` and `%ROWTYPE` reduce dependence on manually duplicated type definitions.
 ```
 
 ---
 
-# 54. Mental Model for PL/SQL in ETL/DWH
+## 54. Mental model for PL/SQL in ETL/DWH
 
 For the Data Developer job, imagine PL/SQL as follows:
 
@@ -1968,12 +1904,12 @@ STAGING
    ▼
 PL/SQL PACKAGE
    │
-- validation of data
-- Transformations
-- Business rules
-- Error handling
+- data validation
+- transformations
+- business rules
+- error handling
 - Logging
-- * Batch control *
+- * batch control *
    │
    ▼
 DWH
@@ -1985,7 +1921,7 @@ DWH
 And for volumes:
 
 ```
-SQL setbased
+SQL set-based
       │
 − INSERT SELECT
 − UPDATE
@@ -2004,7 +1940,7 @@ This is one of the key ideas to remember.
 
 ---
 
-# 55. What to remain
+## 55. What to remember
 
 If you have to compress the entire course into a single page, remember:
 
@@ -2018,8 +1954,8 @@ EXCEPTION
 END;
 
 Data:
-% TYPE
-% ROWTYPE
+%TYPE
+%ROWTYPE
 SELECT INTO
 
 Flow:
@@ -2029,14 +1965,14 @@ FOR
 WHILE
 LOOP
 
-Date of processing:
-default cursor
+Data processing:
+implicit cursor
 explicit cursor
-Parametrized cursor
+parameterized cursor
 
-Modulation:
+Modularity:
 procedure
-function
+functions
 package
 
 Errors:
@@ -2060,8 +1996,8 @@ bind variables
 
 Database events:
 triggers
-: OLD
-: NEW
+:OLD
+:NEW
 
 Transactions:
 COMMIT
@@ -2073,28 +2009,28 @@ And the principle that links them all:
 
 **SQL set-based first → bulk PL/SQL if necessary → row-by-row only when logic really demands it.**
 
-The next natural step for the course would be to take **PL/SQL advanced / expert** separately and to deepen the things that most likely appear at the technical discussion: **cursors and bulk processing, packages, exception / error stack, translations, dynamic SQL and a complete example of ETL DWH pack with login and batch control**.
+A natural next step would be a separate **advanced / expert PL/SQL** chapter covering deeper cursor and bulk-processing patterns, package design, exception stacks, transactions, dynamic SQL, and a complete ETL/DWH package with logging and batch control.
 
 ---
 
 ## Questions and answers
 
-### How would you briefly explain PL / SQL fundamentally until advanced to a colleague who knows SQL, but not this area?
+### How would you briefly explain PL/SQL from fundamentals to advanced to a colleague who knows SQL?
 
-PL / SQL covers anonymous blocks, variables, records and control flow, procedures, functions, packages and scopes, explicit and implicitly cursors. In practice, first, I determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
+PL/SQL covers anonymous blocks, variables, records and control flow, procedures, functionss, packages and scopes, explicit and implicit cursors. In practice, first, I determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
 
-### What are the two most common practical problems related to PL / SQL?
+### What are two common practical problems related to PL/SQL?
 
-Two recurring problems are misinterpretation of data or granularity and degradation of performance at real volume. For PL / SQL, I explicitly follow anonymous blocks, variables, records and control flow, procedures, functions, packages and scopes, explicit and implicitly cursors and compare the result with a control set.
+Two recurring problems are misinterpretation of data or granularity and degradation of performance at real volume. For PL/SQL, I explicitly follow anonymous blocks, variables, records and control flow, procedures, functionss, packages and scopes, explicit and implicit cursors and compare the result with a control set.
 
 ### How do you check that the result is correct and not just fast?
 
-I compare the number of rows, amounts and keys with the source or with a reference result; I test NULLs, duplicates, limits and rerouting of the batch.I only then check time, resources and execution plan.
+I compare row counts, amounts, and keys with the source or a reference result; I test NULLs, duplicates, boundary conditions, and batch reruns. Only then do I evaluate execution time, resource usage, and SQL execution plans.
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functionsal requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 
-In a bank flow, PL / SQL fundamentally until advanced occurs along with logging, auditing, reconciliation and impact analysis.
+In a banking flow, PL/SQL is often combined with logging, auditing, reconciliation, transaction control, and impact analysis.
