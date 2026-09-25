@@ -8,21 +8,21 @@ sidebar_position: 10
 
 <div className="chapter-kicker">Chapter C10 · Complete course</div>
 
-For an **Oracle Data Developer / PL/SQL Developer / DWH Developer**, it is not enough to write SQL correctly. You must also understand **how Oracle decides to execute SQL-** and how you check if the decision is good.
+For an **Oracle Data Developer / PL/SQL Developer / DWH Developer**, it is not enough to write SQL correctly. You must also understand **how Oracle decides to execute SQL** and how to verify whether that decision is efficient.
 
 The central idea:
 
 > **Oracle Optimizer tries to find the execution plan with the lowest estimated cost, using data statistics and cardinality estimates.**
 
-You do not optimize SQL- by intuition or by the index = fast rule. You optimize from **the real** execution plan.
+You do not optimize SQL by intuition or by assuming that an index always means faster execution. You optimize from **the real** execution plan.
 
 ---
 
-## 1. What is Oracle Optimizer
+## 1. What is the Oracle Optimizer?
 
 Oracle receives an SQL instruction:
 
-```
+```sql
 SELECT *
 FROM transactions
 WHERE account_id = 1001;
@@ -32,10 +32,10 @@ There are several possible ways to execute it:
 
 ```
 Variant 1:
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 
 Variant 2:
-INDERANGE SCAN
+INDEX RANGE SCAN
    ↓
 TABLE ACCESS BY INDEX ROWID
 
@@ -43,29 +43,29 @@ Variant 3:
 other index
 ```
 
-The optimiser must choose one of the options.
+The optimizer must choose among these alternatives.
 
 In modern Oracle we are talking mainly about:
 
 **CBO = Cost Based Optimizer**
 
-The optimiser estimates the cost of different plans based on:
+The optimizer estimates the cost of different plans based on:
 
 - statistics;
 - the number of rows;
 - the distribution of values;
-- the selectivity of predictions;
+- predicate selectivity;
 - indexes;
 - partitions;
 - intermediate cardinality;
 - the type of join;
 - cost of I/O;
 - CPU;
-- Sometimes parallelism.
+- sometimes parallelism.
 
 ---
 
-# 2. Parsing → Optimization → Execution
+## 2. Parsing → Optimization → Execution
 
 Simplified:
 
@@ -76,16 +76,16 @@ Parsing
  ↓
 Optimizer
  ↓
-Implementation Plan
+Execution Plan
  ↓
-Implementation Engine
+Execution Engine
  ↓
 Rows
 ```
 
-The optimizer doesn't run all the options to see which one is faster.
+The optimizer does not execute every alternative to discover which is faster.
 
-He makes **estimates**.
+It makes **estimates**.
 
 That's why a very important problem in tuning is:
 
@@ -93,7 +93,7 @@ That's why a very important problem in tuning is:
 
 ---
 
-# 3. Cost of time in seconds
+## 3. Cost is not execution time
 
 In an execution plan you can see:
 
@@ -101,7 +101,7 @@ In an execution plan you can see:
 Cost = 127
 ```
 
-This NU means:
+This does **not** mean:
 
 ```
 127 ms
@@ -109,7 +109,7 @@ This NU means:
 127 I/O-uri
 ```
 
-The cost is a relative value used by the optimiser to compare the plans.
+The cost is a relative value used by the optimizer to compare the plans.
 
 For example:
 
@@ -118,27 +118,27 @@ Plan A cost 40
 Plan B cost 500
 ```
 
-The optimiser basically considers plan A cheaper.
+The optimizer basically considers plan A cheaper.
 
 But:
 
-> The lower cost plan is not necessarily the plan that acts best in reality.
+> The lower-cost plan is not necessarily the plan that performs best in reality.
 
-If statistics or estimates are wrong, the optimiser can choose poorly.
+If statistics or estimates are wrong, the optimizer can choose poorly.
 
 ---
 
-# 4. Statistics
+## 4. Statistics
 
-The optimiser needs data information.
+The optimizer needs metadata and data-distribution statistics.
 
 Examples:
 
 ```
-row number
+row count
 number of blocks
 number of distinct values
-NULL-uri
+NULL values
 min / max
 distribution of values
 index statistics
@@ -146,28 +146,28 @@ index statistics
 
 You can collect statistics with:
 
-```
+```sql
 BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
-Ownname = "'DEV_LAB',"
-Tabnames = "'TRANSACTIONS'"
-waterfalls = TRUE
+ownname => 'DEV_LAB',
+tabname => 'TRANSACTIONS',
+cascade => TRUE
 );
 END;
 /
 ```
 
-waterfalls = The TRUE also collects statistics for associated indexes.
+`cascade => TRUE` also gathers statistics for associated indexes.
 
 ---
 
-# 5. Cardinality
+## 5. Cardinality
 
 **Cardinality** means the estimated number of rows produced by an operation.
 
 Example:
 
-```
+```sql
 SELECT *
 FROM transactions
 WHERE status = 'ERROR';
@@ -179,7 +179,7 @@ If the table has:
 10,000,000 rows
 ```
 
-and the optimiser estimates that:
+and the optimizer estimates that:
 
 ```
 10,000 rows
@@ -203,7 +203,7 @@ I mean:
 
 ---
 
-# 6. Selection
+## 6. Selectivity
 
 Selectivity is the proportion of rows that satisfy the condition.
 
@@ -214,7 +214,7 @@ Example:
 1,000 rows returned
 ```
 
-Selection:
+Selectivity:
 
 ```
 1000 / 10,000,000
@@ -245,23 +245,23 @@ The index can be useless.
 Oracle may prefer:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 ---
 
-# 7. TABLE ACCESS FULL is not automatically bad
+## 7. TABLE ACCESS FULL is not automatically bad
 
 One of the most common mistakes:
 
-> * Full Table Scan = stupid query. *
+> * Full Table Scan = bad query. *
 
 False.
 
 For:
 
-```
-SELECT SUM (amount)
+```sql
+SELECT SUM(amount)
 FROM fact_transaction;
 ```
 
@@ -270,7 +270,7 @@ on an DWH, Oracle must probably read a very large part of the table.
 One:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 it can be the right choice.
@@ -286,18 +286,18 @@ Especially for:
 
 ---
 
-# 8. When it is an advantageous index
+## 8. When an index is advantageous
 
 Suppose:
 
-```
-CREATEQ1QX ix_trx_account
+```sql
+CREATE INDEX ix_trx_account
 ON transactions (account_id);
 ```
 
 Query:
 
-```
+```sql
 SELECT *
 FROM transactions
 WHERE account_id = 123456;
@@ -313,22 +313,22 @@ INDEX RANGE SCAN IX_TRX_ACCOUNT
 The flow is:
 
 ```
-INDERANGE SCAN
+INDEX RANGE SCAN
       ↓
 ROWID
       ↓
 TABLE ACCESS BY INDEX ROWID
 ```
 
-Oracle first search the index, get ROWID, then go to the table.
+Oracle first searches the index, obtains ROWIDs, and then accesses the table.
 
 ---
 
-# 9. INDEX UNIQUE SCAN
+## 9. INDEX UNIQUE SCAN
 
 For a single key:
 
-```
+```sql
 SELECT *
 FROM customers
 WHERE customer_id = 100;
@@ -349,15 +349,15 @@ INDEX UNIQUE SCAN PK_CUSTOMERS
 
 INDEX UNIQUE SCAN means:
 
-> Oracle knows he can find maximum one line.
+> Oracle knows the lookup can return at most one row.
 
 ---
 
-# 10. INDEX RANGE SCAN
+## 10. INDEX RANGE SCAN
 
 Example:
 
-```
+```sql
 SELECT *
 FROM transactions
 WHERE account_id = 1001;
@@ -372,16 +372,16 @@ TABLE ACCESS BY INDEX ROWID
 INDEX RANGE SCAN IX_TRX_ACCOUNT
 ```
 
-Oracle finds an **range of inputs** in the index.
+Oracle finds a **range of entries** in the index.
 
 ---
 
-# 11. Reading DBMS\ _ XPLAN
+## 11. Reading DBMS_XPLAN
 
 For starters, we can use:
 
 ```
-EXPLAINQ1QX FOR
+EXPLAIN FOR
 
 SELECT *
 FROM transactions
@@ -390,7 +390,7 @@ WHERE account_id = 1001;
 
 then:
 
-```
+```sql
 SELECT *
 FROM TABLE (DBMS_XPLAN.DISPLAY);
 ```
@@ -399,11 +399,11 @@ But for real tuning is more useful the plan of the query that actually ran.
 
 ---
 
-# 12. DBMS\ _ XPLAN.DISPLAY\ _ CURSOR
+## 12. DBMS_XPLAN.DISPLAY_CURSOR
 
 You can execute:
 
-```
+```sql
 SELECT / * + GATHER_PLAN_STATISTICS * /
 *
 FROM transactions
@@ -412,7 +412,7 @@ WHERE account_id = 1001;
 
 then:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (
@@ -439,7 +439,7 @@ A-Rows = Current Rows
 
 ---
 
-# 13. E-Rows vs A-Rows
+## 13. E-Rows vs A-Rows
 
 Suppose:
 
@@ -450,7 +450,7 @@ A-Rows = 500000
 
 We have a huge difference.
 
-The optimiser thought they'd come:
+The optimizer thought they'd come:
 
 ```
 10 rows
@@ -482,7 +482,7 @@ Therefore:
 
 ---
 
-# 14. How do you read the plan
+## 14. How do you read the plan
 
 We have already discussed the very important rule:
 
@@ -490,7 +490,7 @@ We have already discussed the very important rule:
 
 Example:
 
-```
+```sql
 SELECT STATEMENT
 ► HASH JOIN
 ► TABLE ACCESS FULL DIM_ACCOUNT
@@ -513,7 +513,7 @@ It's not enough to simply read the top-down lines.
 
 ---
 
-# 15. ACCESS vs FILTER
+## 15. ACCESS vs FILTER
 
 In Predicate Information you can see:
 
@@ -542,7 +542,7 @@ Access (= 1001)
 with an index:
 
 ```
-INDERANGE SCAN
+INDEX RANGE SCAN
 ```
 
 ---
@@ -577,7 +577,7 @@ Rows returned
 
 ---
 
-# 16. SARGabilty
+## 16. SARGabilty
 
 A prediction is SARGable when Oracle can effectively use an access structure, for example an index.
 
@@ -615,12 +615,12 @@ This rule is also very important for **partition pruning**.
 
 ---
 
-# 17. Functions on indexed columns
+## 17. Functions on indexed columns
 
 We have:
 
-```
-CREATEQ1QX ix_customer_name
+```sql
+CREATE ix_customer_name
 ON custodian (customer_name);
 ```
 
@@ -640,8 +640,8 @@ it is not necessarily usable efficiently.
 
 You can create a function-based index:
 
-```
-CREATEQ1QX ix_customer_upper_name
+```sql
+CREATE ix_customer_upper_name
 ON custodian (UPPER (customer_name));
 ```
 
@@ -655,9 +655,9 @@ can benefit from the index.
 
 ---
 
-# 18. Join Algoriths
+## 18. Join Algoriths
 
-The optimiser must also decide how **executes the** joints.
+The optimizer must also decide how **executes the** joins.
 
 The three important ones are:
 
@@ -669,7 +669,7 @@ Sort Merge Join
 
 ---
 
-# 19. Nested Loops
+## 19. Nested Loops
 
 Conceptual:
 
@@ -703,13 +703,13 @@ Typical OLTP.
 
 ---
 
-# 20. Hash Join
+## 20. Hash Join
 
 It's very important in DWH.
 
 Example:
 
-```
+```sql
 SELECT...
 FROM fact_transaction f
 JOIN dim_account
@@ -737,7 +737,7 @@ That can be a very good choice.
 
 ---
 
-# 21. Sort Merge Join
+## 21. Sort Merge Join
 
 Conceptual:
 
@@ -763,15 +763,15 @@ Hash Join
 
 ---
 
-# 22. OLTP vs DWH
+## 22. OLTP vs DWH
 
-The optimiser can produce very different plans for the two types of workload.
+The optimizer can produce very different plans for the two types of workload.
 
 ### OLTP
 
 Query:
 
-```
+```sql
 SELECT *
 FROM account
 WHERE account_id =: id;
@@ -780,13 +780,13 @@ WHERE account_id =: id;
 Probably:
 
 ```
-INDEUNIQUE SCAN
+INDEX UNIQUE SCAN
 ```
 
 or:
 
 ```
-INDERANGE SCAN
+INDEX RANGE SCAN
 ```
 
 and:
@@ -801,10 +801,10 @@ Nested Loops
 
 Query:
 
-```
+```sql
 SELECT
 d.year,
-SUM (f.amount)
+SUM(f.amount)
 FROM fact_transaction f
 JOIN dim_date d
 ON d.date_key = f.date_key
@@ -814,9 +814,9 @@ GROUP BY d.year;
 You can see:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 HASH JOIN
-HASHQ1QX BY
+HASH BY
 PARALLEL EXECUTION
 ```
 
@@ -824,7 +824,7 @@ These are no signs that the query is bad.
 
 ---
 
-# 23. Histograms
+## 23. Histograms
 
 Suppose we have:
 
@@ -835,7 +835,7 @@ SUCCESS 99.5%
 ERROR 0.5%
 ```
 
-If the optimiser involves uniform distribution, it may misestimate:
+If the optimizer involves uniform distribution, it may misestimate:
 
 ```
 WHERE status = 'ERROR'
@@ -864,11 +864,11 @@ they can be different.
 
 ---
 
-# 24. Bind Variables
+## 24. Bind Variables
 
 Example:
 
-```
+```sql
 SELECT *
 FROM transactions
 WHERE account_id =: account_id;
@@ -901,7 +901,7 @@ adaptive cursor sharing
 
 ---
 
-# 25. Clustering Factor
+## 25. Clustering Factor
 
 Clustering factor shows about how well the index order correlates with the physical order of the rows in the table.
 
@@ -954,17 +954,17 @@ block 850
 Oracle can estimate that the index causes too many I/O-uri and prefers:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 ---
 
-# 26. Composite Index
+## 26. Composite Index
 
 Index:
 
-```
-CREATEQ1QX ix_trx_acc_date
+```sql
+CREATE ix_trx_acc_date
 ON transactions (account_id, transaction_date);
 ```
 
@@ -993,14 +993,14 @@ You have to design the indexes from the workload, not just the individual column
 
 ---
 
-# 27. Partition Pounding
+## 27. Partition Pounding
 
 Very important in DWH.
 
 We have:
 
-```
-CREATEQ1QX fact_transaction
+```sql
+CREATE fact_transaction
 (
 transaction_id NUMBER,
 transaction_date DATE,
@@ -1016,8 +1016,8 @@ PARTITION pmax VALUES LESS THAN (MAXVALUE)
 
 Query:
 
-```
-SELECT SUM (amount)
+```sql
+SELECT SUM(amount)
 FROM fact_transaction
 WHERE transaction_date = DATE '2026-01-01'
 AND transaction_date; DATE '2027-01-01';
@@ -1039,7 +1039,7 @@ In an DWH can produce huge differences.
 
 ---
 
-# 28. Predicate Pushdown
+## 28. Predicate Pushdown
 
 The idea is to filter out as early as possible.
 
@@ -1067,13 +1067,13 @@ FILTER
 JOIN
 ```
 
-The optimiser is trying to convert the query to reduce the processed volumes as early as possible.
+The optimizer is trying to convert the query to reduce the processed volumes as early as possible.
 
 ---
 
-# 29. Query Transformations
+## 29. Query Transformations
 
-The optimiser doesn't necessarily execute the SQL- exactly in the form you wrote it.
+The optimizer doesn't necessarily execute the SQL- exactly in the form you wrote it.
 
 It can make transformations like:
 
@@ -1102,17 +1102,17 @@ You don't have to have a one-to-one textual correspondence.
 
 ---
 
-# 30. materialized View Query Rewrite
+## 30. materialized View Query Rewrite
 
 In DWH you can have:
 
-```
+```sql
 CREATE MATERIALIZED VIEW mv_monthly_sales
 AS
 SELECT
 account_type,
 TRUNC (transaction_date, 'MM') month_id,
-SUM (amount) total_amount
+SUM(amount) total_amount
 FROM fact_transaction
 GROUP BY
 account_type,
@@ -1139,13 +1139,13 @@ This can be an extraordinary optimization in BI/DWH.
 
 ---
 
-# 31. Parallel Execution
+## 31. Parallel Execution
 
-For large DWH querys:
+For large DWH queries:
 
-```
+```sql
 SELECT / * + PARALLEL (f 4) * /
-SUM (amount)
+SUM(amount)
 FROM fact_transaction f;
 ```
 
@@ -1160,11 +1160,11 @@ May increase:
 - CPU;
 - I/O;
 - general consumption of resources;
-- competition with other querys.
+- competition with other queries.
 
 ---
 
-# 32. The most important columns in ALLSTATS LAST
+## 32. The most important columns in ALLSTATS LAST
 
 A real plan may contain:
 
@@ -1205,7 +1205,7 @@ It is often one of the most useful indicators for tuning.
 
 ---
 
-# 33. The Classical Problem Nested Loops
+## 33. The Classical Problem Nested Loops
 
 Imagination:
 
@@ -1226,7 +1226,7 @@ you can have an enormous amount of access.
 The individual plan seems innocent:
 
 ```
-INDERANGE SCAN
+INDEX RANGE SCAN
 ```
 
 but it's repeated:
@@ -1239,14 +1239,14 @@ This shows why you don't have to look at a single isolated line.
 
 ---
 
-# 34. Example DWH
+## 34. Example DWH
 
 Query:
 
-```
+```sql
 SELECT
 c.segment,
-SUM (f.amount)
+SUM(f.amount)
 FROM fact_transaction f
 JOIN dim_customer c
 ON c.customer_key = f.customer_key
@@ -1258,7 +1258,7 @@ GROUP BY c.segment;
 A reasonable plan may be conceptual:
 
 ```
-HASHQ1QX BY
+HASH BY
     ↓
 HASH JOIN
     ↓
@@ -1285,7 +1285,7 @@ We don't automatically want indexes everywhere.
 
 ---
 
-# 35. Example of estimation problem
+## 35. Example of estimation problem
 
 Plan:
 
@@ -1318,7 +1318,7 @@ partition pruning?
 
 ---
 
-# 36. Extended Statistics
+## 36. Extended Statistics
 
 Suppose:
 
@@ -1336,15 +1336,15 @@ COUNTRY = 'RO'
 CITY = 'Bucharest'
 ```
 
-The optimiser may simply assume that the two conditions are independent.
+The optimizer may simply assume that the two conditions are independent.
 
 For highly correlated columns **extended statistics** may be useful.
 
 Conceptual example:
 
-```
+```sql
 SELECT DBMS_STATS.CREATE_EXTENDED_STATS (
-Ownname = "'DEV_LAB',"
+ownname => 'DEV_LAB',
 Tabnames = "'CUSTOMER'"
 Expansion = * '(COUNTRY, CITY)'
 )
@@ -1353,11 +1353,11 @@ FROM dual;
 
 ---
 
-# 37. Hints
+## 37. Hints
 
 You can see:
 
-```
+```sql
 SELECT / * + INDEX (t ix_trx_account) * /
 *
 FROM transactions t
@@ -1396,7 +1396,7 @@ partitioning
 
 ---
 
-# 38. What do you check when an SQL is slow
+## 38. What do you check when an SQL is slow
 
 A good workflow:
 
@@ -1432,7 +1432,7 @@ This is a very good pattern and for review.
 
 ---
 
-# 39. What to NU do
+## 39. What to NU do
 
 Avoid naive rules:
 
@@ -1454,11 +1454,11 @@ Optimizer tuning is about:
 
 ---
 
-# 40. Complete example of laboratory Oracle 26ai
+## 40. Complete example of laboratory Oracle 26ai
 
 We assume:
 
-```
+```sql
 CREATE TABLE opt_test AS
 SELECT
 LEVEL
@@ -1472,7 +1472,7 @@ CONNECT BY LEVEL;
 
 Collect statistics:
 
-```
+```sql
 BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
 USER,
@@ -1484,7 +1484,7 @@ END;
 
 Test:
 
-```
+```sql
 SELECT / * + GATHER_PLAN_STATISTICS * /
 *
 FROM opt_test
@@ -1493,7 +1493,7 @@ WHERE customer_id = 47382;
 
 then:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (
@@ -1507,13 +1507,13 @@ NULL,
 You'll probably initially see:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 Create index:
 
-```
-CREATEQ1QX ix_opt_customer
+```sql
+CREATE ix_opt_customer
 ON opt_test (customer_id);
 ```
 
@@ -1530,11 +1530,11 @@ Buffers
 
 ---
 
-# 41. Exercise 2
+## 41. Exercise 2
 
 Compare:
 
-```
+```sql
 SELECT / * + GATHER_PLAN_STATISTICS * /
 *
 FROM opt_test
@@ -1543,16 +1543,16 @@ WHERE customer_id = 123;
 
 with:
 
-```
+```sql
 SELECT / * + GATHER_PLAN_STATISTICS * /
 *
 FROM opt_test
 WHERE status_id = 3;
 ```
 
-The custodian\ _ id has many distinct values.
+The custodian_id has many distinct values.
 
-The status\ _ id has only:
+The status_id has only:
 
 ```
 0... 9
@@ -1560,7 +1560,7 @@ The status\ _ id has only:
 
 Question:
 
-> Why could an index be attractive to the custodian\ _ id, but much less attractive to the status\ _ id?
+> Why could an index be attractive to the custodian_id, but much less attractive to the status_id?
 
 Answer:
 
@@ -1568,12 +1568,12 @@ Answer:
 
 ---
 
-# 42. Exercise 3
+## 42. Exercise 3
 
 Create:
 
-```
-CREATEQ1QX ix_opt_date
+```sql
+CREATE ix_opt_date
 ON opt_test (trx_date);
 ```
 
@@ -1593,19 +1593,19 @@ AND trx_date - DATE '2026-01-11'
 Study:
 
 ```
-INDERANGE SCAN
-TABLEQ1QX FULL
+INDEX RANGE SCAN
+TABLE ACCESS FULL
 Predicted Information
 Buffers
 ```
 
 ---
 
-# 43. Exercise 4 - E-Rows vs A-Rows
+## 43. Exercise 4 - E-Rows vs A-Rows
 
 Execute:
 
-```
+```sql
 SELECT / * + GATHER_PLAN_STATISTICS * /
 *
 FROM opt_test
@@ -1627,7 +1627,7 @@ The goal is not only to achieve a quick plan, but to understand:
 
 ---
 
-# 44. DWH Exercise
+## 44. DWH Exercise
 
 On our lab schematics:
 
@@ -1640,11 +1640,11 @@ FACT_TRANSACTION
 
 run:
 
-```
+```sql
 SELECT / * + GATHER_PLAN_STATISTICS * /
 d.year_num,
 a.account_type,
-SUM (f.amount) total_amount
+SUM(f.amount) total_amount
 FROM fact_transaction f
 JOIN dim_account
 ON a.account_key = f.account_key
@@ -1659,8 +1659,8 @@ Analyze:
 
 ```
 scans
-order of joints
-type of joints
+order of joins
+type of joins
 E-Rows / A-Rows
 Starts
 Buffers
@@ -1695,13 +1695,13 @@ No. It can be optimal when a large part of the table is read, especially in DWH.
 Unique Scan finds maximum one entry for a single key; Range Scan can return several entries.
 
 **Nested Loops vs hash Join?**
-Nested Loops is effective for small exterior sets and indexed access; Hash Join is frequently better for large volumes and equal joints.
+Nested Loops is effective for small exterior sets and indexed access; Hash Join is frequently better for large volumes and equal joins.
 
 **What do you first check in a slow query?**
 The real plan, the volumes, E-Rows vs A-Rows, Starts, Buffers and preachers.
 
 **What does E-Rows 10 / A-Rows 1.000,000 indicate?**
-A major miscarriage of cardinality that can lead the optimiser to an inappropriate plan.
+A major miscarriage of cardinality that can lead the optimizer to an inappropriate plan.
 
 **What is partition pruning?**
 Elimination of partitions that cannot contain the required rows.
@@ -1719,13 +1719,13 @@ Interviewer:
 
 A very good answer:
 
-> I'm starting with the actual execution plan, I'm not directly assuming that an index is missing. I'm using DBMS\ _ XPLAN.DISPLAY\ _ CURSOR with execution statistics and comparing E-Rows with A-Rows. I'm looking for the first operation where the estimation differs significantly from reality, I check Starts and Buffers, then the predications, types of join and access path. If the estimates are wrong I check the statistics and data distribution; only then do I decide whether the SQL-, statistics, indexation or physical design need to be modified.
+> I'm starting with the actual execution plan, I'm not directly assuming that an index is missing. I'm using DBMS_XPLAN.DISPLAY_CURSOR with execution statistics and comparing E-Rows with A-Rows. I'm looking for the first operation where the estimation differs significantly from reality, I check Starts and Buffers, then the predications, types of join and access path. If the estimates are wrong I check the statistics and data distribution; only then do I decide whether the SQL-, statistics, indexation or physical design need to be modified.
 
 It shows that you think like a developer who makes **diagnostic**, not like someone who mechanically adds indexes.
 
 ---
 
-# 47. Mental Pattern to Memorize
+## 47. Mental Pattern to Memorize
 
 You can remember the whole module like this:
 
