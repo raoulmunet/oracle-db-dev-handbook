@@ -8,14 +8,14 @@ sidebar_position: 6
 
 <div className="chapter-kicker">Chapter C06 · Complete course</div>
 
-A **Data Warehouse (DWH)** is a database primarily designed for **analysis, reporting, aggregation and historical data**, rather than day-to-day operational transaction processing.
+A **Data Warehouse (DWH)** is a database primarily designed for **analysis, reporting, aggregation, and historical data**, rather than day-to-day operational transaction processing.
 
-In a banking system, operational applications process accounts, transactions, customers and payments. The DWH collects data from several systems and supports questions such as:
+In a banking system, operational applications process accounts, transactions, customers and payments. The DWH integrates data from multiple systems and supports questions such as:
 
 ```
 What is the average monthly balance per customer segment?
 How has the volume of transactions evolved in the last five years?
-What is the profitability on the product / branch / customer?
+What is the profitability by product, branch, and customer?
 How many customers have gone from one segment to another?
 ```
 
@@ -32,9 +32,9 @@ OLTP → Integration / ETL → Data Warehouse → Mart / BI / Analytics
 Bill Inmon's classic definition describes a DWH as:
 
 - **Subject-oriented** — organized around subjects such as Customer, Account, Transaction and Product;
-- **Integrated** is provided in a common format;
+- **Integrated** — data from multiple sources is standardized into a common format and meaning;
 - **Time-variant** retains history;
-- **Non-volatile** data are mainly uploaded and read, not permanently modified as in an OLTP.
+- **Non-volatile** — data is mainly loaded and queried rather than continuously modified as in OLTP systems.
 
 Example:
 
@@ -45,7 +45,7 @@ customer_id = 123
 country = "RO"
 ```
 
-and other system:
+and another system may have:
 
 ```
 client_no = C000123
@@ -60,11 +60,11 @@ source_customer_id = C000123
 country_code = RO
 ```
 
-The DWH standardizes the meaning of the data, not only its format.
+The DWH standardizes both the format and the business meaning of data.
 
 ---
 
-# 6.2. Typical DWH Architecture
+## 6.2. Typical DWH Architecture
 
 A simplified architecture:
 
@@ -121,24 +121,24 @@ REPORTING / BI
 
 ---
 
-# 6.3. Staging Area
+## 6.3. Staging Area
 
 **Staging** is the intermediate area where data is loaded close to the form in which it arrives from source systems.
 
 Example:
 
-```
+```sql
 CREATE TABLE stg_customer (
-source_customer_id VARCHAR2 (50),
-first_name VARCHAR2 (100),
-last_name VARCHAR2 (100),
-birth_date VARCHAR2 (20),
-country VARCHAR2 (100),
+source_customer_id VARCHAR2(50),
+first_name VARCHAR2(100),
+last_name VARCHAR2(100),
+birth_date VARCHAR2(20),
+country VARCHAR2(100),
 load_date DATE
 );
 ```
 
-Notice that birth data can initially be VARCHAR2.
+Notice that `birth_date` can initially be stored as `VARCHAR2`.
 
 Why?
 
@@ -166,7 +166,7 @@ DWH
 
 ---
 
-# 6.4. ETL vs ELT
+## 6.4. ETL vs ELT
 
 **ETL**:
 
@@ -176,7 +176,7 @@ Transform
 Load
 ```
 
-The data are converted before loading into DWH.
+Data is transformed before loading into the DWH.
 
 **ELT**:
 
@@ -186,9 +186,9 @@ Load
 Transform
 ```
 
-The data are uploaded first, and the transformation is done in the database.
+Data is loaded first, and transformation is performed inside the database.
 
-In Oracle, ELT is very effective because transformations can use directly:
+In Oracle, ELT can be very effective because transformations can directly use:
 
 ```
 SQL
@@ -201,18 +201,17 @@ direct-path insert
 
 Example:
 
-```
-INSERT / * + APPEND * / INTO fact_transaction
-SELECT
-    ...
+```sql
+INSERT /*+ APPEND */ INTO fact_transaction
+SELECT ...
 FROM stg_transaction;
 ```
 
-The Oracle Data Integrator (**ODI**) is largely built on ELT philosophy.
+Oracle Data Integrator (**ODI**) is largely based on the ELT philosophy.
 
 ---
 
-# 6.5. Fact Tables and Dimension Tables
+## 6.5. Fact Tables and Dimension Tables
 
 Dimensional modelling is one of the most important DWH ideas.
 
@@ -226,9 +225,9 @@ DIM_DATE ---- FACT_TRANSACTION ---- DIM_ACCOUNT
 DIM_PRODUCT
 ```
 
-## Fact Table
+### Fact table
 
-Contains events or measurements.
+Contains business events or measurements.
 
 Example:
 
@@ -245,7 +244,7 @@ fee_amount
 balance_after
 ```
 
-It usually has a lot of lines:
+It usually contains a very large number of rows:
 
 ```
 100 million
@@ -253,9 +252,9 @@ It usually has a lot of lines:
 10 billion
 ```
 
-## Size Table
+### Dimension table
 
-Contains descriptive context.
+Contains descriptive context for facts and measures.
 
 Example:
 
@@ -275,9 +274,9 @@ current_flag
 
 ---
 
-# 6.6. Grain is one of the most important concepts of DWH
+## 6.6. Grain is one of the most important concepts of DWH
 
-**Grain** defines exactly what a line of fact table represents.
+**Grain** defines exactly what one row in a fact table represents.
 
 For example:
 
@@ -305,7 +304,7 @@ Problem example:
 FACT_ACCOUNT
 ```
 
-What's a line?
+What does one row represent?
 
 ```
 An account?
@@ -331,9 +330,9 @@ account_key + date_key
 
 ---
 
-# 6.7. Star Scheme
+## 6.7. Star Schema
 
-The most used dimensional model.
+The most commonly used dimensional model.
 
 ```
 DIM_DATE
@@ -351,17 +350,17 @@ Advantages:
 simple
 fast for reporting
 easy to understand
-JOIN-uri few
-Optimizable for aggregation
+joins few
+well suited for aggregation
 ```
 
 Query:
 
-```
+```sql
 SELECT
 d.year,
 c.segment,
-SUM (f.transaction_amount) total_amount
+SUM(f.transaction_amount) total_amount
 FROM fact_transaction f
 JOIN dim_date d
 ON d.date_key = f.date_key
@@ -374,7 +373,7 @@ c.segment;
 
 ---
 
-# 6.8. Snowflake Schema
+## 6.8. Snowflake Schema
 
 In a snowflake scheme, dimensions are normalized.
 
@@ -400,13 +399,13 @@ DIM_CUSTOMER
 country_name
 ```
 
-Snowflake reduces redundancy but increases the number of JOIN-uri.
+A snowflake schema reduces redundancy but increases the number of joins.
 
-For reporting and BI, **star scheme is often preferred**.
+For reporting and BI, a **star schema is often preferred**.
 
 ---
 
-# 6.9. Surrogate Keys
+## 6.9. Surrogate Keys
 
 In DWH, dimensions frequently use artificial keys.
 
@@ -424,16 +423,16 @@ customer_key = 987654
 
 Structure:
 
-```
+```sql
 CREATE TABLE dim_customer (
 customer_key NUMBER PRIMARY KEY,
-source_customer_id VARCHAR2 (50),
-customer_name VARCHAR2 (200),
-segment VARCHAR2 (50)
+source_customer_id VARCHAR2(50),
+customer_name VARCHAR2(200),
+segment VARCHAR2(50)
 );
 ```
 
-Why don't we just use the source ID-?
+Why not use only the source-system ID?
 
 Because the same entity may have several historical versions.
 
@@ -444,11 +443,11 @@ customer_key source_id segment
 245 C100 PREMIUM
 ```
 
-This is the base for **Slowly Changing Dimensions**.
+This is one of the foundations of **Slowly Changing Dimensions**.
 
 ---
 
-# 6.10. Slowly Changing Dimensions › SCD
+## 6.10. Slowly Changing Dimensions › SCD
 
 SCD describes how we manage changes in the attributes of a dimension.
 
@@ -461,7 +460,7 @@ SCD
 SCD Type 3
 ```
 
-## SCD
+### SCD Type 1
 
 Overwrite.
 
@@ -480,7 +479,7 @@ city = Brasov
 
 We do:
 
-```
+```sql
 UPDATE dim_customer
 SET city = 'Brasov'
 WHERE customer_key = 100;
@@ -490,9 +489,9 @@ History is lost.
 
 ---
 
-# 6.11. SCD Type 2
+## 6.11. SCD Type 2
 
-The most important method for DWH.
+One of the most important DWH history-preservation techniques.
 
 We keep the history.
 
@@ -516,7 +515,7 @@ Now we can answer the question:
 What segment did the client have at the time of the transaction?
 ```
 
-The factor preserves:
+The fact table preserves:
 
 ```
 customer_key = 100
@@ -528,44 +527,42 @@ or:
 customer_key = 205
 ```
 
-depending on the version of the existing size at the time.
+depending on which dimension version was valid at the time.
 
 ---
 
-# 6.12. Simplified SCD Type 2 Implementation
+## 6.12. Simplified SCD Type 2 Implementation
 
 We identify the changes:
 
-```
-SELECT
-s.customer_id,
-ssegment
-FROM stg_customer
+```sql
+SELECT s.customer_id,
+       s.segment
+FROM stg_customer s
 JOIN dim_customer d
-ON d.customer_id = s.customer_id
-AND d.current_flag = 'Y'
-WHERE NVL (s.segment, '#')
+  ON d.customer_id = s.customer_id
+ AND d.current_flag = 'Y'
+WHERE NVL(s.segment, '#') <> NVL(d.segment, '#');
 ```
 
 We're closing the old version:
 
-```
+```sql
 UPDATE dim_customer d
-SET
-valid_to = SYSDATE - INTERVAL '1' SECOND,
-current_flag = 'N'
-WHERE current_flag = 'Y'
-AND EXISTS (
-SELECT 1
-FROM stg_customer
-WHERE s.customer_id = d.customer_id
-AND NVL (s.segment, '#')
-);
+SET valid_to     = SYSDATE - INTERVAL '1' SECOND,
+    current_flag = 'N'
+WHERE d.current_flag = 'Y'
+  AND EXISTS (
+      SELECT 1
+      FROM stg_customer s
+      WHERE s.customer_id = d.customer_id
+        AND NVL(s.segment, '#') <> NVL(d.segment, '#')
+  );
 ```
 
 We create the new version:
 
-```
+```sql
 INSERT INTO dim_customer (
 customer_key,
 customer_id,
@@ -584,17 +581,17 @@ DATE '9999-12-31',
 FROM stg_customer s;
 ```
 
-In production logic must only identify new or modified records.
+In production, the logic must identify only new or changed records.
 
 ---
 
-# 6.13. Fact Table for Main Types
+## 6.13. Fact Table for Main Types
 
 There are three very important types.
 
 ### Transaction Fact
 
-One round per event.
+One row per business event.
 
 ```
 FACT_TRANSACTION
@@ -603,7 +600,7 @@ transaction_id
 customer_key
 account_key
 date_key
-% 1
+amount
 ```
 
 Grain:
@@ -650,17 +647,17 @@ contract_date
 disbursement_date
 ```
 
-The line is updated as the process progresses.
+The row is updated as the process progresses.
 
 ---
 
-# 6.14. Additives, Semi-Additives and Non-Additive Measures
+## 6.14. Additives, Semi-Additives and Non-Additive Measures
 
 Very important for reviews.
 
 ### Additives
 
-They can add up to all sizes.
+They can be summed across all relevant dimensions.
 
 ```
 sales_amount
@@ -671,12 +668,12 @@ quantity
 Example:
 
 ```
-SUM (transaction_amount)
+SUM(transaction_amount)
 ```
 
 ### Semi-additive
 
-Can be aggregated on some dimensions, but not all.
+They can be aggregated across some dimensions, but not all.
 
 Example:
 
@@ -693,7 +690,7 @@ total balance all accounts
 but it doesn't make sense:
 
 ```
-SUM (balance for the same account each day)
+SUM(balance for the same account each day)
 ```
 
 Over time we usually use:
@@ -707,12 +704,12 @@ MAX
 
 ### Non-additive
 
-It doesn't add up directly.
+These measures should not be summed directly.
 
 Examples:
 
 ```
-percenage
+percentage
 ratio
 average
 Exchange rates
@@ -720,9 +717,9 @@ Exchange rates
 
 ---
 
-# 6.15. Conformed Dimensions
+## 6.15. Conformed Dimensions
 
-A dimension common to several fact tables.
+A conformed dimension is shared consistently across multiple fact tables.
 
 Example:
 
@@ -752,7 +749,7 @@ In all systems.
 
 ---
 
-# 6.16. Date Size
+## 6.16. Date Dimension
 
 One of the most common dimensions.
 
@@ -779,11 +776,11 @@ date_key = 20260923
 
 Query:
 
-```
+```sql
 SELECT
 d.year,
 d.month_name,
-SUM (f.amount)
+SUM(f.amount)
 FROM fact_transaction f
 JOIN dim_date d
 ON d.date_key = f.date_key
@@ -794,7 +791,7 @@ d.month_name;
 
 ---
 
-# 6.17. Late Arriving Dimensions
+## 6.17. Late Arriving Dimensions
 
 Very common problem.
 
@@ -805,9 +802,9 @@ transaction_id = T100
 customer_id = C500
 ```
 
-but the C500 client still does not exist in DIM\ _ CUSTOMER.
+but the C500 client still does not exist in DIM_CUSTOMER.
 
-You can't lose the transaction.
+The transaction must not be lost.
 
 One solution is to create a placeholder row:
 
@@ -819,7 +816,7 @@ customer_name = UNKNOWN
 
 When the client's data arrives:
 
-```
+```sql
 UPDATE dim_customer
 ```
 
@@ -827,7 +824,7 @@ or the correct version is created.
 
 ---
 
-# 6.18. Unknown / Default Dimension Members
+## 6.18. Unknown / Default Dimension Members
 
 A very used pattern:
 
@@ -855,13 +852,13 @@ Thus we do not leave:
 customer_key = NULL
 ```
 
-In fact backgammon.
+In fact table.
 
 The advantage is that we can look separately at quality issues.
 
 ---
 
-# 6.19. Data Quality
+## 6.19. Data Quality
 
 In an DWH, data quality is critical.
 
@@ -880,7 +877,7 @@ missing mappings
 
 Example Oracle 26ai:
 
-```
+```sql
 SELECT *
 FROM stg_transaction
 WHERE VALIDATE_CONVERSION (amount AS NUMBER) returns 0;
@@ -888,7 +885,7 @@ WHERE VALIDATE_CONVERSION (amount AS NUMBER) returns 0;
 
 Older Oracle versions:
 
-```
+```sql
 SELECT *
 FROM stg_transaction
 WHERE NOT REGEXP_LIKE (amount, '^[+-]?[0-9]+([.,][0-9]+)?$');
@@ -908,18 +905,18 @@ VALID_ROWS Carol, FACT_TRANSACTION
 
 ---
 
-# 6.20. Error Table / Reject Table
+## 6.20. Error Table / Reject Table
 
 Example:
 
-```
+```sql
 CREATE TABLE etl_error (
 error_id NUMBER,
 batch_id NUMBER,
-source_table VARCHAR2 (100),
-source_key VARCHAR2 (100),
-error_code VARCHAR2 (50),
-error_message VARCHAR2 (4000),
+source_table VARCHAR2(100),
+source_key VARCHAR2(100),
+error_code VARCHAR2(50),
+error_message VARCHAR2(4000),
 error_date TIMESTAMP
 );
 ```
@@ -933,13 +930,13 @@ error_code = INVALID_AMOUNT
 error_message = Cannot convert ABC to NUMBER
 ```
 
-This model is much better than stopping the entire batch for one wrong row.
+This model is often preferable to stopping an entire batch because of one invalid row.
 
 ---
 
-# 6.21. Batch Processing
+## 6.21. Batch Processing
 
-ETL- is often organized in batches.
+ETL processing is often organized in batches.
 
 Example:
 
@@ -949,7 +946,7 @@ ETL_BATCH
 batch_id
 start_time
 end_time
-stasis
+status
 rows_read
 rows_inserted
 rows_updated
@@ -971,29 +968,29 @@ Each laden table may have:
 batch_id
 ```
 
-for the audit.
+for auditability.
 
 ---
 
-# 6.22. Full Load vs Incremental Load
+## 6.22. Full Load vs Incremental Load
 
-### Full Lold
+### Full Load
 
-Reload everything.
+Reloads the complete data set.
 
-```
+```sql
 TRUNCATE TABLE dim_product;
 
-INSERTQ1QX dim_product
-SELECT...
+INSERT INTO dim_product
+SELECT ...
 FROM source_product;
 ```
 
-Simple, but it can get very expensive.
+Simple, but potentially very expensive at scale.
 
-### Incremental Lead
+### Incremental Load
 
-You're just uploading the changes.
+Loads only new or changed data.
 
 Example:
 
@@ -1012,23 +1009,22 @@ In a large DWH, incremental load is almost mandatory.
 
 ---
 
-# 6.23. High Water Mark
+## 6.23. High Water Mark
 
 A common pattern for incremental load.
 
 At the last execution:
 
-```
-last_processed_timestamp =
-2026-096-22 23: 59: 59
+```text
+last_processed_timestamp = 2026-09-22 23:59:59
 ```
 
 New load:
 
-```
+```sql
 SELECT *
 FROM source_transaction
-WHERE update_timestamp
+WHERE update_timestamp > :last_processed_timestamp;
 ```
 
 After success:
@@ -1038,40 +1034,38 @@ high_water_mark =
 MAX (update_timestamp)
 ```
 
-Important: high water the mark should be updated **only after the success of the** batch.
+Important: the high-water mark should be updated **only after the batch completes successfully**.
 
 ---
 
-# 6.24. MERGE is very important in Oracle DWH
+## 6.24. MERGE is very important in Oracle DWH
 
 Example:
 
-```
-MERGE INTO dim_product
-USING stg_product
-ON (
-d.product_id = s.product_id
-)
-WHENQ1QX THEN
-UPDATE SET
-d.product_name = s.product_name,
-d.category = s.category
+```sql
+MERGE INTO dim_product d
+USING stg_product s
+   ON (d.product_id = s.product_id)
+WHEN MATCHED THEN
+    UPDATE SET
+        d.product_name = s.product_name,
+        d.category     = s.category
 WHEN NOT MATCHED THEN
-INSERT (
-product_key,
-product_id,
-product_name,
-category
-)
-VALUES (
-product_seq.NEXTVAL,
-s.product_id,
-s.product_name,
-scategory
-);
+    INSERT (
+        product_key,
+        product_id,
+        product_name,
+        category
+    )
+    VALUES (
+        product_seq.NEXTVAL,
+        s.product_id,
+        s.product_name,
+        s.category
+    );
 ```
 
-It's a classic pattern for:
+This is a classic pattern for:
 
 ```
 UPSERT
@@ -1079,22 +1073,22 @@ UPSERT
 
 I mean:
 
-```
+```sql
 UPDATE if any
 INSERT if not available
 ```
 
 ---
 
-# 6.25. Partitioning in DWH
+## 6.25. Partitioning in DWH
 
-Fact tables can have billions of rows.
+Fact tables may contain billions of rows.
 
 That's why partitioning is very important.
 
 Example:
 
-```
+```sql
 CREATE TABLE fact_transaction (
 transaction_id NUMBER,
 transaction_date DATE,
@@ -1109,11 +1103,11 @@ PARTITION p2026_03 VALUES LESS THAN (DATE '2026-04-01')
 
 Query:
 
-```
-SELECT SUM (amount)
+```sql
+SELECT SUM(amount)
 FROM fact_transaction
-WHERE transaction_date = DATE '2026-02-01'
-AND transaction_date; DATE '2026-03-01';
+WHERE transaction_date >= DATE '2026-02-01'
+  AND transaction_date <  DATE '2026-03-01';
 ```
 
 Oracle can do:
@@ -1132,9 +1126,9 @@ instead of the whole table.
 
 ---
 
-# 6.26. Index in DWH
+## 6.26. Index in DWH
 
-In DWH they occur commonly:
+Common DWH index types include:
 
 ```
 B-tree indexes
@@ -1142,11 +1136,11 @@ bitmap indexes
 local partitioned indexes
 ```
 
-Bitmap indexes can be good for columns with reduced cardinality:
+Bitmap indexes can be good for low-cardinality columns:
 
 ```
 gender
-stasis
+status
 segment
 country
 ```
@@ -1162,7 +1156,7 @@ But bitmap indexes are not suitable for OLTP systems with many competing updates
 
 ---
 
-# 6.27. Star Transformation
+## 6.27. Star Transformation
 
 Oracle can optimize Star Querys scheme by:
 
@@ -1172,26 +1166,26 @@ STAR TRANSFORMATION
 
 For example:
 
-```
-SELECT SUM (f.amount)
+```sql
+SELECT SUM(f.amount)
 FROM fact_sales f
 JOIN dim_customer c
-ON c.customer_key = f.customer_key
-JOIN dim_product
-ON p.product_key = f.product_key
+  ON c.customer_key = f.customer_key
+JOIN dim_product p
+  ON p.product_key = f.product_key
 WHERE c.country = 'RO'
-AND p.category = 'LOAN';
+  AND p.category = 'LOAN';
 ```
 
 Oracle can use the size filters to quickly narrow the fact tables.
 
 ---
 
-# 6.28. Materialized Views
+## 6.28. Materialized Views
 
 For costly aggregates:
 
-```
+```sql
 CREATE MATERIALIZED VIEW mv_monthly_sales
 BUILD IMMEDIATE
 REFRESH FAST
@@ -1199,7 +1193,7 @@ AS
 SELECT
 date_key,
 product_key,
-SUM (amount) total_amount
+SUM(amount) total_amount
 FROM fact_sales
 GROUP BY
 date_key,
@@ -1216,9 +1210,9 @@ reporting may use pre-aggregated data.
 
 ---
 
-# 6.29. Multiple Sources and Date Mapping
+## 6.29. Multiple Sources and Date Mapping
 
-An important responsibility for Data Developer is the mapping.
+An important Data Developer responsibility is source-to-target mapping.
 
 Example:
 
@@ -1226,7 +1220,7 @@ Example:
 SOURCE CRM
 client_no
 
-SOURCEQ1QX BANKING
+SOURCE BANKING
 customer_id
 
 DWH
@@ -1236,7 +1230,7 @@ source_customer_id
 The mapping document may show:
 
 ```
-TARGETQ1QX RULE
+TARGET RULE
 
 customer_id CRM.CLIENT_NO directly
 country_code CRM.COUNTRY look up COUNTRY_MAP
@@ -1248,13 +1242,13 @@ load_date - SYSDATE
 This is exactly what in many projects is called:
 
 ```
-Source-all-Target Mapping
+Source-to-Target Mapping
 STTM
 ```
 
 ---
 
-# 6.30.
+## 6.30.
 
 Example:
 
@@ -1287,13 +1281,13 @@ Example:
 
 ```
 CRM Romania RO
-COREQ1QX RO
+CORE RO
 PAYMENTS 642 RO
 ```
 
 ---
 
-# 6.31. Reconciliation
+## 6.31. Reconciliation
 
 After ETL we need to check if the data is complete.
 
@@ -1301,20 +1295,20 @@ Example:
 
 Source:
 
-```
+```sql
 SELECT
-COUNT (*)
-SUM (amount)
+COUNT(*)
+SUM(amount)
 FROM source_transaction
 WHERE business_date = DATE '2026-09-22';
 ```
 
 DWH:
 
-```
+```sql
 SELECT
-COUNT (*)
-SUM (amount)
+COUNT(*)
+SUM(amount)
 FROM fact_transaction
 WHERE business_date = DATE '2026-09-22';
 ```
@@ -1335,13 +1329,13 @@ This is called:
 reconciliation
 ```
 
-She's extremely important in banking.
+It is extremely important in banking.
 
 ---
 
-# 6.32. Audit and Linage
+## 6.32. Audit and Linage
 
-We have to be able to answer:
+We should be able to answer:
 
 ```
 Where does that value come from?
@@ -1359,7 +1353,7 @@ batch_id
 load_timestamp
 ```
 
-This information shall enable:
+This information enables:
 
 ```
 Data Lineage
@@ -1381,7 +1375,7 @@ Source system
 
 ---
 
-# 6.33. DWH in banking
+## 6.33. DWH in banking
 
 A simplified model may have:
 
@@ -1419,24 +1413,22 @@ fee_amount
 
 Report:
 
-```
-SELECT
-c.segment,
-p.product_name,
-SUM (famount_local)
+```sql
+SELECT c.segment,
+       p.product_name,
+       SUM(f.amount_local) AS total_amount_local
 FROM fact_transaction f
 JOIN dim_customer c
-ON c.customer_key = f.customer_key
-JOIN dim_product
-ON p.product_key = f.product_key
-GROUP BY
-c.segment,
-p.product_name;
+  ON c.customer_key = f.customer_key
+JOIN dim_product p
+  ON p.product_key = f.product_key
+GROUP BY c.segment,
+         p.product_name;
 ```
 
 ---
 
-# 6.34. Complete example of ETL flow
+## 6.34. Complete example of ETL flow
 
 We assume:
 
@@ -1449,7 +1441,7 @@ with:
 ```
 transaction_id
 customer_id
-% 1
+amount
 transaction_date
 ```
 
@@ -1471,46 +1463,45 @@ FACT_TRANSACTION
 
 Step 1:
 
-```
-INSERTQ1QX stg_transaction
+```sql
+INSERT INTO stg_transaction
 SELECT *
 FROM source_transaction
-WHERE update_date
+WHERE update_date > :last_successful_load;
 ```
 
 Step 2: validation.
 
-```
+```sql
 SELECT *
 FROM stg_transaction
 WHERE VALIDATE_CONVERSION (amount AS NUMBER) returns 0;
 ```
 
-Step 3: Lookup curator.
+Step 3: customer lookup.
 
-```
-SELECT
-s.transaction_id,
-d.customer_key
-FROM stg_transaction
-LEFT JOIN dim_customer
-ON d.customer_id = s.customer_id
-AND d.current_flag = 'Y';
+```sql
+SELECT s.transaction_id,
+       d.customer_key
+FROM stg_transaction s
+LEFT JOIN dim_customer d
+  ON d.customer_id = s.customer_id
+ AND d.current_flag = 'Y';
 ```
 
-Step 4: charge fact.
+Step 4: load the fact table.
 
-```
+```sql
 INSERT INTO fact_transaction (
 transaction_id,
 customer_key,
 date_key,
-% 1
+amount
 )
 SELECT
 s.transaction_id,
-NVL (d.customer_key, -1),
-TO_NUMBER (TO_CHAR (s.transaction_date, 'YYYYMMDD')),
+NVL(d.customer_key, -1),
+TO_NUMBER(TO_CHAR(s.transaction_date, 'YYYYMMDD')),
 ♪ amount ♪
 FROM stg_transaction
 LEFT JOIN dim_customer
@@ -1520,7 +1511,7 @@ AND d.current_flag = 'Y';
 
 ---
 
-# 6.35. Real problems that you need to know how to investigate
+## 6.35. Real problems that you need to know how to investigate
 
 As Oracle Data Developer you will often encounter scenarios such as:
 
@@ -1531,7 +1522,7 @@ A batch has 1 million missing rows.
 
 The BI report shows other totals than the source system.
 
-There were duplicates in fact backgammon.
+There were duplicates in fact table.
 
 An customer_key cannot be found.
 
@@ -1577,15 +1568,15 @@ OLTP optimizes operational transactions and DWH optimizes analysis and history.
 
 The exact level of detail represented by a row of fact tables.
 
-**Fact vs Size?**
+**Fact vs. Dimension?**
 
 Fact = events and measures.
 
-Size = descriptive context.
+Dimension = descriptive context.
 
 **Star vs Snowflake?**
 
-Star has denormalised dimensions and fewer JOIN-uri; Snowflake normalises dimensions.
+Star has denormalised dimensions and fewer joins; Snowflake normalises dimensions.
 
 **What is SCD Type 2?**
 
@@ -1603,17 +1594,17 @@ Processing only new or modified data.
 
 Comparison of source data with the uploaded result for verification of completeness and correctness.
 
-**What is late arming size?**
+**What is a late-arriving dimension?**
 
-The factor arrives before the appropriate size exists.
+The fact row arrives before the related dimension row exists.
 
 **What is partition pruning?**
 
-The Oracle only access the partitions relevant to query.
+The Oracle accesses only the partitions relevant to the query.
 
 ---
 
-# 6.37. What you need to master for the role of Oracle Data Developer
+## 6.37. What you need to master for the role of Oracle Data Developer
 
 For the **Oracle DWH / ETL Data Developer** profile, I would consider it essential to master very well:
 
@@ -1622,7 +1613,7 @@ DWH architecture
 
 Fact / Size
 
-Star Scheme
+Star Schema
 
 Grain
 
@@ -1636,19 +1627,19 @@ ETL / ELT
 
 Staging
 
-Incremental Lead
+Incremental Load
 
 MERGE
 
 Data Quality
 
-Handling Error
+Error Handling
 
 Batch Processing
 
 Reconciliation
 
-Source-all-Target Mapping
+Source-to-Target Mapping
 
 Partitioning
 
@@ -1656,13 +1647,13 @@ SQL performance
 
 Execution Plans
 
-Analytical Functions
+Analytic Functions
 
 ODI concepts
 
 Data Lineage
 
-Banking date flows
+Banking data flows
 ```
 
 Of these, for review, **Grain + Fact / Dimension + SCD2 + Incremental Load + ETL troubleshooting + Reconciliation + Partitioning** are probably the most important combination.
@@ -1678,9 +1669,9 @@ Of these, for review, **Grain + Fact / Dimension + SCD2 + Incremental Load + ETL
 A good answer would be:
 
 > I start by separating the problem between extraction, transformation and load. I check the volumes from the previous days and the duration of each step ETL. Then I check the execution of the plans of the slow SQL-s, partition pruning, Oracle statistics and possible FULL TABLE SCAN-s unintentionally.
-> 
+>
 > I'm checking whether the incremental load filters the data correctly and whether the indexes and partitions are right. For the fact large tables I'm checking whether we can use partitioning on the data business, direct-path insert, parallel DML or partition exchange.
-> 
+>
 > Finally, I'm checking the reconciliation to make sure that the optimization doesn't change the functional result.
 
 This is exactly the combination commonly sought at a Data Developer:
@@ -1710,7 +1701,7 @@ DATA WAREHOUSE
                        │
         ┌──────────────┼──────────────┐
         │              │              │
-MODELQ1QX PERFORMANCE
+MODEL PERFORMANCE
         │              │              │
 Fact / Dim Staging Partitioning
 Grain Mapping Index
@@ -1728,7 +1719,7 @@ BUSINESS
 Banking / Risk / Finance
 ```
 
-For our course, the next logical step would be to separately deepen **dimensional modelling: Grain → Facts → Surrogate Keys → SCD Type 2**, then build in Oracle 26ai a small full banking DWH, for example DWH\ _ ACCOUNT, with staging, DIM\ _ CUSTOMER, DIM\ _ ACCOUNT, DIM\ _ DATE and FACT\ _ TRANSACTION.
+For our course, the next logical step would be to separately deepen **dimensional modelling: Grain → Facts → Surrogate Keys → SCD Type 2**, then build in Oracle 26ai a small full banking DWH, for example DWH_ACCOUNT, with staging, DIM_CUSTOMER, DIM_ACCOUNT, DIM_DATE and FACT_TRANSACTION.
 
 ---
 
@@ -1736,15 +1727,15 @@ For our course, the next logical step would be to separately deepen **dimensiona
 
 ### How would you briefly explain Data Warehouse to a colleague who knows SQL, but not this area?
 
-Data Warehouse covers enterprise DWH purpose and architecture, facts, dimensions, grain and surrounding keys, staging, integration and presentation layers. In practice, I first determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
+A Data Warehouse covers enterprise analytical architecture, facts, dimensions, grain, surrogate keys, staging, integration, and presentation layers. In practice, I first determine the source data and required business result, then verify the model, ETL logic, reconciliation, execution plan, and impact on the wider flow.
 
 ### What are the two most common practical issues related to Data Warehouse?
 
-Two recurring problems are the misinterpretation of data or granularity and degradation of performance at real volume. For Data Warehouse, I explicitly follow the enterprise DWH purpose and architecture, facts, dimensions, grain and surround keys, staging, integration and presentation layers and compare the result with a control set.
+Two recurring problems are incorrect grain or mapping logic, which produces wrong results, and performance degradation at production scale. I explicitly verify facts, dimensions, grain, surrogate keys, staging, integration, presentation layers, and source-to-target mappings against a trusted control set.
 
 ### How do you check that the result is correct and not just fast?
 
-I compare the number of rows, amounts and keys with the source or with a reference result; I test NULLs, duplicates, limits and rerouting of the batch.I only then check time, resources and execution plan.
+I compare row counts, amounts, and keys with the source or a reference result; I test NULLs, duplicates, boundary conditions, and batch reruns. Only then do I evaluate elapsed time, resource usage, partition pruning, and execution plans.
 
 ### What information did you collect before you modified an existing solution?
 
