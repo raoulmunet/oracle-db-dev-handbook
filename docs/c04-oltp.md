@@ -124,7 +124,7 @@ WHERE account_id =: id;
 Oracle will probably use:
 
 ```
-INDEUNIQUE SCAN
+INDEX UNIQUE SCAN
 TABLE ACCESS BY INDEX ROWID
 ```
 
@@ -178,7 +178,7 @@ In DWH the situation is often opposite: denormalization can be intended for the 
 
 ---
 
-# 5. Mayor Key and Foreign Key
+# 5. Primary Key and Foreign Key
 
 Keys are fundamental in an OLTP.
 
