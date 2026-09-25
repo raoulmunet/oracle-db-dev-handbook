@@ -8,7 +8,7 @@ sidebar_position: 14
 
 <div className="chapter-kicker">Chapter C14 · Complete course</div>
 
-In Oracle, an **JOIN** logically describes how two or more data sets should be combined. **Join algorithm** describes however **physically performing the Oracle that** operation.
+In Oracle, a **JOIN** logically describes how two or more data sets should be combined. A **join algorithm** describes how Oracle physically performs that operation.
 
 For a Data Developer / DWH Developer, the most important are:
 
@@ -16,30 +16,30 @@ For a Data Developer / DWH Developer, the most important are:
 2. **Hash Join**
 3. **Sort Merge Join**
 
-In addition, **join order**, access by index, estimated cardinality and how we read these operations in DBMS\ _ XPLAN.
+You also need to understand **join order**, indexed access, estimated cardinality, and how these operations appear in `DBMS_XPLAN`.
 
 ---
 
-# 14.1. JOIN logic vs Join Algorithm
+## 14.1. JOIN logic vs. join algorithm
 
 SQL-:
 
-```
+```sql
 SELECT e.employee_id,
 e.last_name,
 d.department_name
-FROM employment e
-JOIN departments
+FROM employees e
+JOIN departments d
 ON d.department_id = e.department_id;
 ```
 
 Just say:
 
-> Combine employment with departments after department\ _ id.
+> Combine employees with departments by `department_id`.
 
-Do not tell Oracle **how** to do this.
+The SQL does not tell Oracle **how** to perform the join.
 
-The optimiser can choose, for example:
+The optimizer can choose, for example:
 
 ```
 NESTED LOOPS
@@ -53,7 +53,7 @@ HASH JOIN
 
 or:
 
-```
+```sql
 MERGE JOIN
 ```
 
@@ -61,7 +61,7 @@ The decision belongs to the **Cost Based Optimizer (CBO)**.
 
 ---
 
-# 14.2. What Oracle analyses before choosing the algorithm
+## 14.2. What Oracle analyzes before choosing the algorithm
 
 The Oracle shall take account in particular of:
 
@@ -73,25 +73,25 @@ The Oracle shall take account in particular of:
 - histograms;
 - available memory;
 - Table size;
-- the type of game condition;
+- the join condition;
 - the order of the tables;
 - the estimated cost of each variant.
 
 Therefore:
 
-```
+```sql
 SELECT...
 FROM A
 JOIN B ON...
 ```
 
-does not automatically mean that Oracle first processes A
+does not automatically mean that Oracle processes A first.
 
-The optimiser can reverse order.
+The optimizer can reverse order.
 
 ---
 
-# 14.3. Nested Loops Join
+## 14.3. Nested Loops Join
 
 Conceptual:
 
@@ -120,7 +120,7 @@ WHERE B.id = a.id;
 END LOOP;
 ```
 
-Obviously, the implementation of Oracle is much more effective.
+Oracle's actual implementation is much more efficient than this pseudo-code.
 
 ---
 
@@ -138,9 +138,9 @@ ORDERS
 50,000,000 rows
 ```
 
-But the query is only looking for one client:
+But the query is only looking for one customer:
 
-```
+```sql
 SELECT o. *
 FROM customers c
 JOIN orders o
@@ -150,8 +150,8 @@ WHERE c.customer_id = 100;
 
 If there is:
 
-```
-CREATEQ1QX idx_orders_customer
+```sql
+CREATE INDEX idx_orders_customer
 ON orders (customer_id);
 ```
 
@@ -160,9 +160,9 @@ Oracle can do:
 ```
 CUSTOMERS
    ↓
-1 custodian
+1 customer
    ↓
-INDEX look up in ORDERS
+index lookup in ORDERS
 ```
 
 Conceptual plan:
@@ -176,7 +176,7 @@ INDEX RANGE SCAN idx_orders_customer
 
 ---
 
-# 14.4. Outer table and Inner table
+## 14.4. Outer table and inner table
 
 At Nested Loops we have two important roles.
 
@@ -186,7 +186,7 @@ It's the source from which Oracle first reads the lines.
 
 **Inner table**
 
-It's the table where the Oracle search for matches for each row in the Outer Table.
+It is the row source Oracle probes for matches for each row in the Outer Table.
 
 Conceptual:
 
@@ -195,22 +195,22 @@ Outer table
      |
 ♪ ♪ ♪
      v
-Inner table look up
+inner-table lookup
 
 ♪ ♪ ♪
      v
-Inner table look up
+inner-table lookup
 
 ♪ ♪ ♪
      v
-Inner table look up
+inner-table lookup
 ```
 
 That is why it is very important that the outer table produces relatively few lines.
 
 ---
 
-# 14.5. When Nested Loops is very effective
+## 14.5. When Nested Loops is very effective
 
 Ideal scenario:
 
@@ -224,7 +224,7 @@ Good index on JOIN column
 
 Example:
 
-```
+```sql
 SELECT *
 FROM customers c
 JOIN transactions t
@@ -236,7 +236,7 @@ If:
 
 ```
 CUSTOMERS → 1 row
-TRANSACTIONS → million
+TRANSACTIONS → millions of rows
 ```
 
 and:
@@ -249,7 +249,7 @@ is indexed, Nested Loops is very effective.
 
 ---
 
-# 14.6. The Classical Problem Nested Loops
+## 14.6. The classic Nested Loops problem
 
 If the outer table produces:
 
@@ -260,7 +260,7 @@ If the outer table produces:
 and for each Oracle you must look up in Table B:
 
 ```
-1,000,000 index looks
+1,000,000 index lookups
 ```
 
 The operation can become very expensive.
@@ -283,7 +283,7 @@ HASH JOIN
 
 ---
 
-# 14.7. Hash Join
+## 14.7. Hash Join
 
 Hash Join is the extremely important algorithm for:
 
@@ -291,7 +291,7 @@ Hash Join is the extremely important algorithm for:
 DWH
 ETL
 OLAP
-large dates
+large data sets
 ```
 
 The principle is completely different from Nested Loops.
@@ -308,7 +308,7 @@ Instead it builds a hash structure in memory.
 
 ---
 
-# 14.8. The Two Phase of Hash Join
+## 14.8. The two phases of a Hash Join
 
 Hash Join has conceptual:
 
@@ -329,7 +329,7 @@ FACT_SALES
 
 JOIN:
 
-```
+```sql
 SELECT...
 FROM fact_sales f
 JOIN dim_customer c
@@ -340,7 +340,7 @@ Oracle can do:
 
 ### BUILD
 
-Build hash tables from smaller table:
+Build a hash table from the smaller input:
 
 ```
 DIM_CUSTOMER
@@ -377,11 +377,11 @@ and for each row calculate:
 hash (customer_key)
 ```
 
-Looking for the right bucket.
+and probes the corresponding bucket.
 
 ---
 
-# 14.9. Conceptual Scheme
+## 14.9. Conceptual scheme
 
 ```
 DIM_CUSTOMER
@@ -404,7 +404,7 @@ This is very effective for large volumes.
 
 ---
 
-# 14.10. Ideal condition for Hash Join
+## 14.10. Ideal condition for Hash Join
 
 Hash Join is especially suitable for:
 
@@ -416,7 +416,7 @@ i.e. **equi-join**.
 
 Example:
 
-```
+```sql
 SELECT *
 FROM sales s
 JOIN customers c
@@ -431,7 +431,7 @@ HASH JOIN
 
 ---
 
-# 14.11. Why Hash Join is common in DWH
+## 14.11. Why Hash Join is common in DWH
 
 In DWH we often have:
 
@@ -444,11 +444,11 @@ DIM_DATE 20K
 
 Query:
 
-```
+```sql
 SELECT
 d.year,
 p.category,
-SUM (f.amount)
+SUM(f.amount)
 FROM fact_sales f
 JOIN dim_date d
 ON d.date_key = f.date_key
@@ -464,9 +464,9 @@ Oracle may use:
 ```
 HASH JOIN
 HASH JOIN
-TABLEQ1QX FULL
-TABLEQ1QX FULL
-TABLEQ1QX FULL
+TABLE ACCESS FULL
+TABLE ACCESS FULL
+TABLE ACCESS FULL
 ```
 
 This is not necessarily a problem.
@@ -477,7 +477,7 @@ In DWH:
 
 ---
 
-# 14.12. Hash Join and Memory
+## 14.12. Hash Join and Memory
 
 The hash tablet is built in memory available for SQL operation.
 
@@ -507,11 +507,11 @@ Performance can decrease significantly.
 
 ---
 
-# 14.13. Sort Merge Join
+## 14.13. Sort Merge Join
 
 The third important algorithm is:
 
-```
+```sql
 MERGE JOIN
 ```
 
@@ -545,7 +545,7 @@ Oracle can walk them efficiently.
 
 ---
 
-# 14.14. Conceptual
+## 14.14. Conceptual
 
 ```
 TABLE A
@@ -567,17 +567,17 @@ TABLE B
 
 In execution plan you can see operations such as:
 
-```
+```sql
 MERGE JOIN
 SORT JOIN
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 SORT JOIN
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 ---
 
-# 14.15. When can be useful Sort Merge Join
+## 14.15. When can be useful Sort Merge Join
 
 It is useful in certain situations, in particular:
 
@@ -588,7 +588,7 @@ It is useful in certain situations, in particular:
 
 Non-equi example:
 
-```
+```sql
 SELECT *
 FROM transactions t
 JOIN exchange_rates
@@ -606,7 +606,7 @@ Sort Merge can also be useful for interval conditions.
 
 ---
 
-# 14.16. Nested Loops vs Hash Join
+## 14.16. Nested Loops vs Hash Join
 
 The most important comparison to be memorized:
 
@@ -616,8 +616,6 @@ Features of Nested Loops
 The Index is very important; it is often not necessary.
 * * *
 DWH is sometimes very common
-= = sync, corrected by elderman = =
-= = sync, corrected by elderman = =
 Typical condition
 Memory may require a lot of memory
 
@@ -637,7 +635,7 @@ But it's not an absolute rule.
 
 ---
 
-# 14.17. Sort Merge vs Hash Join
+## 14.17. Sort Merge vs Hash Join
 
 For two large tables and:
 
@@ -653,21 +651,21 @@ HASH JOIN
 
 for:
 
-```
+```sql
 MERGE JOIN
 ```
 
 because Hash Join does not require complete sorting of both sets.
 
-But if the data is already in the right order or the condition of the joint favors the mercury, the optimiser can choose Sort Merge.
+But if the data is already in the right order or the condition of the joint favors the mercury, the optimizer can choose Sort Merge.
 
 ---
 
-# 14.18. Example OLTP
+## 14.18. Example OLTP
 
 Query:
 
-```
+```sql
 SELECT
 o.order_id,
 o.order_date
@@ -692,8 +690,8 @@ CUSTOMERS → 1 row
 
 and we have:
 
-```
-CREATEQ1QX idx_orders_customer
+```sql
+CREATE INDEX idx_orders_customer
 ON orders (customer_id);
 ```
 
@@ -712,7 +710,7 @@ Here Nested Loops is very logical.
 
 ---
 
-# 14.19. Example DWH
+## 14.19. Example DWH
 
 We assume:
 
@@ -726,10 +724,10 @@ DIM_ACCOUNT
 
 Query:
 
-```
+```sql
 SELECT
 a.account_type,
-SUM (f.amount)
+SUM(f.amount)
 FROM fact_transaction f
 JOIN dim_account
 ON a.account_key = f.account_key
@@ -740,7 +738,7 @@ a.account_type;
 Possible plan:
 
 ```
-HASHQ1QX BY
+HASH BY
 HASH JOIN
 TABLE ACCESS FULL DIM_ACCOUNT
 TABLE ACCESS FULL FACT_TRANSACTION
@@ -750,13 +748,13 @@ For an DWH this plan can be perfectly reasonable.
 
 ---
 
-# 14.20. JOIN order
+## 14.20. JOIN order
 
 The JOIN algorithm and the JOIN- order are two different things.
 
 Query:
 
-```
+```sql
 SELECT *
 FROM A
 JOIN B ON...
@@ -764,7 +762,7 @@ JOIN C ON...
 JOIN D ON...;
 ```
 
-The optimiser may decide:
+The optimizer may decide:
 
 ```
 B JOIN D
@@ -778,7 +776,7 @@ So SQL- doesn't necessarily determine physical order.
 
 ---
 
-# 14.21. Why JOIN order is so important
+## 14.21. Why JOIN order is so important
 
 We assume:
 
@@ -809,9 +807,9 @@ Important concept:
 
 ---
 
-# 14.22. Cardinality is critical
+## 14.22. Cardinality is critical
 
-The optimiser must estimate:
+The optimizer must estimate:
 
 ```
 How many rows does each operation produce?
@@ -842,7 +840,7 @@ This is why incorrect statistics can lead to the wrong choice of algorithm.
 
 ---
 
-# 14.23. Link with Statistics
+## 14.23. Link with Statistics
 
 We assume:
 
@@ -850,7 +848,7 @@ We assume:
 WHERE status = 'ERROR'
 ```
 
-The optimiser estimates:
+The optimizer estimates:
 
 ```
 100 rows
@@ -882,21 +880,21 @@ E-Rows vs A-Rows
 
 ---
 
-# 14.24. As we see the algorithm in DBMS\ _ XPLAN
+## 14.24. As we see the algorithm in DBMS_XPLAN
 
 Example:
 
-```
+```sql
 SELECT / * + gather_plan_statistics * /
 *
-FROM employment e
-JOIN departments
+FROM employees e
+JOIN departments d
 ON d.department_id = e.department_id;
 ```
 
 Then:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (
@@ -928,7 +926,7 @@ HASH JOIN
 
 ---
 
-# 14.25. How to read it from the bottom up
+## 14.25. How to read it from the bottom up
 
 According to the rule discussed at Execution Plans, we read the data access operations before the parent operation.
 
@@ -954,7 +952,7 @@ Oracle reads the two sources and executes the Join hash.
 
 ---
 
-# 14.26. Nested Loops in DBMS\ _ XPLAN
+## 14.26. Nested Loops in DBMS_XPLAN
 
 Example:
 
@@ -997,7 +995,7 @@ ORDERS
 
 ---
 
-# 14.27. Why the index is so important at Nested Loops
+## 14.27. Why the index is so important at Nested Loops
 
 Suppose:
 
@@ -1041,12 +1039,12 @@ But also **, which is under the inner side of**.
 
 ---
 
-# 14.28. Cartesian Join
+## 14.28. Cartesian Join
 
 A very important case:
 
-```
-MERGEQ1QX CARTESIAN
+```sql
+MERGE CARTESIAN
 ```
 
 or conceptual:
@@ -1057,7 +1055,7 @@ CARTESIAN PRODUCT
 
 Example of mistake:
 
-```
+```sql
 SELECT *
 FROM customers c,
 orders o,
@@ -1088,9 +1086,9 @@ An unexpected Cartesian Join in execution plan must be investigated immediately.
 
 ---
 
-# 14.29. But Cartesian Join is not always an error
+## 14.29. But Cartesian Join is not always an error
 
-The optimiser may intentionally use a Cartesian Join between very small sets.
+The optimizer may intentionally use a Cartesian Join between very small sets.
 
 Example:
 
@@ -1109,8 +1107,8 @@ Then he can do the join with another board.
 
 So:
 
-```
-MERGEQ1QX CARTESIAN
+```sql
+MERGE CARTESIAN
 ```
 
 does not automatically mean the wrong SQL.
@@ -1119,11 +1117,11 @@ We need to check the cardinality.
 
 ---
 
-# 14.30. Semi Join
+## 14.30. Semi Join
 
-For querys such as:
+For queries such as:
 
-```
+```sql
 SELECT *
 FROM customers c
 WHERE EXISTS (
@@ -1136,13 +1134,13 @@ WHERE o.customer_id = c.customer_id
 Oracle may use:
 
 ```
-HASHQ1QX SEMI
+HASH SEMI
 ```
 
 or:
 
 ```
-NESTEDQ1QX SEMI
+NESTED SEMI
 ```
 
 The point is:
@@ -1151,11 +1149,11 @@ The point is:
 
 ---
 
-# 14.31. Anti Join
+## 14.31. Anti Join
 
 For:
 
-```
+```sql
 SELECT *
 FROM customers c
 WHERE NOT EXISTS (
@@ -1168,13 +1166,13 @@ WHERE o.customer_id = c.customer_id
 Oracle may use:
 
 ```
-HASHQ1QX ANTI
+HASH ANTI
 ```
 
 or:
 
 ```
-NESTEDQ1QX ANTI
+NESTED ANTI
 ```
 
 Conceptual:
@@ -1185,7 +1183,7 @@ Very common in ETL.
 
 For example:
 
-```
+```sql
 SELECT. *
 FROM staging_customer
 WHERE NOT EXISTS (
@@ -1200,11 +1198,11 @@ can identify new rows for size table.
 
 ---
 
-# 14.32. Outer Join and algorithm
+## 14.32. Outer Join and algorithm
 
 SQL:
 
-```
+```sql
 SELECT *
 FROM customers c
 LEFT JOIN orders
@@ -1214,13 +1212,13 @@ ON o.customer_id = c.customer_id;
 may produce plans such as:
 
 ```
-HASHQ1QX OUTER
+HASH OUTER
 ```
 
 or:
 
 ```
-NESTEDQ1QX OUTER
+NESTED OUTER
 ```
 
 So:
@@ -1234,14 +1232,14 @@ is semantic SQL.
 Whereas:
 
 ```
-HASHQ1QX OUTER
+HASH OUTER
 ```
 
 describe physical implementation.
 
 ---
 
-# 14.33. Join Algorithm and indexes
+## 14.33. Join Algorithm and indexes
 
 A common mistake is the idea:
 
@@ -1265,7 +1263,7 @@ The query needs:
 A repeated look-up index hundreds of millions of times can be much more expensive than:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 +
 HASH JOIN
 ```
@@ -1274,7 +1272,7 @@ Oracle can completely ignore the legitimate index.
 
 ---
 
-# 14.34. Comparative example
+## 14.34. Comparative example
 
 We assume:
 
@@ -1292,7 +1290,7 @@ WHERE customer_id = 100
 the result:
 
 ```
-1 custodian
+1 customer
 20 orders
 ```
 
@@ -1333,13 +1331,13 @@ cardinality
 
 ---
 
-# 14.35. Adaptive Plans
+## 14.35. Adaptive Plans
 
 Oracle may also have adaptive mechanisms whereby the plan may contain alternatives or adapt certain operations to information obtained during execution.
 
 That is why it is important to consider not only:
 
-```
+```sql
 EXPLAIN PLAN
 ```
 
@@ -1357,13 +1355,13 @@ ALLSTATS LAST
 
 ---
 
-# 14.36. Hints for Join Algorithms
+## 14.36. Hints for Join Algorithms
 
-For study and diagnosis we can influence the optimiser.
+For study and diagnosis we can influence the optimizer.
 
 Nested Loops:
 
-```
+```sql
 SELECT / * + USE_NL (o)
        ...
 FROM customers c
@@ -1373,7 +1371,7 @@ ON o.customer_id = c.customer_id;
 
 Hash Join:
 
-```
+```sql
 SELECT / * + USE_HASH (o)
        ...
 FROM customers c
@@ -1383,7 +1381,7 @@ ON o.customer_id = c.customer_id;
 
 Join's going:
 
-```
+```sql
 SELECT / * + USE_MERGE (o)
        ...
 FROM customers c
@@ -1395,17 +1393,17 @@ But the important rule is:
 
 > Hint is useful for testing and diagnosis, it must not be the first solution to a performance problem.
 
-The **must first be checked as to why the optimiser chose the** plan.
+The **must first be checked as to why the optimizer chose the** plan.
 
 ---
 
-# 14.37. LEADING point
+## 14.37. LEADING point
 
 We can influence and join the order.
 
 Example:
 
-```
+```sql
 SELECT / * + LEADING (c o) * /
        ...
 FROM customers c
@@ -1423,7 +1421,7 @@ O
 
 It can be combined with:
 
-```
+```sql
 SELECT / * + LEADING (c o)
 USE_NL (o) * /
        ...
@@ -1433,7 +1431,7 @@ But again, these are primarily useful tools for experiment and diagnosis.
 
 ---
 
-# 14.38. Real Troubleshooting Scenario
+## 14.38. Real Troubleshooting Scenario
 
 We have:
 
@@ -1457,7 +1455,7 @@ E-Rows = 100
 A-Rows = 8,000,000
 ```
 
-The optimiser believed that the outer dataset would contain:
+The optimizer believed that the outer dataset would contain:
 
 ```
 100 rows
@@ -1499,7 +1497,7 @@ bind variables
 correlated predicates
 ```
 
-After the estimate has been corrected, the optimiser can choose naturally:
+After the estimate has been corrected, the optimizer can choose naturally:
 
 ```
 HASH JOIN
@@ -1507,7 +1505,7 @@ HASH JOIN
 
 ---
 
-# 14.39. JOIN Algorithm decision tree
+## 14.39. JOIN Algorithm decision tree
 
 for review you can remember the model:
 
@@ -1533,7 +1531,7 @@ It is intentionally simplified, but very useful as a mental model.
 
 ---
 
-# 14.40. What do we check when an JOIN is slow
+## 14.40. What do we check when an JOIN is slow
 
 The practical diagnostic order shall be:
 
@@ -1565,13 +1563,13 @@ slow query → add index
 
 ---
 
-# 14.41. Oracle Exercises 26ai
+## 14.41. Oracle Exercises 26ai
 
 Assuming your lab schematics, you can compare algorithms.
 
 ### Exercise 1)
 
-```
+```sql
 SELECT / * + gather_plan_statistics * /
 e.employee_id,
 e.last_name,
@@ -1583,7 +1581,7 @@ ON d.department_id = e.department_id;
 
 Then:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (
@@ -1605,7 +1603,7 @@ access methods
 
 ### Exercise 2 is pushing Nested Loops
 
-```
+```sql
 SELECT / * + gather_plan_statistics
 USE_NL (d) *
 e.employee_id,
@@ -1618,7 +1616,7 @@ ON d.department_id = e.department_id;
 
 ### Exercise 3 is pushing Hash Join
 
-```
+```sql
 SELECT / * + gather_plan_statistics
 USE_HASH (d) *
 e.employee_id,
@@ -1631,7 +1629,7 @@ ON d.department_id = e.department_id;
 
 ### Exercise 4) Merge Join
 
-```
+```sql
 SELECT / * + gather_plan_statistics
 USE_MERGE (d) *
 e.employee_id,
@@ -1646,7 +1644,7 @@ Compare the plans.
 
 ---
 
-# 14.42. Very useful exercise for DWH
+## 14.42. Very useful exercise for DWH
 
 With laboratory tables of a type:
 
@@ -1657,11 +1655,11 @@ TRANSACTIONS
 
 run:
 
-```
+```sql
 SELECT / * + gather_plan_statistics * /
 a.account_type,
-COUNT (*) transaction_count,
-SUM (t.amount) total_amount
+COUNT(*) transaction_count,
+SUM(t.amount) total_amount
 FROM dwh_account
 JOIN transactions t
 ON t.account_id = a.account_id
@@ -1724,7 +1722,7 @@ Answer:
 
 **What can make Oracle choose the wrong Nested Loops instead of Hash Join?**
 
-> Often a misestimate of cardinality. If the optimiser estimates several dozen rows but in reality there are millions, it can consider Nested Loops cheap. That's why I'm checking E-Rows versus A-Rows, then statistics, predicates and data distribution.
+> Often a misestimate of cardinality. If the optimizer estimates several dozen rows but in reality there are millions, it can consider Nested Loops cheap. That's why I'm checking E-Rows versus A-Rows, then statistics, predicates and data distribution.
 
 ---
 
@@ -1734,12 +1732,12 @@ Answer:
 
 ---
 
-# 14.44. The three squares to memorize
+## 14.44. The three squares to memorize
 
 ### Pattern 1
 
 ```
-1 custodian
+1 customer
         ↓
 NESTED LOOPS
         ↓
@@ -1784,7 +1782,7 @@ Think:
 
 ---
 
-# 14.45. Summary for Data Developer
+## 14.45. Summary for Data Developer
 
 The most important things to remember are:
 
