@@ -18,13 +18,13 @@ If statistics are incorrect or old:
 
 > **bad statistics → bad cardinality estimates → bad execution plan**
 
-That's why Statistics directly links the previous modules:
+That is why statistics directly connect the previous modules:
 
 **Optimizer → Execution Plan → Index → Statistics**
 
 ---
 
-## 1. What are the Oracle Statistics
+## 1. What Oracle statistics are
 
 Oracle keeps information about:
 
@@ -35,26 +35,26 @@ Oracle keeps information about:
 - distribution of values;
 - the volume of data.
 
-The optimiser does not execute the query to see how many rows there are. He tries to **estimate this using statistics.
+The optimizer does not execute the query to see how many rows there are. It tries to **estimate this using statistics**.
 
 Example:
 
-```
+```sql
 SELECT *
 FROM orders
 WHERE customer_id = 100;
 ```
 
-The optimiser must decide:
+The optimizer must decide:
 
 - how many rows are likely to be found;
 - whether the index is worth using;
-- if it is cheaper FULL TABLE SCAN;
-- What a method of join to use if there are joinings.
+- whether a full table scan is cheaper;
+- which join method to use when joins are involved.
 
 ---
 
-# 2. Table Statistics
+## 2. Table statistics
 
 The most important information is:
 
@@ -66,7 +66,7 @@ AVG_ROW_LEN
 
 We can see them in:
 
-```
+```sql
 SELECT table_name,
 num_rows,
 Blocks,
@@ -78,7 +78,7 @@ WHERE table_name = 'ORDERS';
 
 ### NUM _ ROWS
 
-The average number of rows in the table at the time of collection of statistics.
+The approximate number of rows in the table at the time of collection of statistics.
 
 ### BLOCKS
 
@@ -87,18 +87,18 @@ Number of Oracle blocks occupied by the table.
 This is very important for estimating the cost of:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
-### AVG\ _ ROW _ LEN
+### AVG_ROW _ LEN
 
 Average size of a row.
 
-May influence the estimation of the volume of I/O.
+May influence estimates of I/O volume.
 
 ---
 
-# 3. Column Statistics
+## 3. Column statistics
 
 The Oracle shall keep information such as:
 
@@ -112,11 +112,11 @@ HIGH_VALUE
 
 Example:
 
-```
+```sql
 SELECT column_name,
 num_distinct,
 num_nulls,
-densities,
+density,
 histogram
 FROM user_tab_col_statistics
 WHERE table_name = 'ORDERS';
@@ -124,7 +124,7 @@ WHERE table_name = 'ORDERS';
 
 ---
 
-# 4.NUM\ _ DISTINCT
+## 4. NUM_DISTINCT
 
 It represents approximately the number of distinct values in the column.
 
@@ -150,7 +150,7 @@ For:
 WHERE customer_id = 1234
 ```
 
-The optimiser may approximate:
+The optimizer may approximate:
 
 ```
 1,000,000 / 100,000 = 10 rows
@@ -164,7 +164,7 @@ selectivity = 1 / NUM_DISTINCT
 
 ---
 
-# 5. selectivity
+## 5. Selectivity
 
 **Selectivity** represents the proportion of rows passing through a filter.
 
@@ -197,13 +197,13 @@ I mean:
 0.001%
 ```
 
-A very selective sermon is generally a good candidate for the index.
+A highly selective predicate is often a good candidate for indexed access.
 
 ---
 
-# 6. Cardinality
+## 6. Cardinality
 
-**Cardinality** is the number of lines the optimiser estimates an operation will produce.
+**Cardinality** is the number of lines the optimizer estimates an operation will produce.
 
 The approximate relationship is:
 
@@ -223,10 +223,10 @@ selectivity = 0.001
 Then:
 
 ```
-cardinality n.e.1 000
+cardinality ≈ 1,000
 ```
 
-In DBMS\ _ PLAN, the estimated cardinality usually appears as:
+In DBMS_PLAN, the estimated cardinality usually appears as:
 
 ```
 E-Rows
@@ -246,7 +246,7 @@ E-Rows vs A-Rows
 
 ---
 
-# 7. Why E-Rows vs A-Rows is so important
+## 7. Why E-Rows vs. A-Rows is so important
 
 Example:
 
@@ -256,7 +256,7 @@ Operation E-Rows A-Rows
 TABLE ACCESS 10 500000
 ```
 
-The optimiser thought they'd come:
+The optimizer thought they'd come:
 
 ```
 10 rows
@@ -284,19 +284,19 @@ In reality, for hundreds of thousands of rows it could have been more appropriat
 HASH JOIN
 ```
 
-This is one of the most important diagnostic squares:
+This is one of the most important tuning diagnostics:
 
 > **Wrong plan? Check cardinality estimates first.**
 
 ---
 
-# 8. Statistics for indexes
+## 8. Index statistics
 
 The indexes have their own statistics.
 
 Example:
 
-```
+```sql
 SELECT index_name,
 num_rows,
 distinct_keys,
@@ -316,14 +316,14 @@ CLUSTERING_FACTOR
 
 ---
 
-# 9. DISTINCT\ _ KEYS
+## 9. DISTINCT_KEYS
 
 It represents the number of distinct values in the index.
 
 For:
 
-```
-CREATEQ1QX ix_orders_customer
+```sql
+CREATE INDEX ix_orders_customer
 ON orders (customer_id);
 ```
 
@@ -334,7 +334,7 @@ NUM_ROWS = 1,000,000
 DISTINCT_KEYS = 100,000
 ```
 
-The optimiser can estimate that a custodian has on average:
+The optimizer can estimate that a customer has on average:
 
 ```
 1,000,000 / 100,000
@@ -343,11 +343,11 @@ The optimiser can estimate that a custodian has on average:
 
 ---
 
-# 10. CLUSTERING\ _ FACTOR
+## 10. CLUSTERING_FACTOR
 
 It is one of the most important and often misunderstood statistics.
 
-CLUSTERING\ _ FACTOR indicates about how well the order of data in the table is related to the index order.
+CLUSTERING_FACTOR indicates how closely the physical row order in the table follows the index order.
 
 Very good example:
 
@@ -368,17 +368,17 @@ CLUSTERING_FACTOR = 950,000
 
 Accessing many values through the index can mean a lot of random access to the table blocks.
 
-Optimiser may prefer:
+Optimizer may prefer:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 even if the index exists.
 
 ---
 
-# 11. Histograms
+## 11. Histograms
 
 Normal statistics suggest that the values are evenly distributed.
 
@@ -406,18 +406,17 @@ There's only:
 3 separate values
 ```
 
-Without further information, the optimiser may involve approximately:
+Without further information, the optimizer may involve approximately:
 
 ```
 1,000,000 / 3
-= = sync, corrected by elderman = =
 ```
 
 But reality is completely different.
 
 ---
 
-# 12. Why histograms are useful
+## 12. Why histograms are useful
 
 For:
 
@@ -448,7 +447,7 @@ The optimal plan can be different.
 For ACTIVE:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 It can be better.
@@ -456,23 +455,23 @@ It can be better.
 For SUSPENDED:
 
 ```
-INDERANGE SCAN
+INDEX RANGE SCAN
 ```
 
 It can be better.
 
-The histogram says to the optimiser:
+The histogram says to the optimizer:
 
 > the values are not evenly distributed.
 
 ---
 
-# 13. How do we see if there is histogram
+## 13. How do we see if there is histogram
 
-```
+```sql
 SELECT column_name,
 num_distinct,
-densities,
+density,
 histogram,
 num_buckets
 FROM user_tab_col_statistics
@@ -494,9 +493,9 @@ Oracle may decide to create histograms for the relevant columns.
 
 ---
 
-# 14. DBMS _ STATS
+## 14. DBMS _ STATS
 
-The standard Oracle package for optimiser statistics is:
+The standard Oracle package for optimizer statistics is:
 
 ```
 DBMS_STATS
@@ -504,7 +503,7 @@ DBMS_STATS
 
 Simple example:
 
-```
+```sql
 BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
 Ownname = "USER,"
@@ -518,11 +517,11 @@ It collects statistics for the table and, depending on the options, columns / in
 
 ---
 
-# 15. GATHER\ _ SCHEMA\ _ STATS
+## 15. GATHER_SCHEMA_STATS
 
 For a scheme:
 
-```
+```sql
 BEGIN
 DBMS_STATS.GATHER_SCHEMA_STATS (
 Ownname = =
@@ -537,7 +536,7 @@ Oracle has mechanisms for automatic and incremental statistics.
 
 ---
 
-# 16. METHOD\ _ OPT
+## 16. METHOD_OPT
 
 A very important parameter is:
 
@@ -547,7 +546,7 @@ METHOD_OPT
 
 Example:
 
-```
+```sql
 BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
 Ownname = "USER,"
@@ -570,11 +569,11 @@ I mean, pushing histograms everywhere.
 
 ---
 
-# 17. CASCADE
+## 17. CASCADE
 
 For index collection and statistics:
 
-```
+```sql
 BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
 Ownname = "USER,"
@@ -587,7 +586,7 @@ END;
 
 ---
 
-# 18. SAMPLE\ _ SIZE
+## 18. SAMPLE_SIZE
 
 Oracle doesn't have to read every line.
 
@@ -601,7 +600,7 @@ estimate_percent = = DBMS_STATS.AUTO_SAMPLE_SIZE
 
 Example:
 
-```
+```sql
 BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
 Ownname = "USER,"
@@ -616,7 +615,7 @@ END;
 
 ---
 
-# 19. Statistics stale
+## 19. Statistics stale
 
 A typical problem:
 
@@ -638,7 +637,7 @@ After an ETL:
 + 20,000,000 rows
 ```
 
-But the optimiser still sees roughly:
+But the optimizer still sees roughly:
 
 ```
 1,000,000
@@ -648,7 +647,7 @@ Plans can become completely inappropriate.
 
 We can check:
 
-```
+```sql
 SELECT table_name,
 num_rows,
 last_analyzed,
@@ -659,7 +658,7 @@ WHERE table_name = 'ORDERS';
 
 ---
 
-# 20. Statistics and ETL
+## 20. Statistics and ETL
 
 This is extremely important in an DWH.
 
@@ -708,7 +707,7 @@ reporting / BI queries
 
 ---
 
-# 21. Parties statistics
+## 21. Parties statistics
 
 In an DWH it is common to exist:
 
@@ -738,7 +737,7 @@ partition level
 
 We can see them, for example, in:
 
-```
+```sql
 SELECT partition_name,
 num_rows,
 Blocks,
@@ -751,7 +750,7 @@ This is very important because ETL- can only modify the last partition.
 
 ---
 
-# 22. Incremental Statistics
+## 22. Incremental Statistics
 
 In a big DWH you don't necessarily want to rescan:
 
@@ -775,9 +774,9 @@ This pattern is very important for large DWH-uri.
 
 ---
 
-# 23. Extended Statistics
+## 23. Extended Statistics
 
-The optimiser may have problems when two columns are correlated.
+The optimizer may have problems when two columns are correlated.
 
 Example:
 
@@ -793,13 +792,13 @@ WHERE country = 'RO'
 AND city = 'Bucharest'
 ```
 
-If the optimiser treats the predictions independently it can misestimate selectivity.
+If the optimizer treats the predictions independently it can misestimate selectivity.
 
 Oracle allows **extended statistics** for groups of columns.
 
 Conceptual example:
 
-```
+```sql
 SELECT DBMS_STATS.CREATE_EXTENDED_STATS (
 USER,
 'CUSTOMER',
@@ -810,7 +809,7 @@ FROM dual;
 
 Then:
 
-```
+```sql
 BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
 USER,
@@ -824,7 +823,7 @@ These statistics can help optimizer understand the correlation between columns.
 
 ---
 
-# 24. Statistics on Expressions
+## 24. Statistics on Expressions
 
 Suppose:
 
@@ -858,9 +857,9 @@ USER,
 
 ---
 
-# 25. Dynamic Statistics
+## 25. Dynamic Statistics
 
-Sometimes the optimiser doesn't have enough statistics.
+Sometimes the optimizer doesn't have enough statistics.
 
 Can use **dynamic statistics** to do sampling during the hard park.
 
@@ -886,7 +885,7 @@ remain the base.
 
 ---
 
-# 26. Statistics of exact data in real time
+## 26. Statistics of exact data in real time
 
 Very important:
 
@@ -906,7 +905,7 @@ LAST_ANALYZED
 
 If you have:
 
-```
+```sql
 SELECT COUNT *
 FROM orders;
 ```
@@ -919,7 +918,7 @@ you can get:
 
 and:
 
-```
+```sql
 SELECT num_rows
 FROM user_tables
 WHERE table_name = 'ORDERS';
@@ -933,24 +932,24 @@ may show:
 
 It's not necessarily a problem.
 
-The optimiser doesn't need exact values at all times.
+The optimizer doesn't need exact values at all times.
 
 He needs estimates good enough to choose the plan.
 
 ---
 
-# 27. Statistics and Index Selection
+## 27. Statistics and Index Selection
 
 Suppose:
 
-```
-CREATEQ1QX ix_orders_status
+```sql
+CREATE ix_orders_status
 ON orders (status);
 ```
 
 Query:
 
-```
+```sql
 SELECT *
 FROM orders
 WHERE status = 'ACTIVE';
@@ -962,10 +961,10 @@ If:
 ACTIVE = 99%
 ```
 
-The optimiser may decide:
+The optimizer may decide:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 even if there is an index.
@@ -985,7 +984,7 @@ with:
 may decide:
 
 ```
-INDERANGE SCAN
+INDEX RANGE SCAN
 ```
 
 This is a direct consequence of:
@@ -1000,7 +999,7 @@ Costing
 
 ---
 
-# 28. Statistics and Join Order
+## 28. Statistics and Join Order
 
 Suppose:
 
@@ -1010,7 +1009,7 @@ JOIN ORDERS
 JOIN ORDER_LINES
 ```
 
-The optimiser must decide:
+The optimizer must decide:
 
 ```
 What table reads first?
@@ -1044,11 +1043,11 @@ partition pruning
 
 ---
 
-# 29. Practically complete example
+## 29. Practically complete example
 
 We create:
 
-```
+```sql
 CREATE TABLE stat_test AS
 SELECT level AS id,
 CASE
@@ -1063,14 +1062,14 @@ CONNECT BY level = 1000000;
 
 Index:
 
-```
-CREATEQ1QX ix_stat_test_status
+```sql
+CREATE ix_stat_test_status
 ON stat_test (status);
 ```
 
 We collect statistics:
 
-```
+```sql
 BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
 Ownname = "USER,"
@@ -1084,10 +1083,10 @@ END;
 
 We see statistics:
 
-```
+```sql
 SELECT column_name,
 num_distinct,
-densities,
+density,
 histogram,
 num_buckets
 FROM user_tab_col_statistics
@@ -1096,11 +1095,11 @@ WHERE table_name = 'STAT_TEST';
 
 ---
 
-# 30. Compare two querys
+## 30. Compare two queries
 
 ### Query 1
 
-```
+```sql
 SELECT *
 FROM stat_test
 WHERE status = 'ACTIVE';
@@ -1108,7 +1107,7 @@ WHERE status = 'ACTIVE';
 
 ### Query 2
 
-```
+```sql
 SELECT *
 FROM stat_test
 WHERE status = 'SUSPENDED';
@@ -1116,7 +1115,7 @@ WHERE status = 'SUSPENDED';
 
 Use:
 
-```
+```sql
 SELECT / * + GATHER_PLAN_STATISTICS * /
 *
 FROM stat_test
@@ -1125,7 +1124,7 @@ WHERE status = 'SUSPENDED';
 
 Then:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (
@@ -1146,7 +1145,7 @@ Buffers
 
 ---
 
-# 31. Diagnostic pattern for tuning
+## 31. Diagnostic pattern for tuning
 
 When a query is slow, a very good order of analysis is:
 
@@ -1181,7 +1180,7 @@ The Hint can mask the problem instead of solving it.
 
 ---
 
-# 32. Real script DWH
+## 32. Real script DWH
 
 We have:
 
@@ -1194,9 +1193,9 @@ Partitioned monthly.
 
 Query BI:
 
-```
+```sql
 SELECT customer_segment,
-SUM (amount)
+SUM(amount)
 FROM fact_transaction f
 JOIN dim_customer c
 ON c.customer_key = f.customer_key
@@ -1213,7 +1212,7 @@ Nested Loops
 
 and it takes 40 minutes.
 
-In DBMS\ _ XPLAN:
+In DBMS_XPLAN:
 
 ```
 DIM_CUSTOMER
@@ -1255,7 +1254,7 @@ And the query can become much more effective.
 
 ---
 
-# 33. Scenario ETL very common
+## 33. Scenario ETL very common
 
 ETL:
 
@@ -1276,7 +1275,7 @@ They are part of the behavior of the pipeline.
 
 ---
 
-# 34. What to NU do
+## 34. What to NU do
 
 ### Do not collect obsessive statistics
 
@@ -1304,7 +1303,7 @@ and the column is relevant for predictions.
 
 ### Do not assume that index = index usage
 
-The optimiser calculates:
+The optimizer calculates:
 
 ```
 cost
@@ -1344,7 +1343,7 @@ The proportion of rows that satisfy a prediction.
 
 ---
 
-### 4. What does NUM\ _ DISTINCT mean?
+### 4. What does NUM_DISTINCT mean?
 
 The average number of distinct values of a column.
 
@@ -1385,29 +1384,29 @@ partition statistics
 
 ### 9. How is DBMS doing?
 
-Collect and manage statistics used by the optimiser.
+Collect and manage statistics used by the optimizer.
 
 ---
 
 ### 10. Why are statistics important in an DWH?
 
-Because large volumes and ETL-s can quickly change the distribution of data, and wrong cardinalities can cause very expensive joints and access paths.
+Because large volumes and ETL-s can quickly change the distribution of data, and wrong cardinalities can cause very expensive joins and access paths.
 
 ---
 
-# 36. Oracle Exercises 26ai
+## 36. Oracle Exercises 26ai
 
-For your lab DEV\ _ LAB, I would do the following exercises:
+For your lab DEV_LAB, I would do the following exercises:
 
-1. Create STAT\ _ TEST with 1 million rows and distribute 99% ACTIVE / 0.5% SUSPENDED / 0.5% CLOSED.
+1. Create STAT_TEST with 1 million rows and distribute 99% ACTIVE / 0.5% SUSPENDED / 0.5% CLOSED.
 2. Create:
 
-```
-CREATEQ1QX ix_stat_test_status
+```sql
+CREATE ix_stat_test_status
 ON stat_test (status);
 ```
 
-3. Run DBMS\ _ STATS.GATHER\ _ TABLE\ _ STATS.
+3. Run DBMS_STATS.GATHER_TABLE_STATS.
 4. Check:
 
 ```
@@ -1477,15 +1476,15 @@ EXECUTION PLAN
 
 ---
 
-# 37. Mental Model to Remember
+## 37. Mental Model to Remember
 
 For Statistics, remember the chain:
 
 ```
-DATA
+                  DATA
                     │
                     ▼
-STATISTICS
+                STATISTICS
                     │
        ┌────────────┴────────────┐
        ▼                         ▼
@@ -1495,24 +1494,24 @@ AVG_ROW_LEN DENSITY
        │                         │
        └────────────┬────────────┘
                     ▼
-SELECTIVITY
+               SELECTIVITY
                     │
                     ▼
-CARDINALITY
-E-Rows
+               CARDINALITY
+                 E-Rows
                     │
                     ▼
-COST
+                   COST
                     │
                     ▼
-EXECUTION PLAN
+               EXECUTION PLAN
                     │
        ┌────────────┼─────────────┐
        ▼            ▼             ▼
-INDEX JOIN METHOD JOIN ORDER
+  INDEX JOIN   METHOD JOIN      ORDER
                   │
                   ▼
-PERFORMANCE
+             PERFORMANCE
 ```
 
 And when you diagnose:
@@ -1541,7 +1540,7 @@ If we had to reduce the entire module to seven ideas:
 1. **Statistics are the basis of the Cost-Based Optimizer decisions.**
 2. **Selectivity says what proportion of the table is filtered.**
 3. **Cardinality represents the estimated number of rows.**
-4. **NUM\ _ ROWS, NUM\ _ DISTINCT, index histograms and statistics influence estimates.**
+4. **NUM_ROWS, NUM_DISTINCT, index histograms and statistics influence estimates.**
 5. **Histograms are important for uneven distribution of the skew.**
 6. **One of the best tuning techniques is comparing E-Rows to A-Rows.**
 7. In an DWH, after large loads, **statistics must remain representative for** data, including partitions.
