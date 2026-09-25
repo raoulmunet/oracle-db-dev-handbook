@@ -8,7 +8,7 @@ sidebar_position: 4
 
 <div className="chapter-kicker">Chapter C04 · Complete course</div>
 
-## 1. What OLTP Is
+## 1. What OLTP is
 
 **OLTP = Online Transaction Processing**.
 
@@ -45,7 +45,7 @@ These operations are very different from a DWH query that may process millions o
 
 ---
 
-## 2. The OLTP Mental Model
+## 2. The OLTP mental model
 
 In a simplified banking application, we might have:
 
@@ -95,7 +95,7 @@ This is a typical OLTP model: clear relationships, primary and foreign keys, and
 
 ---
 
-## 3. Characteristics of an OLTP System
+## 3. Characteristics of an OLTP system
 
 Typical OLTP characteristics include:
 
@@ -175,7 +175,7 @@ In a DWH, the situation is often different: denormalization may be intentional b
 
 ---
 
-## 5. Primary Keys and Foreign Keys
+## 5. Primary keys and foreign keys
 
 Keys are fundamental in OLTP systems.
 
@@ -292,7 +292,7 @@ Oracle uses mechanisms such as **redo** to recover committed transactions after 
 
 ---
 
-## 7. Transaction Boundaries
+## 7. Transaction boundaries
 
 A very important question in OLTP is:
 
@@ -385,7 +385,7 @@ The rest of the transaction can continue after the rollback to the savepoint.
 
 ---
 
-## 9. Read Consistency in Oracle
+## 9. Read consistency in Oracle
 
 Oracle has a very important mechanism:
 
@@ -467,7 +467,7 @@ when two transactions try to modify the same row.
 
 ---
 
-## 11. Row Locking
+## 11. Row locking
 
 Assume:
 
@@ -598,7 +598,7 @@ higher account_id
 
 ---
 
-## 14. Isolation Levels
+## 14. Isolation levels
 
 In Oracle, the most commonly used isolation level is:
 
@@ -668,11 +668,11 @@ CREATE INDEX idx_transactions_account_ts
 ON transactions (account_id, transaction_ts DESC);
 ```
 
-The exact benefit depends on the data distribution, query patterns, and execution plan.
+The exact benefit depends on data distribution, query patterns, index design, and the execution plan.
 
 ---
 
-## 16. Why We Do Not Index Everything
+## 16. Why we do not index everything
 
 Every index must be maintained.
 
@@ -747,7 +747,7 @@ The optimizer decides based on statistics, estimated cardinality, cost, clusteri
 
 ---
 
-## 18. Foreign Keys and Indexes
+## 18. Foreign keys and indexes
 
 In OLTP systems, it is frequently useful to index foreign-key columns.
 
@@ -772,11 +772,11 @@ faster child-row lookups
 reduced locking issues in some parent-key update/delete scenarios
 ```
 
-A foreign key does **not** automatically create an index in Oracle, so the need for one should be evaluated explicitly.
+A foreign key does **not** automatically create an index in Oracle, so indexing foreign-key columns should be evaluated explicitly based on access and locking patterns.
 
 ---
 
-## 19. Bind Variables
+## 19. Bind variables
 
 Bind variables are extremely important in Oracle OLTP systems.
 
@@ -804,7 +804,7 @@ FROM accounts
 WHERE account_id = :account_id;
 ```
 
-Oracle can then reuse the parsed cursor.
+Oracle can then reuse the parsed cursor more effectively.
 
 Important benefits include:
 
@@ -820,7 +820,7 @@ In an OLTP system executing thousands of SQL statements per second, this is crit
 
 ---
 
-## 20. Typical OLTP Execution Plans
+## 20. Typical OLTP execution plans
 
 A very common OLTP plan looks like:
 
@@ -853,7 +853,7 @@ NESTED LOOPS
     INDEX RANGE SCAN IDX_ACCOUNTS_CUSTOMER
 ```
 
-This is very characteristic of OLTP workloads:
+This pattern is very characteristic of OLTP workloads:
 
 ```text
 few rows
@@ -909,7 +909,7 @@ A **Hash Join** may be more appropriate.
 
 ---
 
-## 22. Transactions Must Be Short
+## 22. Transactions must be short
 
 An important OLTP rule is:
 
@@ -949,7 +949,7 @@ This keeps lock duration as short as possible.
 
 ---
 
-## 23. COMMIT Too Often
+## 23. COMMIT too often
 
 The opposite extreme is also problematic.
 
@@ -1042,11 +1042,11 @@ COMMIT;
 
 often belongs to the layer that controls the complete business transaction rather than to every internal procedure.
 
-A production implementation should also validate conditions such as insufficient funds, missing accounts, invalid amounts, and the number of rows affected.
+A production implementation should also validate insufficient funds, missing accounts, invalid amounts, and the number of rows affected by each DML statement.
 
 ---
 
-## 25. Data Integrity
+## 25. Data integrity
 
 In OLTP systems, the database should protect the data.
 
@@ -1169,7 +1169,7 @@ A DWH answers questions such as:
 
 ---
 
-## 28. Complete Example: Bank Transfer
+## 28. Complete example: bank transfer
 
 Assume:
 
@@ -1255,7 +1255,7 @@ This apparently simple operation brings together most of the essential OLTP conc
 
 ---
 
-## 29. What to Check for OLTP Performance
+## 29. What to check for OLTP performance
 
 For an OLTP SQL statement, one of the main questions is often:
 
@@ -1306,7 +1306,7 @@ This is not an absolute rule: Oracle may still choose a full scan when statistic
 
 ---
 
-## 30. Important OLTP Anti-Patterns
+## 30. Important OLTP anti-patterns
 
 The following situations should be recognized quickly:
 
@@ -1337,7 +1337,7 @@ leaving all integrity enforcement exclusively to the application
 
 ---
 
-## 31. Questions and Answers
+## 31. Questions and answers
 
 ### What characterizes an OLTP system?
 
@@ -1347,7 +1347,7 @@ A strong compact answer is:
 
 ---
 
-## 32. Memorization Scheme
+## 32. Memorization scheme
 
 If you want to retain OLTP as one mental model:
 
@@ -1394,7 +1394,7 @@ many rows + scans + Hash Joins + aggregations + parallelism
 
 ---
 
-## Additional Questions and Answers
+## Additional questions and answers
 
 ### How would you briefly explain OLTP to a colleague who knows SQL but not this area?
 
