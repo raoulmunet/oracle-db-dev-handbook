@@ -12,7 +12,7 @@ sidebar_position: 4
 
 **OLTP = Online Transaction Processing**.
 
-A OLTP system is built to process a large number of small and fast operations, carried out simultaneously by many users or applications.
+An OLTP system is built to process a large number of small and fast operations, carried out simultaneously by many users or applications.
 
 Classical examples:
 
