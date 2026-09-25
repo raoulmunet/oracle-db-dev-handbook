@@ -1,0 +1,14 @@
+.hero{padding:5.5rem 0 4.5rem;background:linear-gradient(135deg,#f4f8fc 0%,#fff 58%,#eaf1f8 100%);border-bottom:1px solid #dbe4ee}
+.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.16em;color:#2f5597;margin-bottom:1.5rem}
+.heroGrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:4rem;align-items:center}
+.hero h1{font-size:clamp(2.65rem,5vw,4.8rem);line-height:1.02;max-width:850px;color:#17365d;letter-spacing:-.045em;margin:0 0 1.5rem}
+.lead{font-size:1.25rem;line-height:1.65;max-width:760px;color:#40546b}
+.actions{display:flex;gap:.9rem;flex-wrap:wrap;margin-top:2rem}
+.flow{background:#17365d;color:white;border-radius:20px;padding:2rem;display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;box-shadow:0 18px 50px rgba(23,54,93,.16)}
+.flow span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.26);padding:.65rem .8rem;border-radius:9px;font-weight:750}.flow b{color:#8fc3ff}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);margin-top:-1px;border:1px solid #dbe4ee;border-top:0;background:#fff}
+.summary div{display:flex;flex-direction:column;padding:1.6rem 2rem;border-right:1px solid #dbe4ee}.summary div:last-child{border-right:0}.summary strong{font-size:1.65rem;color:#17365d}.summary span{color:#617187}
+.catalogue{padding:5rem 0 6rem}.sectionHeading p{font-size:.78rem;font-weight:800;letter-spacing:.14em;color:#2f5597;margin:0 0 .6rem}.sectionHeading h2{font-size:2.2rem;color:#17365d;max-width:650px;margin-bottom:2.4rem}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.card{display:block;border:1px solid #d8e1eb;border-radius:15px;padding:1.55rem;background:#fff;color:inherit;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}.card:hover{text-decoration:none;transform:translateY(-3px);border-color:#7c9fc6;box-shadow:0 14px 30px rgba(23,54,93,.09)}
+.range{font-size:.78rem;font-weight:800;color:#2f5597;letter-spacing:.1em}.card h3{margin:.55rem 0 .45rem;color:#17365d}.card p{color:#5e6d80;min-height:3rem}.open{font-weight:750;color:#2f5597}
+@media(max-width:850px){.hero{padding:3.5rem 0}.heroGrid{grid-template-columns:1fr;gap:2rem}.summary{grid-template-columns:1fr}.summary div{border-right:0;border-bottom:1px solid #dbe4ee}.cards{grid-template-columns:1fr}}
