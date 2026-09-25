@@ -8,7 +8,7 @@ sidebar_position: 11
 
 <div className="chapter-kicker">Chapter C11 · Complete course</div>
 
-An **Execution Plan** shows **how Oracle intends to execute an SQL** instruction: in what order does the tables access, what indexes use, how does the joints, where they sort, aggregate or filter, and how expensive the Optimizer estimates they are operations.
+An **Execution Plan** shows **how Oracle intends to execute a SQL statement**: table access order, index usage, join methods, sorting, aggregation, filtering, and the cost estimated by the optimizer.
 
 For a Data Developer, Execution Plan is one of the most important diagnostic tools for SQL performance.
 
@@ -16,76 +16,76 @@ For a Data Developer, Execution Plan is one of the most important diagnostic too
 
 ## 11.1. The Fundamental Idea
 
-For SQL-:
+For this SQL:
 
-```
+```sql
 SELECT e.employee_id,
 e.last_name,
 d.department_name
-FROM hr.employment e
-JOIN hr departments d
+FROM hr.employees e
+JOIN hr.departments d
 ON d.department_id = e.department_id
-WHERE e.salary › 10000;
+WHERE e.salary > 10000;
 ```
 
 Oracle does not simply execute the instruction in the order in which it is written.
 
-The optimiser decides:
+The optimizer decides:
 
 - which table is first read;
 - if it uses index or FULL TABLE SCAN;
-- Join algorithm;
-- order of joints;
+- join algorithm;
+- join order;
 - when applying filters;
 - whether it has to sort;
 - if it can turn the query into a more efficient form.
 
-The result is **Execution Planet**.
+The result is an **execution plan**.
 
 ---
 
-# 11.2. The three things that need to be differentiated
+## 11.2. Three concepts to distinguish
 
 There are three close but different concepts.
 
-### Estimated Implementation Plan
+### Estimated execution plan
 
-Optimiser's estimated plan.
+Optimizer's estimated plan.
 
-```
-EXPLAINQ1QX FOR
+```sql
+EXPLAIN PLAN FOR
 SELECT *
-FROM hr employees
+FROM hr.employees
 WHERE department_id = 50;
 ```
 
 Then:
 
-```
+```sql
 SELECT *
 FROM TABLE (DBMS_XPLAN.DISPLAY);
 ```
 
-Oracle **does not perform the** query.
+Oracle **does not execute the query**.
 
-He just estimates how they'd execute him.
+It estimates how the statement would be executed.
 
 ---
 
-### Actual Execution Plan
+### Actual execution plan
 
 The query is executed and we can see real information about the execution.
 
-```
-SELECT / * + gather_plan_statistics * /
+```sql
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
-FROM hr employees
+FROM hr.employees
 WHERE department_id = 50;
 ```
 
 Then:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (
@@ -96,7 +96,7 @@ NULL,
 );
 ```
 
-It's much more important for Troubleshooting.
+This is much more useful for troubleshooting.
 
 We can compare:
 
@@ -117,17 +117,17 @@ I mean:
 
 ---
 
-### The Shared Pool Planet
+### Plan from the shared pool
 
 We can see the plan of the SQL cursor already executed:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (
-sql_id = = '...',
-cursor_child_no =
-Format = 'ALLSTATS LAST'
+sql_id => '...',
+cursor_child_no => 0,
+format => 'ALLSTATS LAST'
 )
 );
 ```
@@ -136,11 +136,11 @@ It is very useful in actual production investigations.
 
 ---
 
-# 11.3. How to read an Execution Plan
+## 11.3. How to read an execution plan
 
 Practical rule:
 
-> **Execution The planet is read mainly from bottom up and from inside out.**
+> **An execution plan is usually read from the bottom up and from the inside out.**
 
 Example:
 
@@ -150,7 +150,6 @@ Example:
 --------------------------------------------------------------------------------
 * *
 * * * *
-= = sync, corrected by elderman = = @ elder _ man
 --------------------------------------------------------------------------------
 ```
 
@@ -169,11 +168,11 @@ Oracle:
 1. search the keys in the index;
 2. obtain ROWID;
 3. access the rows in the table;
-4. Turn back the result.
+4. return the result.
 
 ---
 
-# 11.4. Important columns of DBMS\ _ XPLAN
+## 11.4. Important DBMS_XPLAN columns
 
 A plan can look like this:
 
@@ -201,7 +200,7 @@ Id
 It is also used in the section:
 
 ```
-Predicted Information
+Predicate Information
 ```
 
 ---
@@ -213,19 +212,19 @@ Oracle's operation.
 Examples:
 
 ```
-TABLEQ1QX FULL
-INDERANGE SCAN
+TABLE ACCESS FULL
+INDEX RANGE SCAN
 HASH JOIN
 NESTED LOOPS
 SORT
-HASHQ1QX BY
+HASH BY
 ```
 
 ---
 
-## Setup
+### Object / Name
 
-The subject matter on which the operation is carried out.
+The object on which the operation is performed.
 
 Example:
 
@@ -238,7 +237,7 @@ CUSTOMERS
 
 ---
 
-## Rows
+### Rows
 
 Estimated number of rows.
 
@@ -256,21 +255,21 @@ E-Rows
 
 ---
 
-## Bytes
+### Bytes
 
 Estimated amount of data processed.
 
 Conceptual:
 
 ```
-Bytes rec rows × row size
+Bytes ≈ rows × average row size
 ```
 
 ---
 
-## Cost
+### Cost
 
-The relatively estimated cost of Optimizer.
+The optimizer's relative estimated cost.
 
 Example:
 
@@ -290,11 +289,11 @@ and neither:
 125 seconds
 ```
 
-It is an internal **unit of comparison between the** plane alternatives.
+It is an internal **comparison unit between alternative plans**.
 
 ---
 
-## Time
+### Time
 
 Expected time.
 
@@ -304,29 +303,29 @@ It's a cost-based estimate.
 
 ---
 
-# 11.5. Main Operations
+## 11.5. Main operations
 
-## TABLEQ1QX FULL
+## TABLE ACCESS FULL
 
 ```
 TABLE ACCESS FULL
 ```
 
-The Oracle reads a large part or all of the blocks of the table.
+Oracle reads a large part or all of the table blocks.
 
 Example:
 
-```
+```sql
 SELECT *
-FROM employment;
+FROM employees;
 ```
 
 or:
 
-```
+```sql
 SELECT *
 FROM
-WHERE salary is 1000;
+WHERE salary > 1000;
 ```
 
 if the filter returns many lines.
@@ -345,15 +344,15 @@ if the query needs:
 700,000 rows
 ```
 
-A Full Table Scan can be much more effective than hundreds of thousands of access through the index.
+A Full Table Scan can be much more effective than hundreds of thousands of accesses through an index.
 
 ---
 
-# 11.6. INDEX UNIQUE SCAN
+## 11.6. INDEX UNIQUE SCAN
 
 Example:
 
-```
+```sql
 SELECT *
 FROM
 WHERE employee_id = 100;
@@ -365,7 +364,7 @@ If:
 EMPLOYEE_ID
 ```
 
-is Mayor Key, the plan may contain:
+is a primary key, the plan may contain:
 
 ```
 INDEX UNIQUE SCAN
@@ -387,15 +386,15 @@ ROWID
 table row
 ```
 
-It's used when Oracle knows that there can be maximum one result.
+It is used when Oracle knows that at most one row can match.
 
 ---
 
-# 11.7. INDEX RANGE SCAN
+## 11.7. INDEX RANGE SCAN
 
 Example:
 
-```
+```sql
 SELECT *
 FROM
 WHERE department_id = 50;
@@ -403,7 +402,7 @@ WHERE department_id = 50;
 
 or:
 
-```
+```sql
 SELECT *
 FROM
 WHERE salary BETWEEN 5000 AND 8000;
@@ -412,7 +411,7 @@ WHERE salary BETWEEN 5000 AND 8000;
 Plan:
 
 ```
-INDERANGE SCAN
+INDEX RANGE SCAN
 ```
 
 Oracle is looking for an area in B-tree.
@@ -430,7 +429,7 @@ Of rows.
 
 ---
 
-# 11.8. TABLE ACCESS BY INDEX ROWID
+## 11.8. TABLE ACCESS BY INDEX ROWID
 
 The index shall contain:
 
@@ -441,7 +440,7 @@ ROWID
 
 But the query may require:
 
-```
+```sql
 SELECT employee_id,
 first_name,
 last_name,
@@ -454,18 +453,18 @@ Plan:
 
 ```
 TABLE ACCESS BY INDEX ROWID
-INDERANGE SCAN
+INDEX RANGE SCAN
 ```
 
 ---
 
-# 11.9. INDEX FAST FULL SCAN
+## 11.9. INDEX FAST FULL SCAN
 
 Conceptual example:
 
-```
+```sql
 SELECT COUNT *
-FROM employment;
+FROM employees;
 ```
 
 If the index is sufficient for query:
@@ -496,7 +495,7 @@ Fast Full Scan:
 
 ---
 
-# 11.10. Join Operations
+## 11.10. Join Operations
 
 The three important mechanisms are:
 
@@ -560,7 +559,7 @@ equity joins
 
 Example:
 
-```
+```sql
 SELECT...
 FROM fact_sales f
 JOIN dim_customer c
@@ -592,11 +591,11 @@ but important to recognize.
 
 ---
 
-# 11.11. Join Order
+## 11.11. Join Order
 
 For:
 
-```
+```sql
 SELECT...
 FROM orders o
 JOIN customers c
@@ -605,7 +604,7 @@ JOIN countries co
 ON co.country_id = c.country_id;
 ```
 
-The optimiser may decide:
+The optimizer may decide:
 
 ```
 COUNTRIES
@@ -625,19 +624,19 @@ The order in FROM does not normally dictate the physical order of execution.
 
 ---
 
-# 11.12. SORT
+## 11.12. SORT
 
 Operations such as:
 
 ```
-SORTQ1QX BY
-SORTQ1QX BY
+SORT BY
+SORT BY
 SORT UNIQUE
 ```
 
 Example:
 
-```
+```sql
 SELECT *
 FROM
 ORDER BY salary;
@@ -646,7 +645,7 @@ ORDER BY salary;
 It can produce:
 
 ```
-SORTQ1QX BY
+SORT BY
 TABLE ACCESS FULL EMPLOYEES
 ```
 
@@ -664,11 +663,11 @@ TEMP tablespace
 
 ---
 
-# 11.13. HASH GROUP BY
+## 11.13. HASH GROUP BY
 
 Example:
 
-```
+```sql
 SELECT department_id,
 COUNT *
 FROM
@@ -678,7 +677,7 @@ GROUP BY department_id;
 Possible plan:
 
 ```
-HASHQ1QX BY
+HASH BY
 TABLE ACCESS FULL EMPLOYEES
 ```
 
@@ -686,7 +685,7 @@ The Oracle builds a hash structure for aggregation.
 
 ---
 
-# 11.14. FILTER
+## 11.14. FILTER
 
 Plan:
 
@@ -707,7 +706,7 @@ subqueries
 
 ---
 
-# 11.15. Predicted Information
+## 11.15. Predicate Information
 
 One of the most important sections of the plan.
 
@@ -769,14 +768,14 @@ In general, it is preferable to reduce the number of rows as early as possible.
 
 ---
 
-# 11.16. Estimated Rows vs Actual Rows
+## 11.16. Estimated Rows vs Actual Rows
 
 This is one of the most important tuning techniques.
 
 We execute:
 
-```
-SELECT / * + gather_plan_statistics * /
+```sql
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
 FROM
 WHERE department_id = 50;
@@ -784,7 +783,7 @@ WHERE department_id = 50;
 
 Then:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (
@@ -811,7 +810,7 @@ A-Rows = 100,000
 
 That's an enormous difference.
 
-The optimiser thought:
+The optimizer thought:
 
 ```
 10 rows
@@ -843,7 +842,7 @@ times.
 
 ---
 
-# 11.17. Cardinal
+## 11.17. Cardinal
 
 **Cardinality** is the estimated number of rows produced by an operation.
 
@@ -853,7 +852,7 @@ Example:
 WHERE status = 'FAILED'
 ```
 
-The optimiser must estimate:
+The optimizer must estimate:
 
 ```
 How many lines have FAILED status?
@@ -875,9 +874,9 @@ Therefore, it is often said:
 
 ---
 
-# 11.18. Statistics
+## 11.18. Statistics
 
-The optimiser bases his decisions on statistics.
+The optimizer bases his decisions on statistics.
 
 Examples:
 
@@ -892,7 +891,7 @@ histograms
 
 Collection:
 
-```
+```sql
 BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
 Ownname = "'DEV_LAB',"
@@ -909,11 +908,11 @@ current rows = 100M
 Statistics = 10M
 ```
 
-The optimiser can build an inappropriate plan.
+The optimizer can build an inappropriate plan.
 
 ---
 
-# 11.19. Histograms
+## 11.19. Histograms
 
 Let's assume the column:
 
@@ -957,7 +956,7 @@ A histogram can help the Optimizer understand distribution.
 
 ---
 
-# 11.20.
+## 11.20.
 
 In the real plans we can see:
 
@@ -971,7 +970,7 @@ Example:
 
 ```
 NESTED LOOPS
-TABLEQ1QX CUSTOMERS
+TABLE CUSTOMERS
 INDEX RANGE SCAN ORDERS_IDX
 ```
 
@@ -993,7 +992,7 @@ This can explain a slow SQL.
 
 ---
 
-# 11.21. Buffers
+## 11.21. Buffers
 
 In real plans:
 
@@ -1019,7 +1018,7 @@ to investigate the real SQL-.
 
 ---
 
-# 11.22. A-Time
+## 11.22. A-Time
 
 It may occur:
 
@@ -1045,14 +1044,14 @@ Buffers
 
 ---
 
-# 11.23. Full Example
+## 11.23. Full Example
 
 Query:
 
-```
-SELECT / * + gather_plan_statistics * /
+```sql
+SELECT /*+ GATHER_PLAN_STATISTICS */
 c.customer_name,
-SUM (f.amount)
+SUM(f.amount)
 FROM fact_sales f
 JOIN dim_customer c
 ON c.customer_key = f.customer_key
@@ -1068,7 +1067,6 @@ Simplified plan:
 ---------------------------------------------------------------------------------
 * * *
 * * * *
-= = sync, corrected by elderman = = @ elder _ man
 3 * TABLE ACCESS FULL * DIM_CUSTOMER * 10,000 *
 * 4 * TABLE ACCESS FULL * FACT_SALES * 500000 * 600000 * 149500 *
 ---------------------------------------------------------------------------------
@@ -1083,7 +1081,7 @@ HASH JOIN
         /
 4 FACT_SALES
        ↓
-HASHQ1QX BY
+HASH BY
        ↓
 SELECT
 ```
@@ -1108,18 +1106,18 @@ We would have investigated statistics and selectivity right away.
 
 ---
 
-# 11.24. Anti-pattern: function on indexed column
+## 11.24. Anti-pattern: function on indexed column
 
 We have the index:
 
-```
-CREATEQ1QX idx_orders_date
+```sql
+CREATE idx_orders_date
 ON orders (order_date);
 ```
 
 Query:
 
-```
+```sql
 SELECT *
 FROM orders
 WHERE TRUNC (order_date) = DATE '2026-09-23';
@@ -1129,7 +1127,7 @@ Oracle may not be able to exploit the normal efficient index.
 
 Better:
 
-```
+```sql
 SELECT *
 FROM orders
 WHERE order_date = DATE '2026-09-23'
@@ -1139,14 +1137,14 @@ AND order_date; DATE '2026-09-24';
 Now we have a range condition:
 
 ```
-INDERANGE SCAN
+INDEX RANGE SCAN
 ```
 
 Possibly.
 
 ---
 
-# 11.25. Default Conversion
+## 11.25. Default Conversion
 
 Another very important case.
 
@@ -1183,7 +1181,7 @@ which can prevent the efficient use of the index.
 
 ---
 
-# 11.26. SELECTIVITY
+## 11.26. SELECTIVITY
 
 Selectivity is the proportion of selected rows.
 
@@ -1221,7 +1219,7 @@ A Full Table Scan can be much more effective.
 
 ---
 
-# 11.27. Good Plan vs. Bad Plan
+## 11.27. Good Plan vs. Bad Plan
 
 There is no rule:
 
@@ -1234,8 +1232,8 @@ A good plan is the one that does as little unnecessary work as possible.
 
 Example DWH:
 
-```
-SELECT SUM (amount)
+```sql
+SELECT SUM(amount)
 FROM fact_transactions
 WHERE transaction_date = DATE '2025-01-01'
 ```
@@ -1249,20 +1247,20 @@ If necessary:
 one:
 
 ```
-FULLQ1QX SCAN
+FULL SCAN
 ```
 
 or:
 
 ```
-PARTITIONQ1QX SCAN
+PARTITION SCAN
 ```
 
 It could be the right plan.
 
 ---
 
-# 11.28. Partition Pounding
+## 11.28. Partition Pounding
 
 Very important in DWH.
 
@@ -1280,8 +1278,8 @@ TRANSACTION_DATE
 
 Query:
 
-```
-SELECT SUM (amount)
+```sql
+SELECT SUM(amount)
 FROM fact_transactions
 WHERE transaction_date = DATE '2026-09-01'
 AND transaction_date; DATE '2026-10-01';
@@ -1303,13 +1301,13 @@ Pstop
 Example:
 
 ```
-PARTITIONQ1QX SINGLE
+PARTITION SINGLE
 ```
 
 or:
 
 ```
-PARTITIONQ1QX ITERATOR
+PARTITION ITERATOR
 ```
 
 This is:
@@ -1320,13 +1318,13 @@ and can reduce the amount of data read enormously.
 
 ---
 
-# 11.29. Bloom Filters
+## 11.29. Bloom Filters
 
 In DWH and Parallel Execution workshops we can meet:
 
 ```
-JOINQ1QX CREATE
-JOINQ1QX USE
+JOIN CREATE
+JOIN USE
 ```
 
 Oracle creates a compact filter based on the values in one table and uses it to quickly remove rows from another source.
@@ -1341,11 +1339,11 @@ Small size
 
 ---
 
-# 11.30. Adaptive Plans
+## 11.30. Adaptive Plans
 
 In certain situations Oracle can prepare alternatives for execution and adapt some decisions based on the information observed during execution.
 
-In DBMS\ _ XPLAN we can meet information such as:
+In DBMS_XPLAN we can meet information such as:
 
 ```
 plane adaptive
@@ -1355,15 +1353,15 @@ or inactive operations.
 
 The important idea for review:
 
-> Optimiser is not always completely rigid; certain mechanisms allow it to adjust execution based on observed reality.
+> Optimizer is not always completely rigid; certain mechanisms allow it to adjust execution based on observed reality.
 
 ---
 
-# 11.31. EXPLAIN PLAN vs DISPLAY\ _ CURSOR
+## 11.31. EXPLAIN PLAN vs DISPLAY_CURSOR
 
 For real troubleshooting:
 
-```
+```sql
 EXPLAIN PLAN
 ```
 
@@ -1383,7 +1381,7 @@ EXPLAIN PLAN shows:
 what Oracle thinks he would do
 ```
 
-DISPLAY\ _ CURSOR... ALLSTATS LAST may show:
+DISPLAY_CURSOR... ALLSTATS LAST may show:
 
 ```
 what he actually did
@@ -1391,20 +1389,20 @@ what he actually did
 
 ---
 
-# 11.32. Recommended laboratory command
+## 11.32. Recommended laboratory command
 
 Run the query:
 
-```
-SELECT / * + gather_plan_statistics * /
+```sql
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
-FROM hr employees
+FROM hr.employees
 WHERE department_id = 50;
 ```
 
 then:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (
@@ -1417,7 +1415,7 @@ NULL,
 
 For further study:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (
@@ -1430,7 +1428,7 @@ NULL,
 
 ---
 
-# 11.33. Practical method of analysis of a plan
+## 11.33. Practical method of analysis of a plan
 
 When you get a slow SQL, you don't start with:
 
@@ -1443,7 +1441,7 @@ Follow a method.
 Search:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 HASH JOIN
 SORT
 NESTED LOOPS
@@ -1513,7 +1511,7 @@ and suspicious expressions:
 TO_NUMBER (...)
 TO_CHAR (...)
 TRUNC (...)
-NVL (...)
+NVL(...)
 ```
 
 ---
@@ -1546,7 +1544,7 @@ Don't automatically try to remove Full Table Scan.
 
 ---
 
-# 11.34. Classic example of problem Nested Loops
+## 11.34. Classic example of problem Nested Loops
 
 Plan:
 
@@ -1598,7 +1596,7 @@ Statistics
 
 ---
 
-# 11.35. Example DWH
+## 11.35. Example DWH
 
 We have:
 
@@ -1611,9 +1609,9 @@ DIM_DATE 10K rows
 
 Query:
 
-```
+```sql
 SELECT c.segment,
-SUM (f.amount)
+SUM(f.amount)
 FROM fact_transaction f
 JOIN dim_customer c
 ON c.customer_key = f.customer_key
@@ -1629,14 +1627,14 @@ The reasonable plan may include:
 TABLE ACCESS FULL DIM_DATE
 HASH JOIN
 PARTITION RANGE ITERATOR FACT_TRANSACTION
-HASHQ1QX DIM_CUSTOMER
-HASHQ1QX BY
+HASH DIM_CUSTOMER
+HASH BY
 ```
 
 It shouldn't scare us:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 HASH JOIN
 ```
 
@@ -1665,7 +1663,7 @@ watching operations produce data for their parents.
 
 ---
 
-### Cost is time?
+#### Cost is time?
 
 No.
 
@@ -1751,73 +1749,73 @@ But choice depends on volumes and costs.
 
 ### What are you after in a slow SQL?
 
-Good technical discussion response:
+Good technical review response:
 
-> I start with the real plan, I check E-Rows versus A-Rows, then Starts, Buffers and Predicate Information. I follow the order of the joints and data volumes, I check the statistics and selectivity of the conditions, and then I decide whether the problem comes from SQL, indexation, statistics, partitioning or estimation of Optimizer.
+> I start with the real plan, I check E-Rows versus A-Rows, then Starts, Buffers and Predicate Information. I follow the order of the joins and data volumes, I check the statistics and selectivity of the conditions, and then I decide whether the problem comes from SQL, indexation, statistics, partitioning or estimation of Optimizer.
 
 ---
 
-# 11.37. Oracle Exercises 26ai
+## 11.37. Oracle Exercises 26ai
 
 ## Exercise 1 - Full Scan
 
-```
-SELECT / * + gather_plan_statistics * /
+```sql
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
-FROM hr employees
-WHERE salary is 1000;
+FROM hr.employees
+WHERE salary > 1000;
 ```
 
 Analyze:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 ---
 
 ## Exercise 2 - Primary Key
 
-```
-SELECT / * + gather_plan_statistics * /
+```sql
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
-FROM hr employees
+FROM hr.employees
 WHERE employee_id = 100;
 ```
 
 Search:
 
 ```
-INDEUNIQUE SCAN
+INDEX UNIQUE SCAN
 ```
 
 ---
 
 ## Exercise 3 - Range Scan
 
-```
-SELECT / * + gather_plan_statistics * /
+```sql
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
-FROM hr employees
+FROM hr.employees
 WHERE department_id = 50;
 ```
 
 Search:
 
 ```
-INDERANGE SCAN
+INDEX RANGE SCAN
 ```
 
 ---
 
 ## Exercise 4 - Join
 
-```
-SELECT / * + gather_plan_statistics * /
+```sql
+SELECT /*+ GATHER_PLAN_STATISTICS */
 e.employee_id,
 d.department_name
-FROM hr.employment e
-JOIN hr departments d
+FROM hr.employees e
+JOIN hr.departments d
 ON d.department_id = e.department_id;
 ```
 
@@ -1834,7 +1832,7 @@ join order
 
 Run:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (
@@ -1854,7 +1852,7 @@ A-Rows
 
 ---
 
-# 11.38. Checklist for reading an DBMS\ _ XPLAN
+## 11.38. Checklist for reading an DBMS_XPLAN
 
 When you see a plan, ask in this order:
 
@@ -1880,7 +1878,7 @@ When you see a plan, ask in this order:
 
 ---
 
-# 11.39. What to note
+## 11.39. What to note
 
 The most important ideas in the module are:
 
@@ -1931,7 +1929,7 @@ Starts
 +
 Buffers
 +
-Predicted Information
+Predicate Information
 ```
 
 These four elements explain a large part of the real SQL performance problems.
