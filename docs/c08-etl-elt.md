@@ -8,7 +8,7 @@ sidebar_position: 8
 
 <div className="chapter-kicker">Chapter C08 · Complete course</div>
 
-ETL/ELT is the area where almost all concepts discussed so far are met: **SQL, PL/SQL, transactions, OLTP, OLAP, Data Warehouse and SCD**. For an Oracle Data Developer, it is not enough to know how to write a INSERT or a MERGE; you must be able to design a flow that is **correctly, repeater, auditable, performant and recoverable after** error.
+ETL/ELT is where many of the concepts discussed so far come together: **SQL, PL/SQL, transactions, OLTP, OLAP, Data Warehouse and SCD**. For an Oracle Data Developer, it is not enough to know how to write a INSERT or a MERGE; you must be able to design a flow that is **correct, repeatable, auditable, performant, and recoverable after errors**.
 
 ---
 
@@ -58,11 +58,11 @@ The data are converted **before** loading into the final structure.
 
 ---
 
-# 2. What ELT is
+## 2. What ELT is
 
 **ELT = Extract → Load → Transform**
 
-Instead of turning the data into a separate ETL engine, we upload the data into the database and use the Oracle power for transformations.
+Instead of transforming data in a separate ETL engine, we load the data into the database and use Oracle for the transformations.
 
 ```
 SOURCE
@@ -102,7 +102,7 @@ DWH_TRANSACTION
 
 ---
 
-# 3.ETL vs ELT
+## 3. ETL vs. ELT
 
 * * * * * * *
 ♪ ♪ ♪ ♪ ♪
@@ -126,11 +126,11 @@ SQL / PL/SQL / ODI transformations
 Core DWH
 ```
 
-that's more like a **ELT** model.
+that is closer to an **ELT** model.
 
 ---
 
-# 4. Typical architecture of a DWH pipeline
+## 4. Typical architecture of a DWH pipeline
 
 A healthy flow should not simply be:
 
@@ -138,7 +138,7 @@ A healthy flow should not simply be:
 SOURCE → DWH
 ```
 
-It's something of form:
+A healthier architecture is:
 
 ```
 SOURCE
@@ -158,9 +158,9 @@ BI / REPORTING
 
 Data almost identical to the source.
 
-Aim:
+Purpose:
 
-- maintenance of raw data;
+- preservation of raw data;
 - debugging,
 - reprocessing;
 - audit.
@@ -190,9 +190,9 @@ Here we go:
 ```
 conversion
 validation
-standardisation
-deductions
-look up
+standardization
+deduplication
+lookups
 business rules
 ```
 
@@ -211,7 +211,7 @@ FACT_TRANSACTION
 
 ---
 
-### Mart date
+### Data mart
 
 Consumer-oriented structures.
 
@@ -225,7 +225,7 @@ FINANCE_MART
 
 ---
 
-# 5. The Three Fundamental Stages
+## 5. The three fundamental stages
 
 ## Extract
 
@@ -235,12 +235,12 @@ The main question:
 
 There are three important models.
 
-### Full Lold
+### Full load
 
 We read everything.
 
-```
-INSERTQ1QX stg_customer
+```sql
+INSERT INTO stg_customer
 SELECT *
 FROM src_customer;
 ```
@@ -257,33 +257,33 @@ We don't want to transfer them all every day.
 
 ---
 
-## Incremental Lead
+### Incremental load
 
-We're just extracting the changes.
+We extract only new or changed data.
 
 Example:
 
-```
+```sql
 SELECT *
 FROM src_customer
-WHERE last_update_date
+WHERE last_update_date > :watermark
 ```
 
 It introduces one of the most important ETL concepts:
 
-# Watermark / High-Water Mark
+### Watermark / High-water mark
 
 For example:
 
 ```
 last processing:
-2026-009-22 23: 00
+2026-09-22 23:00
 ```
 
 We extract:
 
 ```
-WHERE update_date - TIMESTAMP '2026-09-22 23:00:00'
+WHERE update_date > TIMESTAMP '2026-09-22 23:00:00'
 ```
 
 After success:
@@ -294,7 +294,7 @@ watermark = 2026-09-23 23: 00
 
 ---
 
-# 6. The problem of watermark
+## 6. Watermark challenges
 
 It seems simple:
 
@@ -322,7 +322,7 @@ but the transaction makes COMMIT to:
 10: 00: 05
 ```
 
-Pipelineum can lose that line.
+The pipeline can miss that row.
 
 This is why enterprise systems often use:
 
@@ -336,18 +336,18 @@ This is why enterprise systems often use:
 For example:
 
 ```
-WHERE update_date =: watermark - INTERVAL '5' MINUTE
+WHERE update_date >= :watermark - INTERVAL '5' MINUTE
 ```
 
 and the processing must be **idempotent**.
 
 ---
 
-# 7. CDC - Change Data Capture
+## 7. CDC - Change Data Capture
 
 CDC is trying to identify:
 
-```
+```sql
 INSERT
 UPDATE
 DELETE
@@ -360,7 +360,7 @@ Conceptual:
 ```
 SOURCE
 
-IDQ1QX SALARY
+ID SALARY
 10 ANA 5000
 
 UPDATE
@@ -378,13 +378,13 @@ ID OPERATION OLD_VALUE NEW_VALUE
 CDC is very important for:
 
 - large volumes;
-- xQ0QX;
+- ;
 - replication;
-- Systems integration.
+- systems integration.
 
 ---
 
-# 8. Transform
+## 8. Transform
 
 Transformation is usually the most complex part.
 
@@ -420,7 +420,7 @@ birth_dt → birth_date
 
 ---
 
-# 9. Source-to-Target Mapping
+## 9. Source-to-Target Mapping
 
 It is one of the fundamental documents of an DWH project.
 
@@ -428,14 +428,13 @@ Example:
 
 ♪ Source ♪ Transformation ♪ Target ♪
 - - - - - - - - -
-= = sync, corrected by elderman = =
 * * * * * * * *
 * * * *
 * * * * * * * *
 
 Example SQL:
 
-```
+```sql
 SELECT
 c.customer_id,
 UPPER (TRIM (c.customer_name)) customer_name,
@@ -448,7 +447,7 @@ ON co.country_code = c.country_code;
 
 ---
 
-# 10. Data Quality
+## 10. Data Quality
 
 A good ETL does not assume that the source data is correct.
 
@@ -457,7 +456,7 @@ They need to be checked out.
 Examples:
 
 ```
-customer_idQ1QX NULL
+customer_id NULL
 ```
 
 or:
@@ -488,8 +487,8 @@ ETL_REJECT
 
 Example:
 
-```
-INSERTQ1QX etl_reject
+```sql
+INSERT etl_reject
 (
 batch_id,
 source_table,
@@ -509,11 +508,11 @@ customer_id,
 
 ---
 
-# 11. Do not throw the wrong data
+## 11. Do not throw the wrong data
 
 An anti-pattern is:
 
-```
+```sql
 DELETE FROM staging
 WHERE data_is_bad;
 ```
@@ -538,7 +537,7 @@ That's how we know:
 
 ---
 
-# 12. Load
+## 12. Load
 
 After the transformation, the target must be loaded.
 
@@ -546,17 +545,17 @@ We've got a couple of models.
 
 ## INSERT
 
-```
-INSERTQ1QX fact_transaction
+```sql
+INSERT fact_transaction
 SELECT...
 FROM stg_transaction;
 ```
 
 ---
 
-# 13. UPDATE
+## 13. UPDATE
 
-```
+```sql
 UPDATE dim_customer d
 SET d.customer_name =
 (
@@ -570,16 +569,16 @@ For large volumes, however, there are better methods.
 
 ---
 
-# 14. MERGE is the central operation in ETL Oracle
+## 14. MERGE is the central operation in ETL Oracle
 
 Very commonly we use:
 
-```
+```sql
 MERGE INTO dim_customer
 USING stg_customer
 ON (d.source_customer_id = s.customer_id)
 
-WHENQ1QX THEN
+WHEN THEN
 UPDATE SET
 d.customer_name = s.customer_name,
 d.city = s.city
@@ -613,7 +612,7 @@ not existing → INSERT
 
 ---
 
-# 15. SQL set-based vs row-byrow
+## 15. SQL set-based vs row-byrow
 
 One of the most important ETL Oracle rules:
 
@@ -628,7 +627,7 @@ FROM stg_customer
 )
 LOOP
 
-INSERTQ1QX dim_customer
+INSERT dim_customer
 VALUES (...);
 
 END LOOP;
@@ -636,15 +635,15 @@ END LOOP;
 
 Better:
 
-```
-INSERTQ1QX dim_customer
+```sql
+INSERT dim_customer
 SELECT...
 FROM stg_customer;
 ```
 
 or:
 
-```
+```sql
 MERGE INTO...
 ```
 
@@ -652,7 +651,7 @@ Oracle can optimize the set-based processing much better.
 
 ---
 
-# 16. When using PL/SQL
+## 16. When using PL/SQL
 
 PL/SQL is useful for orchestration.
 
@@ -672,7 +671,7 @@ load_dimension;
 update_batch_control;
 
 EXCEPTION
-WHENQ1QX THEN
+WHEN THEN
 
 log_error (
 SQLCODE,
@@ -699,7 +698,7 @@ restart
 
 ---
 
-# 17. Bulk Processing
+## 17. Bulk Processing
 
 If it is necessary to process the procedure, we avoid:
 
@@ -716,7 +715,7 @@ FORALL
 
 Example:
 
-```
+```sql
 SELECT customer_id,
 customer_name
 BULK COLLECT INTO l_customers
@@ -728,7 +727,7 @@ then:
 ```
 FORALL i IN 1.. l_customers.COUNT
 
-INSERTQ1QX dim_customer
+INSERT dim_customer
 VALUES
 (
 l_customers (i).customer_id,
@@ -738,7 +737,7 @@ l_customers (i).customer_name
 
 ---
 
-# 18.
+## 18.
 
 A ETL pipeline should be treated as a controllable unit.
 
@@ -761,7 +760,7 @@ LOAD_DATE
 
 ---
 
-# 19. Control Table
+## 19. Control Table
 
 There's usually something like:
 
@@ -801,7 +800,7 @@ NULL
 
 ---
 
-# 20. Logging
+## 20. Logging
 
 Not enough:
 
@@ -839,7 +838,7 @@ ERROR_MESSAGE
 
 ---
 
-# 21. Restartability
+## 21. Restartability
 
 A fundamental concept.
 
@@ -868,7 +867,7 @@ This is **restartability**.
 
 ---
 
-# 22. Idempotency
+## 22. Idempotency
 
 A very important property.
 
@@ -878,8 +877,8 @@ It means:
 
 Bad:
 
-```
-INSERTQ1QX fact_transaction
+```sql
+INSERT fact_transaction
 SELECT *
 FROM stg_transaction;
 ```
@@ -892,7 +891,7 @@ duplicate rows
 
 Better:
 
-```
+```sql
 MERGE
 ```
 
@@ -904,7 +903,7 @@ transaction_id
 
 ---
 
-# 23. Idempotency vs. Restartability
+## 23. Idempotency vs. Restartability
 
 They're not the same thing.
 
@@ -920,7 +919,7 @@ A pipeline enterprise must ideally offer them both.
 
 ---
 
-# 24. Reconciliation
+## 24. Reconciliation
 
 After the load, we have to prove that the data is correct.
 
@@ -946,23 +945,23 @@ TOTAL 1,000,000
 
 ---
 
-# 25. Financial Reconciliation
+## 25. Financial Reconciliation
 
 The number of rows is not enough.
 
 For example:
 
-```
-SELECT COUNT (*),
-SUM (amount)
+```sql
+SELECT COUNT(*),
+SUM(amount)
 FROM src_transaction;
 ```
 
 Compare to:
 
-```
-SELECT COUNT (*),
-SUM (amount)
+```sql
+SELECT COUNT(*),
+SUM(amount)
 FROM fact_transaction;
 ```
 
@@ -972,7 +971,7 @@ In banking this is critical.
 
 ---
 
-# 26. Example banking
+## 26. Example banking
 
 Source:
 
@@ -1019,12 +1018,12 @@ Reconciliation
 
 ---
 
-# 27. Concrete Example
+## 27. Concrete Example
 
 Staging:
 
-```
-CREATEQ1QX stg_transaction
+```sql
+CREATE stg_transaction
 (
 transaction_id NUMBER,
 account_id NUMBER,
@@ -1052,11 +1051,11 @@ can't become NUMBER.
 
 In modern Oracle we can detect:
 
-```
+```sql
 SELECT *
 FROM stg_transaction
 WHERE VALIDATE_CONVERSION (
-amount_txtQ1QX NUMBER
+amount_txt NUMBER
 ) = 0;
 ```
 
@@ -1070,10 +1069,10 @@ This row goes into the object.
 
 ---
 
-# 28. Load valid
+## 28. Load valid
 
-```
-INSERTQ1QX fact_transaction
+```sql
+INSERT fact_transaction
 (
 transaction_id,
 account_key,
@@ -1101,7 +1100,7 @@ look + validation + transformation + load
 
 ---
 
-# 29.
+## 29.
 
 Very often the source data contains business keys:
 
@@ -1115,7 +1114,7 @@ but fact table uses surrogate key:
 ACCOUNT_KEY = 87423
 ```
 
-You gotta look up:
+You gotta lookups:
 
 ```
 JOIN dim_account
@@ -1172,7 +1171,7 @@ where:
 
 ---
 
-# 31. Late-arriving dimensions
+## 31. Late-arriving dimensions
 
 Suppose we get:
 
@@ -1214,7 +1213,7 @@ And we fill it out when the real size comes out.
 
 ---
 
-# 32. ETL + SCD
+## 32. ETL + SCD
 
 The previous SCD module binds directly to ETL.
 
@@ -1254,7 +1253,7 @@ ETL- is the one who implements this logic.
 
 ---
 
-# 33. Order of loading
+## 33. Order of loading
 
 Order matters.
 
@@ -1285,7 +1284,7 @@ FACT_TRANSACTION
 
 ---
 
-# 34. Schedulating
+## 34. Schedulating
 
 ETL- is usually executed automatically:
 
@@ -1308,7 +1307,7 @@ Load Plan
 
 ---
 
-# 35. Oracle Data Integrator - ODI
+## 35. Oracle Data Integrator - ODI
 
 For the roles of Oracle Data Developer it is important to understand the concepts of ODI even if you have not memorized each screen.
 
@@ -1369,7 +1368,7 @@ error handling
 
 ---
 
-# 36. Particularity ODI
+## 36. Particularity ODI
 
 ODI is best known for its philosophy:
 
@@ -1404,7 +1403,7 @@ DWH
 
 ---
 
-# 37. ETL Performance
+## 37. ETL Performance
 
 In large volumes, in particular:
 
@@ -1421,9 +1420,9 @@ Statistics
 
 ---
 
-# 38. Index and ETL
+## 38. Index and ETL
 
-The indexes help to look up:
+The indexes help to lookups:
 
 ```
 WHERE source_customer_id =:
@@ -1431,7 +1430,7 @@ WHERE source_customer_id =:
 
 but they slow down:
 
-```
+```sql
 INSERT
 UPDATE
 DELETE
@@ -1449,7 +1448,7 @@ or carefully design the necessary indexes.
 
 ---
 
-# 39. Partitioning
+## 39. Partitioning
 
 For large fact tables:
 
@@ -1476,11 +1475,11 @@ instead of the whole table.
 
 ---
 
-# 40. Parallelism
+## 40. Parallelism
 
 At very high volumes we can have:
 
-```
+```sql
 INSERT / * + APPEND PARALLEL (8) * /
 INTO fact_transaction
 SELECT / * + PARALLEL (8) * /
@@ -1502,11 +1501,11 @@ and it needs to be controlled.
 
 ---
 
-# 41. Direct-path insert
+## 41. Direct-path insert
 
 For bulk charges, the following may be used:
 
-```
+```sql
 INSERT / * + APPEND * /
 INTO fact_transaction
 SELECT...
@@ -1517,7 +1516,7 @@ It can be much faster than the conventional insert in certain scenarios.
 
 ---
 
-# 42. Commit Strategy
+## 42. Commit Strategy
 
 Anti-pattern:
 
@@ -1546,7 +1545,7 @@ business unit
 
 ---
 
-# 43. Error handling
+## 43. Error handling
 
 A pipeline must differentiate two large classes.
 
@@ -1589,13 +1588,13 @@ This differentiation is very important.
 
 ---
 
-# 44. Do not use WHEN OTHERS THEN NULL
+## 44. Do not use WHEN OTHERS THEN NULL
 
 Very dangerous example:
 
 ```
 EXCEPTION
-WHENQ1QX THEN
+WHEN THEN
 NULL;
 ```
 
@@ -1611,7 +1610,7 @@ More correctly:
 
 ```
 EXCEPTION
-WHENQ1QX THEN
+WHEN THEN
 
 log_error (
 SQLCODE,
@@ -1633,7 +1632,7 @@ propagated
 
 ---
 
-# 45. Audit
+## 45. Audit
 
 We need to be able to answer:
 
@@ -1665,7 +1664,7 @@ It is part of **data linage**.
 
 ---
 
-# 46. Testing ETL
+## 46. Testing ETL
 
 It shall be tested at least:
 
@@ -1693,7 +1692,7 @@ for checking idempotency.
 
 ---
 
-# 47. Example of complete pipelines
+## 47. Example of complete pipelines
 
 ```
 SOURCE SYSTEM
@@ -1733,9 +1732,9 @@ ETL_BATCH_CONTROL
 
 ---
 
-# 48. Simplified example of ETL procedure
+## 48. Simplified example of ETL procedure
 
-```
+```sql
 CREATE OR REPLACE PROCEDURE load_customer
 (
 p_batch_id NUMBER
@@ -1747,7 +1746,7 @@ BEGIN
 --1. Reject invalid date
     ------------------------------------------------
 
-INSERTQ1QX etl_reject
+INSERT etl_reject
 (
 batch_id,
 source_key,
@@ -1781,7 +1780,7 @@ d.source_customer_id =
 s.customer_id
 )
 
-WHENQ1QX THEN
+WHEN THEN
 
 UPDATE SET
 d.customer_name =
@@ -1816,7 +1815,7 @@ COMMIT;
 
 EXCEPTION
 
-WHENQ1QX THEN
+WHEN THEN
 
 ROLLBACK;
 
@@ -1849,7 +1848,7 @@ RAISE
 
 ---
 
-# 49. ETL vs Data Pipeline
+## 49. ETL vs Data Pipeline
 
 The term **data pipeline** is more general.
 
@@ -1873,7 +1872,7 @@ ETL refers specifically to the movement and transformation of data.
 
 ---
 
-# 50. The 10 concepts that you need to know very well
+## 50. The 10 concepts that you need to know very well
 
 For an Oracle Data Developer, I would first fix the following:
 
@@ -1910,7 +1909,7 @@ Short response:
 
 ### 3. What is staging?
 
-> An intermediate area in which the extracted data is prepared before loading in DWH. Here we can do validations, cleaning, mapping, deductions and business rules without directly affecting the final tables.
+> An intermediate area in which the extracted data is prepared before loading in DWH. Here we can do validations, cleaning, mapping, deduplication and business rules without directly affecting the final tables.
 
 ---
 
@@ -1992,7 +1991,7 @@ Otherwise you can lose data on the next run.
 
 ---
 
-# 53. Mental Model to Remember
+## 53. Mental Model to Remember
 
 I recommend you consider any ETL problem as follows:
 
