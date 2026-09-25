@@ -8,233 +8,231 @@ sidebar_position: 4
 
 <div className="chapter-kicker">Chapter C04 · Complete course</div>
 
-## 1. What OLTP is
+## 1. What OLTP Is
 
 **OLTP = Online Transaction Processing**.
 
-An OLTP system is built to process a large number of small and fast operations, carried out simultaneously by many users or applications.
+An OLTP system is designed to process a large number of small, fast operations carried out concurrently by many users or applications.
 
-Classical examples:
+Typical examples include:
 
-- banking system: payments, transfers, accounts;
-- ERP: invoices, orders, stocks;
-- e-commerce: orders, payments, customers;
-- CRM: customers, contacts, activities.
+- banking systems: payments, transfers, accounts;
+- ERP systems: invoices, orders, inventory;
+- e-commerce systems: orders, payments, customers;
+- CRM systems: customers, contacts, activities.
 
-The key feature is:
+The key characteristic is:
 
-> **many short transactions that read or modify few lines and have to respond very quickly.**
+> **Many short transactions read or modify a small number of rows and must respond very quickly.**
 
 For example:
 
-```
+```sql
 SELECT balance
 FROM accounts
-WHERE account_id =: account_id;
+WHERE account_id = :account_id;
 ```
 
 or:
 
-```
+```sql
 UPDATE accounts
-SET balance = balance -: amount
-WHERE account_id =: account_id;
+SET balance = balance - :amount
+WHERE account_id = :account_id;
 ```
 
-These are very different from an DWH query that can process millions of rows.
+These operations are very different from a DWH query that may process millions of rows.
 
 ---
 
-# 2. The OLTP Mental Model
+## 2. The OLTP Mental Model
 
-In a simplified banking application we can have:
+In a simplified banking application, we might have:
 
-```
+```text
 CUSTOMERS
     |
-1: N
+   1:N
     v
 ACCOUNTS
     |
-1: N
+   1:N
     v
 TRANSACTIONS
 ```
 
 For example:
 
-```
+```sql
 CREATE TABLE customers (
-customer_id NUMBER PRIMARY KEY,
-VARCHAR2 (100) NOT NULL
+    customer_id   NUMBER PRIMARY KEY,
+    customer_name VARCHAR2(100) NOT NULL
 );
 
 CREATE TABLE accounts (
-account_id NUMBER PRIMARY KEY,
-customer_id NUMBER NOT NULL,
-balance NUMBER (15.2) NOT NULL,
+    account_id  NUMBER PRIMARY KEY,
+    customer_id NUMBER NOT NULL,
+    balance     NUMBER(15,2) NOT NULL,
 
-CONSTRAINT fk_account_customer
-FOREIGN KEY (customer_id)
-REFERENCES customers (customer_id)
+    CONSTRAINT fk_account_customer
+        FOREIGN KEY (customer_id)
+        REFERENCES customers (customer_id)
 );
 
-CREATE
-transaction_id NUMBER PRIMARY KEY,
-account_id NUMBER NOT NULL,
-amount NUMBER (15.2) NOT NULL,
-transaction_ts TIMESTAMP DEFAULT SYSTIMESTAMP,
+CREATE TABLE transactions (
+    transaction_id NUMBER PRIMARY KEY,
+    account_id     NUMBER NOT NULL,
+    amount         NUMBER(15,2) NOT NULL,
+    transaction_ts TIMESTAMP DEFAULT SYSTIMESTAMP,
 
-CONSTRAINT fk_transaction_account
-FOREIGN KEY (account_id)
-REFERENCES accounts (account_id)
+    CONSTRAINT fk_transaction_account
+        FOREIGN KEY (account_id)
+        REFERENCES accounts (account_id)
 );
 ```
 
-This is a typical OLTP model: clear relationships, PK/FK and relatively normalized data.
+This is a typical OLTP model: clear relationships, primary and foreign keys, and relatively normalized data.
 
 ---
 
-# 3. Characteristics of an OLTP system
+## 3. Characteristics of an OLTP System
 
-Features of OLTP
-♪ ♪ ♪ ♪ ♪
-Operation - INSERT / UPDATE / DELETE / SELECT
-The row usually accessed few
-The duration of the short transaction
-• Simultani users; many
-• Very high competition
-Consistency of criticism
-The data model usually normalized
-Very important indexes
-* Short and selective Querys *
-• Joins usually on PK/FK
-* * *
-* Parallel Query rarely required *
-Full Table Scan usually unwanted for lookups
+Typical OLTP characteristics include:
 
-A typical example:
+- frequent `INSERT`, `UPDATE`, `DELETE`, and selective `SELECT` operations;
+- only a few rows are usually accessed by each statement;
+- transactions are short;
+- many concurrent users or application sessions;
+- potentially high contention on popular rows;
+- data consistency is critical;
+- the data model is usually normalized;
+- indexes are very important;
+- queries are usually short and selective;
+- joins are often based on PK/FK relationships;
+- parallel query is rarely required for normal transactional lookups;
+- full table scans are usually undesirable for highly selective lookups.
 
-```
+A typical example is:
+
+```sql
 SELECT *
 FROM accounts
-WHERE account_id =: id;
+WHERE account_id = :id;
 ```
 
-Oracle will probably use:
+If `account_id` is the primary key, Oracle will typically use a plan similar to:
 
-```
+```text
 INDEX UNIQUE SCAN
 TABLE ACCESS BY INDEX ROWID
 ```
 
-if the account\ _ id is PK.
-
 ---
 
-# 4. Normalization
+## 4. Normalization
 
-In OLTP we want to avoid unnecessary duplication of data.
+In OLTP systems, we usually want to avoid unnecessary duplication of data.
 
-Instead of:
+Instead of storing everything in one table:
 
-```
+```text
 TRANSACTIONS
 ------------------------------------------
 transaction_id
 customer_name
 customer_address
 account_number
-current
+current_balance
 transaction_amount
 ...
 ```
 
-We have:
+we normally separate the entities:
 
-```
+```text
 CUSTOMERS
 ACCOUNTS
 TRANSACTIONS
 ```
 
-tied through the keys.
+and connect them through keys.
 
-Advantages are important for trade applications:
+The advantages are important for transactional applications:
 
-```
+```text
 less redundancy
-        ↓
+      ↓
 simpler updates
-        ↓
+      ↓
 fewer inconsistencies
-        ↓
+      ↓
 better integrity
 ```
 
-In OLTP, the models in **3NF are common, which are approximately in **3NF, and Third Normal Form**.
+In OLTP systems, data models close to **Third Normal Form (3NF)** are common.
 
-In DWH the situation is often opposite: denormalization can be intended for the performance of analyses.
+In a DWH, the situation is often different: denormalization may be intentional because it can improve analytical query performance and simplify reporting structures.
 
 ---
 
-# 5. Primary Key and Foreign Key
+## 5. Primary Keys and Foreign Keys
 
-Keys are fundamental in an OLTP.
+Keys are fundamental in OLTP systems.
 
-```
+A primary key:
+
+```sql
 customer_id NUMBER PRIMARY KEY
 ```
 
-uniquely identifies the client.
+uniquely identifies a customer.
 
-Foreign key:
+A foreign key:
 
-```
+```sql
 FOREIGN KEY (customer_id)
 REFERENCES customers (customer_id)
 ```
 
-guarantee referential integrity.
+ensures referential integrity.
 
-We can't have:
+We cannot have:
 
-```
-ACCOUNT.customer_id = 9999
-```
-
-if that client doesn't exist.
-
-The Oracle will generate:
-
-```
-ORA-02291:
-integrity connected violated - parent key not found
+```text
+ACCOUNTS.customer_id = 9999
 ```
 
-This is exactly the protective mechanism we want in an OLTP.
+if customer `9999` does not exist.
+
+Oracle will raise an error such as:
+
+```text
+ORA-02291: integrity constraint violated - parent key not found
+```
+
+This is exactly the type of protection we want in an OLTP system.
 
 ---
 
-# 6. ACID
+## 6. ACID
 
-OLTP transactions shall comply with the properties of **ACID**.
+OLTP transactions should comply with the **ACID** properties.
 
-## Atomic
+### Atomicity
 
-The operation is running completely or not at all.
+The operation is completed entirely or not at all.
 
 For a bank transfer:
 
-```
-subtract 100 from A
+```text
+subtract 100 from account A
 +
-Add 100 to B
+add 100 to account B
 ```
 
-it is not acceptable to perform only the first operation.
+It is not acceptable to perform only the first operation.
 
-```
+```sql
 UPDATE accounts
 SET balance = balance - 100
 WHERE account_id = 10;
@@ -246,35 +244,31 @@ WHERE account_id = 20;
 COMMIT;
 ```
 
-If an error occurs:
+If an error occurs before the transaction is committed:
 
-```
+```sql
 ROLLBACK;
 ```
 
----
+### Consistency
 
-## Consistency
+The data must move from one valid state to another valid state.
 
-The data must pass from a valid state to another valid state.
+We can enforce rules such as:
 
-We can have rules like:
-
-```
-CHECK (balance = 0)
+```sql
+CHECK (balance >= 0)
 ```
 
-or business logic implemented through PL/SQL.
+or implement business rules through PL/SQL where appropriate.
 
----
+### Isolation
 
-## Isolation
+Concurrent transactions must not corrupt one another.
 
-Simultaneous transactions shall not corrupt each other.
+Oracle supports this using mechanisms such as:
 
-Oracle manages this by:
-
-```
+```text
 locks
 +
 undo
@@ -284,38 +278,36 @@ read consistency
 MVCC
 ```
 
----
-
-## Durability
+### Durability
 
 After:
 
-```
+```sql
 COMMIT;
 ```
 
-the changes become permanent.
+the committed changes must survive failures.
 
-Oracle uses mechanisms such as **redo** to recover confirmed transactions even after a crash.
+Oracle uses mechanisms such as **redo** to recover committed transactions after a crash.
 
 ---
 
-# 7. Transaction Boundary
+## 7. Transaction Boundaries
 
-A very important issue in OLTP is:
+A very important question in OLTP is:
 
-> **What operations form a single logical transaction?**
+> **Which operations form one logical transaction?**
 
-For example, bank transfer:
+For example, a bank transfer might contain:
 
-```
+```sql
 UPDATE accounts
-SET balance = balance -: amount
-WHERE account_id =: source_account;
+SET balance = balance - :amount
+WHERE account_id = :source_account;
 
 UPDATE accounts
-SET balance = balance +: amount
-WHERE account_id =: target_account;
+SET balance = balance + :amount
+WHERE account_id = :target_account;
 
 INSERT INTO transactions (...)
 VALUES (...);
@@ -323,91 +315,87 @@ VALUES (...);
 COMMIT;
 ```
 
-The three operations together form the transaction.
+These operations together form one transaction.
 
-It wouldn't be fair:
+It would be incorrect to do this:
 
-```
+```text
 UPDATE account A
-COMMIT;
+COMMIT
 
 UPDATE account B
-COMMIT;
+COMMIT
 ```
 
-Because if the second operation fails, the money has disappeared from the first account.
+because if the second operation fails, money would already have been removed from the first account.
 
 Rule:
 
-```
+```text
 business transaction
-=
-translation boundary
+        =
+transaction boundary
 ```
 
 ---
 
-# 8. COMMIT, ROLLBACK and SAVEPOINT
+## 8. COMMIT, ROLLBACK, and SAVEPOINT
 
 ### COMMIT
 
-Confirm the transaction.
+`COMMIT` confirms the transaction.
 
-```
+```sql
 COMMIT;
 ```
 
-After COMMIT:
+After a commit:
 
-```
-the changes are permanent
+```text
+changes become permanent
 +
-Locks are released
+transaction locks are released
 ```
-
----
 
 ### ROLLBACK
 
-Cancel unconfirmed changes.
+`ROLLBACK` cancels uncommitted changes.
 
-```
+```sql
 ROLLBACK;
 ```
 
----
-
 ### SAVEPOINT
 
-Allow partial rollback.
+A savepoint allows a partial rollback within a transaction.
 
-```
+```sql
 SAVEPOINT before_payment;
 
 UPDATE accounts
 SET balance = balance - 100
 WHERE account_id = 10;
 
-...
+-- other operations
 
 ROLLBACK TO before_payment;
 ```
 
-The rest of the transaction can continue.
+The rest of the transaction can continue after the rollback to the savepoint.
 
 ---
 
-# 9. Read Consistency in Oracle
+## 9. Read Consistency in Oracle
 
-The Oracle has a very important mechanism:
+Oracle has a very important mechanism:
 
-> **an SELECT sees a consistent picture of the data.**
+> **A `SELECT` sees a consistent image of the data.**
 
-We're assuming two sessions.
+Assume two sessions.
 
 ### Session A
 
-```
+```sql
 UPDATE accounts
 SET balance = 900
 WHERE account_id = 10;
@@ -415,94 +403,87 @@ WHERE account_id = 10;
 
 but without:
 
-```
+```sql
 COMMIT;
 ```
 
 ### Session B
 
-execute:
+executes:
 
-```
+```sql
 SELECT balance
 FROM accounts
 WHERE account_id = 10;
 ```
 
-Session B must not see the unconfirmed value.
+Session B must not see Session A's uncommitted value.
 
-Oracle rebuilds the corresponding version using **UNDO**.
+Oracle reconstructs the appropriate earlier version of the data using **UNDO** when necessary.
 
-Conceptual:
+Conceptually:
 
-```
+```text
 Session A
 
 1000 → UPDATE → 900
                  |
-uncommited
+                 +-- uncommitted
 
 Session B
-     |
-+ - - - -
-               |
-               v
-1000
+    |
+    +----------------------> 1000
 ```
 
-This is one of the important differences in the Oracle of Competition mechanism.
+This is one of the most important features of Oracle's concurrency model.
 
 ---
 
-# 10. MVCC
+## 10. MVCC
 
-The concept is called:
+The concept is called **Multi-Version Concurrency Control (MVCC)**.
 
-**Multi-Version Concurence Control**.
+Instead of readers normally being blocked by writers:
 
-Instead of readers being normally blocked by writers:
-
-```
-Writer changes data
-Reader reads the consistent version
+```text
+writer changes data
+reader reads a consistent version
 ```
 
-Result:
+The result, in normal situations, is:
 
-```
+```text
 reader does not block writer
 writer does not block reader
 ```
 
-in normal situations.
+However:
 
-But:
-
-```
-Writer can block Writer
+```text
+writer can block writer
 ```
 
-if two transactions want to change the same line.
+when two transactions try to modify the same row.
 
 ---
 
-# 11. Row locking
+## 11. Row Locking
 
-We assume:
+Assume:
 
 ### Session 1
 
-```
+```sql
 UPDATE accounts
 SET balance = balance - 100
 WHERE account_id = 10;
 ```
 
-Oracle puts an **row lock** in turn.
+Oracle acquires a **row-level lock** on the affected row.
 
 If Session 2 executes:
 
-```
+```sql
 UPDATE accounts
 SET balance = balance + 50
 WHERE account_id = 10;
@@ -510,46 +491,46 @@ WHERE account_id = 10;
 
 Session 2 will wait.
 
-The situation is:
+Conceptually:
 
-```
+```text
 Session 1
 UPDATE row 10
-   |
-   v
+    |
+    v
 LOCK row 10
-   |
-   |
+    |
+    |
 Session 2
 UPDATE row 10
-   |
-   v
+    |
+    v
 WAIT
 ```
 
-When Session 1 goes:
+When Session 1 executes either:
 
-```
+```sql
 COMMIT;
 ```
 
 or:
 
-```
+```sql
 ROLLBACK;
 ```
 
-The location is cleared.
+the transaction ends and the lock is released.
 
 ---
 
-# 12. Blocking
+## 12. Blocking
 
-Blocking occurs when one transaction holds a lock that another needs.
+Blocking occurs when one transaction holds a lock that another transaction needs.
 
-It is particularly dangerous when an application:
+It is especially dangerous when an application behaves like this:
 
-```
+```text
 BEGIN TRANSACTION
 UPDATE
 ...
@@ -558,156 +539,156 @@ user waits 5 minutes
 COMMIT
 ```
 
-In an OLTP the transactions must be:
+In an OLTP system, transactions should be:
 
 > **as short as possible.**
 
 Long transactions increase:
 
-```
+```text
 blocking
-lock content
-consumption of UNDO
-risk of deadlock
+lock contention
+UNDO consumption
+risk of deadlocks
 ```
 
 ---
 
-# 13. Deadlock
+## 13. Deadlocks
 
-A deadlock appears when:
+A deadlock occurs when:
 
-```
+```text
 Transaction A
-hold row 1
-Wait for row 2
+holds row 1
+waits for row 2
 
 Transaction B
-keep row 2
-wait for row 1
+holds row 2
+waits for row 1
 ```
 
-Scheme:
+Conceptually:
 
-```
-T1 T2
+```text
+T1                            T2
 
-LOCK Account A LOCK Account B
-      |                     |
-      v                     v
-WAIT Account B
-\ ____ ____ ____ ____ ____ _ /
-              |
-dadlock
+LOCK Account A               LOCK Account B
+      |                             |
+      v                             v
+WAIT Account B  <---------->  WAIT Account A
+              deadlock
 ```
 
-Oracle detects the situation and generates:
+Oracle detects the situation and raises:
 
+```text
+ORA-00060: deadlock detected while waiting for resource
 ```
-ORA-00060:
-deadlock detected while waiting for resource
-```
 
-An important prevention technique is for the application to access resources in the same order.
+An important prevention technique is to make the application access resources in a consistent order.
 
-For example, always:
+For example, always lock or update:
 
-```
-Lower account_id
+```text
+lower account_id first
 then
-account_id higher
+higher account_id
 ```
 
 ---
 
-# 14. Isolation levels
+## 14. Isolation Levels
 
-In Oracle, the most used level is:
+In Oracle, the most commonly used isolation level is:
 
-```
+```text
 READ COMMITTED
 ```
 
-and is the default level.
+and it is the default.
 
-Each state sees the commited data existing at the beginning of the state.
+Under `READ COMMITTED`, each statement sees committed data as of the beginning of that statement.
 
-The Oracle also provides:
+Oracle also provides:
 
-```
+```text
 SERIALIZABLE
 ```
 
-trying to provide behavior equivalent to a serial execution.
+which provides transaction-level consistency and attempts to provide behavior equivalent to serial execution. If Oracle detects that the transaction cannot be serialized, it may raise `ORA-08177`.
 
-There are also:
+There is also:
 
-```
+```sql
 SET TRANSACTION READ ONLY;
 ```
 
-for transactions that need to see a consistent image without changes.
+for transactions that need a consistent read-only view of the data.
 
-In the usual OLTP applications:
+In typical OLTP applications:
 
-> **READ COMMITTED is the standard.
+> **READ COMMITTED is the standard choice.**
 
 ---
 
-# 15. Index in OLTP
+## 15. Indexes in OLTP
 
-The indexes are essential because OLTP makes many selective lookups.
+Indexes are essential because OLTP workloads perform many selective lookups.
 
 Example:
 
-```
+```sql
 SELECT *
 FROM accounts
-WHERE account_id =: id;
+WHERE account_id = :id;
 ```
 
-If the account\ _ id is PK:
+If `account_id` is the primary key, the plan may contain:
 
-```
-INDEUNIQUE SCAN
+```text
+INDEX UNIQUE SCAN
 ```
 
-It's very effective.
+which is very efficient for a single-row lookup.
 
 For:
 
-```
+```sql
 SELECT *
 FROM transactions
-WHERE account_id =: account_id
+WHERE account_id = :account_id
 ORDER BY transaction_ts DESC;
 ```
 
-may be useful:
+an index such as this may be useful:
 
+```sql
+CREATE INDEX idx_transactions_account_ts
+ON transactions (account_id, transaction_ts DESC);
 ```
-CREATEQ1QX idx_transactions_account_ts
-ON transactions (account_id, transaction_ts);
-```
+
+The exact benefit depends on the data distribution, query patterns, and execution plan.
 
 ---
 
-# 16. Why don't we index everything
+## 16. Why We Do Not Index Everything
 
-Each index must be maintained.
+Every index must be maintained.
 
-For:
+For an operation such as:
 
-```
+```sql
 INSERT INTO transactions (...)
+VALUES (...);
 ```
 
-The Oracle must amend:
+Oracle may need to update:
 
-```
-TABLE
+```text
+table data
 +
-PK index
+primary-key index
 +
 account_id index
 +
@@ -718,86 +699,90 @@ other indexes
 
 Therefore:
 
-```
+```text
 more indexes
     ↓
-SELECT potentially faster
+SELECT may become faster
     ↓
-More expensive INSERT/UPDATE/DELETE
+INSERT / UPDATE / DELETE become more expensive
 ```
 
-OLTP requires balance.
+OLTP design requires balance.
 
 ---
 
-# 17. Selectivity
+## 17. Selectivity
 
-An index is very useful when the condition returns few lines.
+An index is especially useful when a condition returns only a small fraction of the table.
 
-Very selective example:
+A highly selective example is:
 
-```
+```sql
 WHERE transaction_id = 123456
 ```
 
-can return:
+which may return:
 
-```
+```text
 1 row out of 100 million
 ```
 
-Excellent index.
+This is an excellent candidate for indexed access.
 
 But:
 
-```
+```sql
 WHERE status = 'ACTIVE'
 ```
 
-if 90% of the rows are ACTIVE, the index may not be useful.
+may not benefit from an index if 90% of the rows are `ACTIVE`.
 
 Oracle may prefer:
 
+```text
+TABLE ACCESS FULL
 ```
-TABLEQ1QX FULL
-```
+
+The optimizer decides based on statistics, estimated cardinality, cost, clustering, and other factors.
 
 ---
 
-# 18. Foreign Keys and indexes
+## 18. Foreign Keys and Indexes
 
-In OLTP systems it is frequently useful to have indexes on FK columns.
+In OLTP systems, it is frequently useful to index foreign-key columns.
 
 For example:
 
-```
+```text
 TRANSACTIONS.account_id
 ```
 
-Can be indexed:
+can be indexed as:
 
-```
-CREATEQ1QX idx_transactions_account
+```sql
+CREATE INDEX idx_transactions_account
 ON transactions (account_id);
 ```
 
-Benefits may include:
+Potential benefits include:
 
+```text
+faster joins
+faster child-row lookups
+reduced locking issues in some parent-key update/delete scenarios
 ```
-Quick JOIN
-quickly look up
-reduction of certain housing problems associated with parental operations
-```
+
+A foreign key does **not** automatically create an index in Oracle, so the need for one should be evaluated explicitly.
 
 ---
 
-# 19. Bind Variables
+## 19. Bind Variables
 
-Very important in Oracle OLTP.
+Bind variables are extremely important in Oracle OLTP systems.
 
-Instead of:
+Instead of sending many SQL statements that differ only by literal values:
 
-```
+```sql
 SELECT *
 FROM accounts
 WHERE account_id = 1001;
@@ -811,35 +796,35 @@ FROM accounts
 WHERE account_id = 1003;
 ```
 
-the application uses:
+an application should normally use:
 
-```
+```sql
 SELECT *
 FROM accounts
-WHERE account_id =: account_id;
+WHERE account_id = :account_id;
 ```
 
-The Oracle may reuse the cursor.
+Oracle can then reuse the parsed cursor.
 
-The advantages are important:
+Important benefits include:
 
-```
+```text
 less hard parsing
-less CPU
+lower CPU usage
 less pressure on the shared pool
-cursor failed
-protection against SQL injection
+better cursor reuse
+protection against SQL injection when binds are used correctly
 ```
 
-In an OLTP system with thousands of querys per second this is critical.
+In an OLTP system executing thousands of SQL statements per second, this is critical.
 
 ---
 
-# 20. Execution Typical OLTP Plan
+## 20. Typical OLTP Execution Plans
 
-A very common OLTP plan is:
+A very common OLTP plan looks like:
 
-```
+```text
 SELECT STATEMENT
 TABLE ACCESS BY INDEX ROWID ACCOUNTS
 INDEX UNIQUE SCAN PK_ACCOUNTS
@@ -847,30 +832,30 @@ INDEX UNIQUE SCAN PK_ACCOUNTS
 
 Read from the bottom up:
 
-```
-INDEUNIQUE SCAN
+```text
+INDEX UNIQUE SCAN
         ↓
-Find ROWID
+find ROWID
         ↓
 TABLE ACCESS BY INDEX ROWID
         ↓
 return row
 ```
 
-Other example:
+Another example:
 
-```
+```text
 NESTED LOOPS
-TABLE ACCESS BY INDEX ROWID CUSTOMERS
-INDEX UNIQUE SCAN PK_CUSTOMERS
+  TABLE ACCESS BY INDEX ROWID CUSTOMERS
+    INDEX UNIQUE SCAN PK_CUSTOMERS
 
-TABLE ACCESS BY INDEX ROWID ACCOUNTS
-INDEX RANGE SCAN IDX_ACCOUNT_CUSTOMER
+  TABLE ACCESS BY INDEX ROWID ACCOUNTS
+    INDEX RANGE SCAN IDX_ACCOUNTS_CUSTOMER
 ```
 
-This is very characteristic OLTP:
+This is very characteristic of OLTP workloads:
 
-```
+```text
 few rows
 +
 indexes
@@ -880,24 +865,24 @@ Nested Loops
 
 ---
 
-# 21. Nested Loops in OLTP
+## 21. Nested Loops in OLTP
 
-We assume:
+Assume:
 
-```
-SELECT. *
+```sql
+SELECT a.*
 FROM customers c
 JOIN accounts a
-ON a.customer_id = c.customer_id
-WHERE c.customer_id =: id;
+  ON a.customer_id = c.customer_id
+WHERE c.customer_id = :id;
 ```
 
-Oracle can do:
+Oracle might execute:
 
-```
+```text
 INDEX UNIQUE SCAN PK_CUSTOMERS
         ↓
-1 custodian
+1 customer
         ↓
 NESTED LOOPS
         ↓
@@ -906,97 +891,96 @@ INDEX RANGE SCAN IDX_ACCOUNTS_CUSTOMER
 
 If we have:
 
-```
-1 custodian
+```text
+1 customer
 5 accounts
 ```
 
-It's very effective.
+this can be very efficient.
 
-In DWH, if we have:
+In a DWH workload, if we process:
 
-```
-10 million Customers
+```text
+10 million customers
 100 million transactions
 ```
 
-A Hash Join can be more appropriate.
+A **Hash Join** may be more appropriate.
 
 ---
 
-# 22. Transactions must be short
+## 22. Transactions Must Be Short
 
-An important OLTP rule:
+An important OLTP rule is:
 
 > **Do not keep transactions open longer than necessary.**
 
-Bad:
+Bad pattern:
 
-```
+```text
 UPDATE
-↓
-input user
-↓
+  ↓
+wait for user input
+  ↓
 30 seconds
-↓
-other UPDATE
-↓
-user confirmation
-↓
+  ↓
+another UPDATE
+  ↓
+wait for user confirmation
+  ↓
 COMMIT
 ```
 
-Okay:
+Better pattern:
 
-```
-receive all data
-↓
-BEGIN transaction
-↓
+```text
+receive all required input
+  ↓
+begin transaction
+  ↓
 UPDATE
 UPDATE
 INSERT
-↓
+  ↓
 COMMIT
 ```
 
-So the time that the locations are kept is very small.
+This keeps lock duration as short as possible.
 
 ---
 
-# 23. COMMIT too often
+## 23. COMMIT Too Often
 
-The opposite extreme is no good either.
+The opposite extreme is also problematic.
 
 For example:
 
-```
-FOR...
-LOOP
-INSERT...;
-COMMIT;
+```sql
+FOR ... LOOP
+    INSERT ...;
+    COMMIT;
 END LOOP;
 ```
 
-it can be very ineffective.
+can be very inefficient and may also break the intended business transaction.
 
-In a logical operation:
+If:
 
-```
-100 INSERT-uri
-```
-
-if they form a single business transaction, normally:
-
-```
-100 INSERT-uri
-
-COMMIT;
+```text
+100 INSERTs
 ```
 
-No:
+form one logical business transaction, the normal pattern is:
 
+```text
+100 INSERTs
+
+COMMIT
 ```
+
+not:
+
+```text
 INSERT
 COMMIT
 INSERT
@@ -1004,218 +988,205 @@ COMMIT
 ...
 ```
 
-Transaction boundary must be determined by business meaning, not arbitrary.
+The transaction boundary should be determined by business meaning, not by an arbitrary row count.
 
 ---
 
-# 24. OLTP and PL/SQL
+## 24. OLTP and PL/SQL
 
-PL/SQL is very useful for trading operations.
+PL/SQL is very useful for transactional business operations.
 
 Example:
 
-```
+```sql
 CREATE OR REPLACE PROCEDURE transfer_money (
-p_from_account NUMBER,
-p_to_account NUMBER,
-p_amount NUMBER
+    p_from_account IN NUMBER,
+    p_to_account   IN NUMBER,
+    p_amount       IN NUMBER
 )
 IS
 BEGIN
+    UPDATE accounts
+    SET balance = balance - p_amount
+    WHERE account_id = p_from_account;
 
-UPDATE accounts
-SET balance = balance - p_amount
-WHERE account_id = p_from_account;
+    UPDATE accounts
+    SET balance = balance + p_amount
+    WHERE account_id = p_to_account;
 
-UPDATE accounts
-SET balance = balance + p_amount
-WHERE account_id = p_to_account;
-
-INSERT
-transaction_id,
-account_id,
-% 1
-)
-VALUES (
-transaction_seq.NEXTVAL,
-p_from_account,
--p_amount
-);
+    INSERT INTO transactions (
+        transaction_id,
+        account_id,
+        amount,
+        transaction_ts
+    )
+    VALUES (
+        transaction_seq.NEXTVAL,
+        p_from_account,
+        -p_amount,
+        SYSTIMESTAMP
+    );
 
 EXCEPTION
-WHENQ1QX THEN
-RAISE;
+    WHEN OTHERS THEN
+        RAISE;
 END;
 /
 ```
 
-Very important: often the decision of:
+Very important: the decision to issue:
 
-```
-COMMIT
+```sql
+COMMIT;
 ```
 
-remains at the level that controls the entire business transaction, not mandatory in each internal procedure.
+often belongs to the layer that controls the complete business transaction rather than to every internal procedure.
+
+A production implementation should also validate conditions such as insufficient funds, missing accounts, invalid amounts, and the number of rows affected.
 
 ---
 
-# 25. Data Integrity
+## 25. Data Integrity
 
-In OLTP, the database must protect the data.
+In OLTP systems, the database should protect the data.
 
-We don't have to rely solely on the app.
+We should not rely only on the application.
 
-Examples:
+Important mechanisms include:
 
-```
+```text
 PRIMARY KEY
-```
-
-```
 FOREIGN KEY
-```
-
-```
 NOT NULL
-```
-
-```
 UNIQUE
-```
-
-```
 CHECK
 ```
 
 For example:
 
-```
-VARCHAR2 status (20)
-CHECK (IN status ('ACTIVE', 'BLOCKED', 'CLOSED'))
+```sql
+status VARCHAR2(20) NOT NULL
+    CHECK (status IN ('ACTIVE', 'BLOCKED', 'CLOSED'))
 ```
 
-This ensures that even another program that writes directly in DB cannot introduce invalid values.
+This ensures that even another program writing directly to the database cannot insert an invalid status value.
 
 ---
 
-# 26.OLTP vs OLAP / DWH
+## 26. OLTP vs. OLAP / DWH
 
-This is one of the most important differences to understand:
+This is one of the most important contrasts to understand.
 
-= = sync, corrected by elderman = = @ elder _ man
-- - - - - - - - -
-Purpose of current operations
-Date of current and historical data
-* * * * * * * *
-= = sync, corrected by elderman = =
-Row / query is few; million
-= = sync, corrected by elderman = =
-The Index is very important and depends on it.
-# Join typical Nested Loops # Hash Join #
-♪ Full Scan often unwanted ♪
-* Parallelism *
-♪ ♪ ♪ ♪ ♪ ♪
-• Very high competition and lower competition
+| Characteristic | OLTP | OLAP / DWH |
+|---|---|---|
+| Main purpose | Current business operations | Analysis and reporting |
+| Data | Mostly current operational data | Large volumes of current and historical data |
+| Rows processed per query | Usually few | Often thousands to millions or more |
+| Data model | Usually normalized | Often dimensional / denormalized |
+| Index usage | Very important for selective access | Important, but large scans are also common |
+| Typical join | Nested Loops for selective access | Hash Join often common for large sets |
+| Full table scans | Often undesirable for point lookups | Often normal and efficient |
+| Parallelism | Usually limited | Often useful |
+| Concurrency | Usually very high | Typically lower transactional contention |
 
-Example OLTP:
+Example OLTP query:
 
-```
+```sql
 SELECT balance
 FROM accounts
-WHERE account_id =: id;
+WHERE account_id = :id;
 ```
 
-Example OLAP:
+Example OLAP query:
 
-```
+```sql
 SELECT
-region,
-product_category,
-SUM (amount)
+    region,
+    product_category,
+    SUM(amount)
 FROM fact_sales
-WHERE sale_date = DATE '2025-01-01'
+WHERE sale_date >= DATE '2025-01-01'
+  AND sale_date <  DATE '2026-01-01'
 GROUP BY
-region,
-product_category;
+    region,
+    product_category;
 ```
 
-The first can read:
+The first query might read:
 
-```
+```text
 1 row
 ```
 
-second:
+while the second might process:
 
-```
+```text
 100 million rows
 ```
 
-This is why the same SQL strategy cannot be optimal for both.
+This is why the same SQL strategy cannot be optimal for both workloads.
 
 ---
 
-# 27. OLTP → ETL → DWH
+## 27. OLTP → ETL → DWH
 
-The general model that it is worth retaining is:
+A useful general model is:
 
-```
+```text
 OLTP
-|
-The Customers
-= = Notes = =
-= = = Transactions = = =
-|
-v
+ |
+ +-- Customers
+ +-- Accounts
+ +-- Transactions
+ |
+ v
 STAGING
-|
-v
+ |
+ v
 ETL / ODI
-|
-♪ ♪ ♪
-= = = Validation = = =
-= = References = =
-♪ ♪ ♪
-|
-v
+ |
+ +-- Validation
+ +-- Transformations
+ +-- Reference-data checks
+ |
+ v
 DWH
-|
-+ -- Dimensions
-|
-+ -- Facts
-|
-v
+ |
+ +-- Dimensions
+ +-- Facts
+ |
+ v
 OLAP / BI / Reports
 ```
 
-OLTP responds to:
+OLTP answers questions such as:
 
-> What's the balance of the account now?
+> What is the account balance now?
 
-DWH responds to:
+A DWH answers questions such as:
 
-> What has been the evolution of the balances of corporate customers by region over the last three years?
+> How have corporate-customer balances evolved by region over the last three years?
 
 ---
 
-# 28. Complete example: bank transfer
+## 28. Complete Example: Bank Transfer
 
-We have:
+Assume:
 
-```
+```text
 Account A = 1000
 Account B = 500
 ```
 
-Transferring:
+We transfer:
 
-```
+```text
 100
 ```
 
-Transaction:
+A simplified transaction could be:
 
-```
+```sql
 UPDATE accounts
 SET balance = balance - 100
 WHERE account_id = 10;
@@ -1224,30 +1195,30 @@ UPDATE accounts
 SET balance = balance + 100
 WHERE account_id = 20;
 
-INSERT
-transaction_id,
-account_id,
-% 1% 2
-transaction_ts
+INSERT INTO transactions (
+    transaction_id,
+    account_id,
+    amount,
+    transaction_ts
 )
 VALUES (
-transaction_seq.NEXTVAL,
-10,
--100,
-SYSTIMESTAMP
+    transaction_seq.NEXTVAL,
+    10,
+    -100,
+    SYSTIMESTAMP
 );
 
-INSERT
-transaction_id,
-account_id,
-% 1% 2
-transaction_ts
+INSERT INTO transactions (
+    transaction_id,
+    account_id,
+    amount,
+    transaction_ts
 )
 VALUES (
-transaction_seq.NEXTVAL,
-20,
-100,
-SYSTIMESTAMP
+    transaction_seq.NEXTVAL,
+    20,
+    100,
+    SYSTIMESTAMP
 );
 
 COMMIT;
@@ -1255,15 +1226,15 @@ COMMIT;
 
 Result:
 
-```
+```text
 Account A = 900
 Account B = 600
 ```
 
-The Oracle shall simultaneously ensure:
+Oracle must simultaneously support:
 
-```
-Atomic
+```text
+Atomicity
 Consistency
 Isolation
 Durability
@@ -1280,167 +1251,168 @@ redo
 constraint validation
 ```
 
-This seemingly simple operation focuses almost all essential concepts of OLTP.
+This apparently simple operation brings together most of the essential OLTP concepts.
 
 ---
 
-# 29. What you need to follow at performance
+## 29. What to Check for OLTP Performance
 
-For an SQL OLTP, the main question is often:
+For an OLTP SQL statement, one of the main questions is often:
 
-```
-How many lines do I have to find?
+```text
+How many rows do I actually need to find?
 ```
 
 If the answer is:
 
-```
+```text
 1
 5
 10
 100
 ```
 
-and the table has:
+and the table contains:
 
-```
+```text
 50 million rows
 ```
 
-we often expect to:
+we often expect selective access such as:
 
-```
+```text
 index access
 ```
 
-No:
+rather than an unnecessary:
 
-```
-Full table scan
+```text
+full table scan
 ```
 
-A healthy profile can show conceptual:
+A healthy execution profile may look conceptually like:
 
-```
-INDEUNIQUE/RANGE SCAN
+```text
+INDEX UNIQUE / RANGE SCAN
         ↓
 TABLE ACCESS BY INDEX ROWID
         ↓
 NESTED LOOPS
         ↓
-feel rows
+few rows returned
+```
+
+This is not an absolute rule: Oracle may still choose a full scan when statistics and cost estimates make it cheaper.
+
+---
+
+## 30. Important OLTP Anti-Patterns
+
+The following situations should be recognized quickly:
+
+```text
+SELECT * when all columns are not required
+
+functions on indexed columns without a matching function-based index:
+WHERE UPPER(code) = ...
+
+transactions kept open for too long
+
+COMMIT after every row
+
+excessive or unnecessary indexes
+
+missing indexes on columns used constantly for selective lookup
+
+SQL without bind variables
+
+updates affecting millions of rows during peak hours
+
+heavy analytical queries executed directly against OLTP tables
+
+locking resources in inconsistent order
+
+leaving all integrity enforcement exclusively to the application
 ```
 
 ---
 
-# 30. Important OLTP anti-patents
+## 31. Questions and Answers
 
-It is worth acknowledging immediately the following situations:
+### What characterizes an OLTP system?
 
-```
-SELECT * without need
+A strong compact answer is:
 
-functions on indexed columns:
-WHERE UPPER (code) =...
-
-transactions kept open long
-
-COMMIT after each row
-
-excessive unnecessary indexes
-
-missing index on columns used constantly for lookup
-
-SQL without wind variables
-
-updates on millions of rows during peak hours
-
-heavy analytical querys performed directly on OLTP
-
-Locking in inconsistent order
-
-integrity logic left only to the application
-```
+> An OLTP system is optimized for a high volume of short, concurrent transactions, typically involving `INSERT`, `UPDATE`, `DELETE`, and highly selective `SELECT` statements. The data model is generally normalized and uses primary keys, foreign keys, and integrity constraints. Performance relies heavily on selective indexes, bind variables, and access to a small number of rows, often through Nested Loops. In Oracle, concurrency is managed using row-level locking, UNDO, and read consistency through MVCC, allowing readers and writers to block each other as little as possible. Transaction boundaries should follow the business operation, with `COMMIT` or `ROLLBACK` applied to the complete logical unit of work.
 
 ---
 
-## Questions and answers
+## 32. Memorization Scheme
 
-If at the technical discussion you are asked:
+If you want to retain OLTP as one mental model:
 
-**- What characterizes an OLTP system?
-
-a very good and compact answer would be:
-
-> A OLTP system is optimized for a large volume of short and competing transactions, usually INSERT, UPDATE, DELETE and SELECT-uri very selective. The model is generally normalized and uses PK, FK and data integrity constraints. The performance is based much on selective indexes, bind variables and access to a small number of lines, frequently through Nested Loops. In Oracle, competition is managed by row-level locking, UNDO and read consistency / MVCC, so that readers and writers block as little as possible. Transaction boundaries must comply with business operation, with COMMIT or ROLLBACK for the entire logical unit.
-
----
-
-# 32. The memorizing scheme
-
-If you want to retain OLTP in a single mental image:
-
-```
+```text
 OLTP
-                          |
-        +-----------------+-----------------+
-        |                 |                 |
-DATAQ1QX PERFORMANCE
-        |                 |                 |
-ACID Index Normalisation
-PK / FK COMMIT
-Constraints ROLLBACK Nested Loops
-SAVEPOINT
-                             |
-CONCURRENCY
-                             |
-                    +--------+--------+
-                    |                 |
-UNDO LOCKS
-                    |                 |
-Read consistency Row locking
-                    |                 |
-MVCC Block
-                                      |
-Deadlock
+ |
+ +----------------------+----------------------+
+ |                      |                      |
+DATA                TRANSACTIONS           PERFORMANCE
+ |                      |                      |
+PK / FK                 ACID                  Indexes
+Constraints             COMMIT                Selectivity
+Normalization           ROLLBACK              Nested Loops
+                        SAVEPOINT              Bind variables
+                           |
+                       CONCURRENCY
+                           |
+                   +-------+-------+
+                   |               |
+                  UNDO            LOCKS
+                   |               |
+            Read consistency   Row locking
+                   |               |
+                  MVCC          Blocking
+                                   |
+                                Deadlocks
 ```
 
 The central idea is:
 
-> **OLTP in Oracle = short transactions + consistent data + high competition + very selective access to few rows.**
+> **OLTP in Oracle = short transactions + consistent data + high concurrency + highly selective access to a small number of rows.**
 
-And the fundamental contrast that it is worth to have permanently in mind is:
+The fundamental contrast to remember is:
 
-```
+```text
 OLTP
-few rows + index + Nested Loops + transactions
+few rows + indexes + Nested Loops + short transactions
 
 vs.
 
 DWH / OLAP
-many rows + scans + Hash Join + aggregations + parallelism
+many rows + scans + Hash Joins + aggregations + parallelism
 ```
 
 ---
 
-## Questions and answers
+## Additional Questions and Answers
 
-### How would you briefly explain the OLTP to a colleague who knows SQL, but not this area?
+### How would you briefly explain OLTP to a colleague who knows SQL but not this area?
 
-The OLTP covers high-competition transactional workloads, normalized data models and referential integrity, short transactions and selective indexes. In practice, first, I determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
+OLTP covers highly concurrent transactional workloads, normalized data models, referential integrity, short transactions, and selective indexed access. In practice, I first identify what data enters the process and what result is required, then I check the implementation, execution plan, transaction boundaries, locking behavior, and the effect on the overall business flow.
 
-### What are the two most common practical problems related to the OLTP?
+### What are two common practical OLTP problems?
 
-Two recurring problems are the misinterpretation of data or granularity and degradation of performance at real volume. For the OLTP, explicitly follow the high-competition transactional workloads, normalized data models and referential integrity, short translations and selective indexes and compare the result with a control set.
+Two recurring problems are incorrect transaction or data interpretation and performance degradation at real production volume. In OLTP systems, I pay particular attention to concurrency, transaction boundaries, normalized models, referential integrity, selective indexes, and whether the SQL still behaves correctly and efficiently under realistic load.
 
-### How do you check that the result is correct and not just fast?
+### How do you check that the result is correct and not merely fast?
 
-I compare the number of rows, amounts and keys with the source or with a reference result; I test NULLs, duplicates, limits and rerouting of the batch.I only then check time, resources and execution plan.
+I compare row counts, amounts, keys, and business totals with the source or a known reference result. I test `NULL` values, duplicates, boundary conditions, and exceptional cases. Only after validating correctness do I evaluate elapsed time, resource consumption, locking, and the execution plan.
 
-### What information did you collect before you modified an existing solution?
+### What information do you collect before modifying an existing OLTP solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect the functional requirement, data grain, schema and keys, expected volume, data distribution, dependencies, execution plans, timings, known errors, logging information, concurrency requirements, and acceptance criteria. I also identify how to roll back the change safely if necessary.
 
-### Give an example of a DWH or banking flow where this concept changes design.
+### Give an example of a DWH or banking flow where OLTP concepts affect the design.
 
-In a bank flow, the OLTP appears together with logging, auditing, reconciliation and impact analysis.
+In a banking flow, OLTP design interacts directly with logging, auditing, reconciliation, data lineage, and impact analysis. A transfer must be atomic and auditable in the source system, while downstream ETL and DWH processes must preserve enough information to reconcile the resulting balances and transaction history.
+
