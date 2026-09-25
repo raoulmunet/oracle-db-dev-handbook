@@ -8,20 +8,20 @@ sidebar_position: 5
 
 <div className="chapter-kicker">Chapter C05 · Complete course</div>
 
-OLAP stands for **Online Analytical Processing** and represents the **-oriented mode of work analysis, reporting, aggregation and exploration of large** data volumes.
+OLAP stands for **Online Analytical Processing** and refers to workloads oriented toward **analysis, reporting, aggregation, and exploration of large data volumes**.
 
-It is very important for a role of **Data Developer / DWH Developer**, because most queries on a Data Warehouse are of a kind OLAP.
+It is especially important for a **Data Developer / DWH Developer**, because many Data Warehouse queries are OLAP-oriented.
 
 ---
 
 ## 1. What OLAP is
 
-In an OLAP system we are not interested in first:
+In an OLAP system, the primary focus is not on:
 
-- the introduction of an order;
-- modification of a customer;
-- payment of an invoice;
-- updating an individual balance.
+- entering an order;
+- modifying a customer record;
+- paying an invoice;
+- updating an individual account balance.
 
 These are **OLTP** activities.
 
@@ -55,9 +55,9 @@ analysis / reporting / BI
 
 ---
 
-# 2. OLTP vs OLAP
+## 2. OLTP vs OLAP
 
-The difference must be known very well.
+The distinction is fundamental.
 
 Features of OLTP and OLAP
 - - - - - - - - -
@@ -67,7 +67,7 @@ Processed rows, few, many
 INSERT/UPDATE
 = = sync, corrected by elderman = = @ elder _ man
 Current data and historical data
-The model is normalized by size.
+The model is normalized by dimension.
 Many and small transactions are small and large
 * * * * *
 * * * *
@@ -76,7 +76,7 @@ Examples of "banking transfer system" are DWH / reporting
 
 Example OLTP:
 
-```
+```sql
 SELECT *
 FROM accounts
 WHERE account_id = 12345;
@@ -91,12 +91,12 @@ TABLE ACCESS BY INDEX ROWID
 
 Example OLAP:
 
-```
-SELECT
-region_id,
-SUM (amount)
+```sql
+SELECT region_id,
+       SUM(amount) AS total_amount
 FROM sales
-WHERE sale_date = DATE '2025-01-01'
+WHERE sale_date >= DATE '2025-01-01'
+  AND sale_date <  DATE '2025-01-02'
 GROUP BY region_id;
 ```
 
@@ -104,20 +104,20 @@ This is where millions of rows can be processed.
 
 The plan may contain:
 
-```
-TABLEQ1QX FULL
-HASHQ1QX BY
+```text
+TABLE ACCESS FULL
+HASH GROUP BY
 ```
 
 And this isn't necessarily bad.
 
 ---
 
-# 3. Dimensional Model
+## 3. Dimensional Model
 
 OLAP is very closely linked to **dimensional modelling**.
 
-Conceptual we have:
+Conceptually, we have:
 
 ```
 DIM_DATE
@@ -146,17 +146,17 @@ DIM_REGION
 
 This is one:
 
-> **Star Schedule**
+> **Star Schema**
 
 ---
 
-# 4. Fact Table
+## 4. Fact Table
 
-The **FACT** table contains measurable events.
+A **fact table** contains measurable business events.
 
 Example:
 
-```
+```text
 FACT_TRANSACTION
 --------------------------------
 transaction_key
@@ -164,21 +164,21 @@ date_key
 customer_key
 account_key
 branch_key
-% 1
+amount
 fee
 quantity
 ```
 
 It usually contains:
 
-- Foreign keys to dimensions;
-- numerical measures;
-- A lot of lines.
+- foreign keys to dimensions;
+- numeric measures;
+- a large number of rows.
 
 Example:
 
-```
-SELECT COUNT *
+```sql
+SELECT COUNT(*)
 FROM fact_transaction;
 ```
 
@@ -192,47 +192,46 @@ rows.
 
 ---
 
-# 5. Measures
+## 5. Measures
 
 A **measure** is a measurable value.
 
 Examples:
 
-```
-% 1
+```text
+amount
 quantity
-returns
+revenue
 cost
 profit
 balance
 fee
 ```
 
-Aggregates usually apply:
+Measures are typically aggregated using:
 
-```
-SUM (amount)
-AVG (amount)
+```sql
+SUM(amount)
+AVG(amount)
 MIN (amount)
 MAX (amount)
-COUNT *
+COUNT(*)
 ```
 
 Example:
 
-```
-SELECT
-customer_key,
-SUM (amount) total_amount
+```sql
+SELECT customer_key,
+       SUM(amount) AS total_amount
 FROM fact_transaction
 GROUP BY customer_key;
 ```
 
 ---
 
-# 6. Sizes
+## 6. Sizes
 
-Dimensions give context to measures.
+Dimensions provide descriptive context for facts and measures.
 
 For example:
 
@@ -264,30 +263,28 @@ This way we can respond to:
 
 > Total transactions per customer, month and country.
 
-```
-SELECT
-d.year,
-d.month,
-c. Country,
-SUM (f.amount)
+```sql
+SELECT d.year,
+       d.month,
+       c.country,
+       SUM(f.amount) AS total_amount
 FROM fact_transaction f
 JOIN dim_date d
-ON f.date_key = d.date_key
+  ON f.date_key = d.date_key
 JOIN dim_customer c
-ON f.customer_key = c.customer_key
-GROUP BY
-d.year,
-d.month,
-c.country;
+  ON f.customer_key = c.customer_key
+GROUP BY d.year,
+         d.month,
+         c.country;
 ```
 
 ---
 
-# 7. Grain is one of the most important concepts
+## 7. Grain is one of the most important concepts
 
 **Grain** says:
 
-> What exactly is a round of fact backgammon?
+> What exactly does one row in the fact table represent?
 
 Example:
 
@@ -295,7 +292,7 @@ Example:
 FACT_TRANSACTION
 ```
 
-He can have grain:
+Its grain can be:
 
 > a row = a bank transaction.
 
@@ -309,7 +306,7 @@ may have:
 
 > a row = balance of an account in a given day.
 
-This should be established **prior to the design of the** table fact.
+The grain should be established **before designing the fact table**.
 
 For example:
 
@@ -329,7 +326,7 @@ date_key + account_key
 
 ---
 
-# 8. Star Scheme
+## 8. Star Schema
 
 The most common OLAP model is:
 
@@ -345,15 +342,15 @@ DIM_BRANCH
 
 The advantages are:
 
-- easy-to-understand querys;
-- simple joints;
-- rapid reporting;
+- easy-to-understand queries;
+- simple joins;
+- fast reporting;
 - appropriate for BI;
-- optimizable efficiently.
+- efficient optimization opportunities.
 
 ---
 
-# 9. Snowflake Schema
+## 9. Snowflake Schema
 
 One option is:
 
@@ -371,36 +368,36 @@ Dimensions are normalized.
 
 This is called:
 
-> Snowflake Scheme
+> Snowflake Schema
 
 Comparative:
 
 ```
 STAR
-denormalised dimensions
+denormalized dimensions
 
 SNOWFLAKE
-Normalised dimensions
+normalized dimensions
 ```
 
-In practice, the star scheme is often preferred for analytics because it simplifies queries.
+In practice, the star schema is often preferred for analytics because it simplifies queries.
 
 ---
 
-# 10. Aggregation of the basic OLAP operation
+## 10. Aggregation of the basic OLAP operation
 
 OLAP means very much:
 
-```
+```sql
 GROUP BY
 ```
 
 Example:
 
-```
+```sql
 SELECT
 region_id,
-SUM (amount)
+SUM(amount)
 FROM sales
 GROUP BY region_id;
 ```
@@ -417,18 +414,18 @@ DE 2100000
 
 ---
 
-# 11. GROUP BY on multiple levels
+## 11. GROUP BY on multiple levels
 
-```
+```sql
 SELECT
 year,
-Month,
+month,
 region,
-SUM (amount)
+SUM(amount)
 FROM sales
 GROUP BY
 year,
-Month,
+month,
 region,
 ```
 
@@ -447,15 +444,15 @@ Conceptual:
 
 ---
 
-# 12.ROLLUP
+## 12.ROLLUP
 
 ROLLUP generates hierarchical subtotals.
 
-```
+```sql
 SELECT
 year,
-Month,
-SUM (amount)
+month,
+SUM(amount)
 FROM sales
 GROUP BY ROLLUP (year, month);
 ```
@@ -481,22 +478,22 @@ month
  ↓
 year
  ↓
-general total
+grand total
 ```
 
 Very common in reporting.
 
 ---
 
-# 13. CUBE
+## 13. CUBE
 
 CUBE calculates all possible combinations of aggregation.
 
-```
+```sql
 SELECT
 region,
 product,
-SUM (amount)
+SUM(amount)
 FROM sales
 GROUP BY CUBE (region, product);
 ```
@@ -507,7 +504,7 @@ It can produce:
 region + product
 region
 product
-general total
+grand total
 ```
 
 Conceptual:
@@ -530,7 +527,7 @@ Grand Total
 
 ---
 
-# 14. ROLLUP vs CUBE
+## 14. ROLLUP vs CUBE
 
 Important difference:
 
@@ -563,146 +560,141 @@ total
 
 ---
 
-# 15. GROUPING SETS
+## 15. GROUPING SETS
 
-If you don't want all the combinations generated by CUBE, you can control exactly the aggregation.
+If you do not want every combination generated by `CUBE`, `GROUPING SETS` lets you specify exactly which aggregations to produce.
 
-```
-SELECT
-region,
-product,
-SUM (amount)
+```sql
+SELECT region,
+       product,
+       SUM(amount) AS total_amount
 FROM sales
-GROUP BY GROUPING SETS
-(
-(region, product),
-(region),
-(production),
-(chuckles)
+GROUP BY GROUPING SETS (
+    (region, product),
+    (region),
+    (product),
+    ()
 );
 ```
 
-It is very useful in complex OLAP querys.
+It is very useful in complex OLAP queries.
 
 ---
 
-# 16. Analytical Functions
+## 16. Analytical Functions
 
-Analytical functions are fundamental in OLAP.
+Analytic functions are fundamental in OLAP.
 
 Example:
 
-```
-SUM (amount) OVER (...)
+```sql
+SUM(amount) OVER (...)
 ```
 
 The difference from GROUP BY is essential.
 
 GROUP BY:
 
-```
+```sql
 SELECT
 customer_id,
-SUM (amount)
+SUM(amount)
 FROM transactions
 GROUP BY customer_id;
 ```
 
-Reduce the ranks.
+`GROUP BY` reduces multiple input rows to one row per group.
 
-Analytical function:
+Analytic function:
 
-```
-SELECT
-transaction_id,
-customer_id,
-% 1% 2
-SUM (amount) OVER (
-PARTITIONQ1QX customer_id
-) customer_total
+```sql
+SELECT transaction_id,
+       customer_id,
+       amount,
+       SUM(amount) OVER (
+           PARTITION BY customer_id
+       ) AS customer_total
 FROM transactions;
 ```
 
-keep each transaction.
+keeps each individual transaction row.
 
 ---
 
-# 17. PARTITION BY
+## 17. PARTITION BY
 
 Example:
 
-```
-SUM (amount)
-OVER (
-PARTITIONQ1QX customer_id
+```sql
+SUM(amount) OVER (
+    PARTITION BY customer_id
 )
 ```
 
 It means conceptually:
 
 ```
-curator 101
+customer 101
 ----------------
 100
 200
 300
 TOTAL = 600
 
-curator 102
+customer 102
 ----------------
 50
 70
 TOTAL = 120
 ```
 
-But each row remains in effect.
+Each individual row remains in the result.
 
 ---
 
-# 18. Total Running
+## 18. Total Running
 
 Very common OLAP example:
 
-```
-SELECT
-account_id,
-transaction_date,
-% 1% 2
-SUM (amount) OVER (
-PARTITIONQ1QX account_id
-ORDERQ1QX transaction_date
-) running_total
+```sql
+SELECT account_id,
+       transaction_date,
+       amount,
+       SUM(amount) OVER (
+           PARTITION BY account_id
+           ORDER BY transaction_date
+           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+       ) AS running_total
 FROM transactions;
 ```
 
 Result:
 
-```
-DATEQ1QX RUNNING_TOTAL
-------------------------------------
-01Jan 100 100
-02-Jan 50 150
-03-Jan -20 130
+```text
+DATE        AMOUNT   RUNNING_TOTAL
+----------------------------------
+01-Jan      100      100
+02-Jan       50      150
+03-Jan      -20      130
 ```
 
 ---
 
-# 19. ROW\ _ NUMBER
+## 19. ROW_NUMBER
 
 Very often used for:
 
-> the last row per entity.
+> the latest row per entity.
 
-```
+```sql
 SELECT *
 FROM (
-SELECT
-t. *,
-ROW_NUMBER () OVER
-PARTITIONQ1QX account_id
-ORDER BY transaction_date DESC
-) rn
-FROM transactions t
+    SELECT t.*,
+           ROW_NUMBER() OVER (
+               PARTITION BY account_id
+               ORDER BY transaction_date DESC
+           ) AS rn
+    FROM transactions t
 )
 WHERE rn = 1;
 ```
@@ -710,26 +702,25 @@ WHERE rn = 1;
 Pattern:
 
 ```
-later row per account
-later status per custodian
-latest translation per card
+latest row per account
+latest status per customer
+latest transaction per card
 ```
 
-Highly frequent in interviews.
+This is a very common Data Warehouse pattern.
 
 ---
 
-# 20. RANK and DENSE\ _ RANK
+## 20. RANK and DENSE_RANK
 
 Example:
 
-```
-SELECT
-customer_id,
-returns,
-RANK () OVER
-ORDER BY returns DESC
-) rnk
+```sql
+SELECT customer_id,
+       revenue,
+       RANK() OVER (
+           ORDER BY revenue DESC
+       ) AS rnk
 FROM customer_revenue;
 ```
 
@@ -755,26 +746,25 @@ DENSE_RANK
 
 ---
 
-# 21. LAG
+## 21. LAG
 
 LAG allows access to the previous row.
 
 Very useful for time comparisons.
 
-```
-SELECT
-Month,
-returns,
-LAG (return)
-ORDER BY month
-) previous_revenue
+```sql
+SELECT month,
+       revenue,
+       LAG(revenue) OVER (
+           ORDER BY month
+       ) AS previous_revenue
 FROM monthly_sales;
 ```
 
 Result:
 
 ```
-MONTHQ1QX PREVIOUS
+MONTH  PREVIOUS
 --------------------------
 Jan 1000 NULL
 Feb 1200 1000
@@ -783,38 +773,37 @@ Mar 1500 1200
 
 We can calculate growth:
 
-```
-returns -
-LAG (return) OVER
+```sql
+revenue - LAG(revenue) OVER (ORDER BY month)
 ```
 
 ---
 
-# 22. LEAD
+## 22. LEAD
 
 LEAD is accessing the next row.
 
 ```
 LEAD (amount) OVER (
-ORDERQ1QX transaction_date
+ORDER  transaction_date
 )
 ```
 
 Useful for:
 
-- the following transaction;
-- the following status;
-- the calculation of the ranges;
+- the next transaction;
+- the next status;
+- interval/range calculations;
 - detection of changes.
 
 ---
 
-# 23. Year-over-Year Analysis
+## 23. Year-over-Year Analysis
 
 Pattern OLAP very important:
 
 ```
-YAY = Year over Year
+YoY = Year over Year
 ```
 
 Conceptual example:
@@ -828,57 +817,55 @@ Growth = + 20%
 
 SQL:
 
-```
-SELECT
-year,
-returns,
-LAG (return)
-ORDER BY year
-) previous_year,
-ROUND (
-(
-returns /
-LAG (return) OVER (ORDER BY year)
-            - 1
-) * 100,
-2
-) growth_pct
+```sql
+SELECT year,
+       revenue,
+       LAG(revenue) OVER (
+           ORDER BY year
+       ) AS previous_year,
+       ROUND(
+           (
+               revenue /
+               NULLIF(LAG(revenue) OVER (ORDER BY year), 0)
+               - 1
+           ) * 100,
+           2
+       ) AS growth_pct
 FROM yearly_sales;
 ```
 
 ---
 
-# 24. Moving Average
+## 24. Moving Average
 
 Other classic OLAP pattern:
 
-```
-AVG (amount) OVER (
-ORDERQ1QX transaction_date
-ROWS BETWEEN 6 PRECEDING
-ANDQ1QX ROW
+```sql
+AVG(amount) OVER (
+    ORDER BY transaction_date
+    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
 )
 ```
 
 This produces a:
 
-> average mobile per 7 observations.
+> moving average over 7 observations.
 
 Very used in:
 
 - trend analysis;
 - risk;
-- Forecasting;
+- forecasting;
 - monitoring.
 
 ---
 
-# 25. PIVOT
+## 25. PIVOT
 
 OLAP frequently involves transformation:
 
 ```
-MONTHQ1QX SALES
+MONTH  SALES
 JAN A 100
 JAN B 200
 FEB A 150
@@ -895,21 +882,21 @@ FEB 150 250
 
 Oracle offers:
 
-```
+```sql
 SELECT *
 FROM sales
 PIVOT (
-SUM (amount)
-FOR product (
-'A' AS A,
-'B' AS B
-)
+    SUM(amount)
+    FOR product IN (
+        'A' AS A,
+        'B' AS B
+    )
 );
 ```
 
 ---
 
-# 26. Slice
+## 26. Slice
 
 Classic OLAP term.
 
@@ -921,7 +908,7 @@ PRODUCT
 REGION
 ```
 
-A **slice** means fixing a size.
+A **slice** means fixing one dimension to a specific value.
 
 For example:
 
@@ -937,19 +924,19 @@ PRODUCT × REGION
 
 SQL:
 
-```
+```sql
 WHERE year = 2026
 ```
 
 ---
 
-# 27. Dice
+## 27. Dice
 
 Dice means selecting a multi-dimensional subset.
 
 For example:
 
-```
+```sql
 WHERE year IN (2025, 2026)
 AND region IN ('RO', 'DE')
 AND product_category = 'Electronics'
@@ -957,7 +944,7 @@ AND product_category = 'Electronics'
 
 ---
 
-# 28. Drill-down
+## 28. Drill-down
 
 It means going down to more detail.
 
@@ -966,7 +953,7 @@ Year
  ↓
 Quarter
  ↓
-Month
+month
  ↓
 Day
 ```
@@ -996,33 +983,33 @@ March
 
 ---
 
-# 29. Rolls-up
+## 29. Rolls-up
 
-Reverse surgery.
+This is the reverse of drill-down.
 
 ```
 Day
  ↓
-Month
+month
  ↓
 Quarter
  ↓
 Year
 ```
 
-I mean, we go from detail to aggregation.
+We move from detailed data to higher-level aggregation.
 
 ---
 
-# 30. Drill-through
+## 30. Drill-through
 
 Drill-down:
 
 ```
-Year → Month → Day
+Year → month → Day
 ```
 
-Drill-through goes up to detailed operational data.
+Drill-through navigates from an aggregate to the detailed underlying records.
 
 For example:
 
@@ -1042,14 +1029,14 @@ then:
 
 ```
 transaction_id
-curator
-Invoice
+customer
+invoice
 % 1
 ```
 
 ---
 
-# 31. OLAP Cube
+## 31. OLAP Cube
 
 Conceptually we can have:
 
@@ -1072,13 +1059,13 @@ TIME
 PRODUCT → REGION
 ```
 
-Each cell shall contain a measure:
+Each cell contains a measure such as:
 
-```
-SUM (SALES)
+```sql
+SUM(SALES)
 ```
 
-Dimension:
+Dimensions:
 
 ```
 TIME
@@ -1094,7 +1081,7 @@ SALES
 
 ---
 
-# 32. OLAP in Modern Oracle
+## 32. OLAP in Modern Oracle
 
 Today OLAP does not necessarily mean a separate physical cube.
 
@@ -1103,18 +1090,18 @@ Many OLAP systems are implemented directly over:
 ```
 Oracle Database
         ↓
-Star Scheme
+Star Schema
         ↓
 Fact + Dimension
         ↓
-SQL analytical queries
+SQL analytic queries
         ↓
 BI
 ```
 
 With:
 
-```
+```sql
 GROUP BY
 analytic functions
 partitioning
@@ -1125,7 +1112,7 @@ columnar / in-memory techniques
 
 ---
 
-# 33. Full Table Scan is not bad in OLAP
+## 33. Full Table Scan is not bad in OLAP
 
 This is a fundamental difference from OLTP.
 
@@ -1138,36 +1125,34 @@ FACT_TRANSACTION
 
 Query:
 
-```
-SELECT
-SUM (amount)
+```sql
+SELECT SUM(amount)
 FROM fact_transaction
-WHERE transaction_date
-BETWEENQ1QX '2026-01-01'
-AND DATE '2026-12-31';
+WHERE transaction_date >= DATE '2026-01-01'
+  AND transaction_date <  DATE '2027-01-01';
 ```
 
-If 300 million lines are to be read, an index may be slower than:
+If 300 million rows must be read, indexed access may be slower than:
 
-```
-FULLQ1QX SCAN
+```text
+TABLE ACCESS FULL
 ```
 
 or:
 
-```
-PARTITIONQ1QX SCAN
+```text
+PARTITION RANGE SCAN
 ```
 
 In OLAP:
 
-> scanning a large amount of data can be exactly the right plan.
+> scanning a large volume of data can be exactly the right plan.
 
 ---
 
-# 34. HASH JOIN
+## 34. HASH JOIN
 
-The very important joint for OLAP is:
+A very important join method for OLAP is:
 
 ```
 HASH JOIN
@@ -1175,13 +1160,12 @@ HASH JOIN
 
 Example:
 
-```
-SELECT
-c.segment,
-SUM (f.amount)
+```sql
+SELECT c.segment,
+       SUM(f.amount) AS total_amount
 FROM fact_transaction f
 JOIN dim_customer c
-ON f.customer_key = c.customer_key
+  ON f.customer_key = c.customer_key
 GROUP BY c.segment;
 ```
 
@@ -1201,7 +1185,7 @@ HASH JOIN
 Conceptual:
 
 ```
-size
+dimension
    ↓
 build hash table
 
@@ -1209,14 +1193,14 @@ fact
    ↓
 scan
    ↓
-hash table samples
+probe hash table
 ```
 
 For large volumes it is often more effective than Nested Loops.
 
 ---
 
-# 35. Nested Loops vs Hash Join
+## 35. Nested Loops vs Hash Join
 
 Simplified:
 
@@ -1229,7 +1213,7 @@ Nested Loops
 
 ```
 Hash Join
-→ many lines
+→ many rows
 → scans
 → OLAP / DWH
 ```
@@ -1238,7 +1222,7 @@ It's not an absolute rule, but it's a very good mental model.
 
 ---
 
-# 36. Partitioning
+## 36. Partitioning
 
 Very important in OLAP.
 
@@ -1256,15 +1240,14 @@ P202612
 
 Query:
 
-```
-SELECT SUM (amount)
+```sql
+SELECT SUM(amount)
 FROM fact_transaction
-WHERE transaction_date
-BETWEENQ1QX '2026-01-01'
-AND DATE '2026-01-31';
+WHERE transaction_date >= DATE '2026-01-01'
+  AND transaction_date <  DATE '2026-02-01';
 ```
 
-The Oracle can only access:
+Oracle may access only:
 
 ```
 P202601
@@ -1272,33 +1255,33 @@ P202601
 
 This phenomenon is called:
 
-> **Partition Pounding**
+> **Partition Pruning**
 
 ---
 
-# 37. Why are we partitioning fact tables
+## 37. Why are we partitioning fact tables
 
 For:
 
 - query performance;
-- partition pruning,
-- lighter loads;
+- partition pruning;
+- easier loading and maintenance;
 - archiving;
 - deletion of old data;
-- Parallelism;
+- parallelism;
 - administration.
 
-Large facttables are very commonly partitioned after time.
+Large fact tables are commonly partitioned by time.
 
 ---
 
-# 38. Bitmap Index
+## 38. Bitmap Index
 
-In certain DWH/OLAP workshops we can have columns with small cardinality:
+In some DWH/OLAP workloads, columns may have low cardinality:
 
 ```
 gender
-stasis
+status
 customer_type
 region
 risk_category
@@ -1313,13 +1296,13 @@ INACTIVE
 BLOCKED
 ```
 
-Here's one:
+A:
 
 ```
 BITMAP INDEX
 ```
 
-can be effective.
+can be effective in such scenarios.
 
 But bitmap indexes are inappropriate for tables with many competing updates.
 
@@ -1332,41 +1315,41 @@ OLTP → usually avoided
 
 ---
 
-# 39. Materialized Views
+## 39. Materialized Views
 
 Suppose the report:
 
-```
-SELECT
-Month,
-region,
-SUM (amount)
+```sql
+SELECT month,
+       region,
+       SUM(amount) AS total_amount
 FROM fact_sales
-GROUP BY month, region;
+GROUP BY month,
+         region;
 ```
 
-read hundreds of millions of rows.
+may read hundreds of millions of rows.
 
 We can create:
 
-```
+```sql
 CREATE MATERIALIZED VIEW mv_monthly_sales
 AS
-SELECT
-Month,
-region,
-SUM (amount) total_amount
+SELECT month,
+       region,
+       SUM(amount) AS total_amount
 FROM fact_sales
-GROUP BY month, region;
+GROUP BY month,
+         region;
 ```
 
-Now the report can question several thousand lines instead of hundreds of millions.
+The report can then query a much smaller pre-aggregated data set.
 
 ---
 
-# 40. Query Rewrite
+## 40. Query Rewrite
 
-Oracle can sometimes automatically turn an interrogation over the fact table into a query over materialized view.
+Oracle can sometimes transparently rewrite a query against the fact table to use a compatible materialized view.
 
 Conceptual:
 
@@ -1374,7 +1357,7 @@ Conceptual:
 USER QUERY
 
 FACT_SALES
-GROUPQ1QX MONTH
+GROUP  MONTH
 ```
 
 Optimizer:
@@ -1395,7 +1378,7 @@ This mechanism is called:
 
 ---
 
-# 41. Parallel Execution
+## 41. Parallel Execution
 
 OLAP processes large volumes of data, so it can benefit from parallelism.
 
@@ -1412,9 +1395,9 @@ Worker 4 → partition 4
 
 SQL:
 
-```
-SELECT / * + PARALLEL (f, 4) * /
-SUM (amount)
+```sql
+SELECT /*+ PARALLEL(f, 4) */
+       SUM(amount)
 FROM fact_transaction f;
 ```
 
@@ -1422,7 +1405,7 @@ But the hint should not be used automatically without understanding the system.
 
 ---
 
-# 42. Predicate Pushdown
+## 42. Predicate Pushdown
 
 The principle is simple:
 
@@ -1444,13 +1427,13 @@ corporate customers
 
 It is ideal for filters to quickly reduce the processed volume.
 
-The optimiser is trying to do this automatically.
+The optimizer often tries to push predicates as close as possible to the data source.
 
 ---
 
-# 43. Cardinal and selectivity
+## 43. Cardinal and selectivity
 
-Very important to the optimiser.
+These concepts are critical for the optimizer.
 
 Example:
 
@@ -1459,17 +1442,17 @@ gender
 M/F
 ```
 
-He has little cardinality.
+This column has low cardinality.
 
 ```
 transaction_id
 ```
 
-He has a very large cardinality.
+This column has very high cardinality.
 
 Selectivity
 
-```
+```sql
 WHERE transaction_id = 123
 ```
 
@@ -1477,7 +1460,7 @@ very selective.
 
 But:
 
-```
+```sql
 WHERE year = 2026
 ```
 
@@ -1491,17 +1474,17 @@ and then an index may not be advantageous.
 
 ---
 
-# 44. Why statistics are critical
+## 44. Why statistics are critical
 
-The optimiser shall estimate:
+The optimizer must estimate:
 
 ```
-How many lines pass the filter?
+How many rows pass the filter?
 ```
 
 For example:
 
-```
+```sql
 WHERE status = 'ACTIVE'
 ```
 
@@ -1511,21 +1494,21 @@ If Oracle estimates:
 100 rows
 ```
 
-But in reality, I am:
+But in reality there are:
 
 ```
 200,000,000 rows
 ```
 
-can choose a completely inappropriate plan.
+Oracle may choose a completely inappropriate plan.
 
 This is why statistics are very important in DWH.
 
 ---
 
-# 45. ETL and OLAP
+## 45. ETL and OLAP
 
-OLAP data usually come from OLTP systems.
+OLAP data usually originates from OLTP systems.
 
 Typical flow:
 
@@ -1555,9 +1538,9 @@ BI
 
 ---
 
-# 46. Incremental Lead
+## 46. Incremental Lead
 
-We don't want to load the entire DWH- every day.
+We do not want to reload the entire DWH every day.
 
 Example:
 
@@ -1566,13 +1549,13 @@ FACT_TRANSACTION
 500M rows
 ```
 
-Today they appear:
+Today there are:
 
 ```
 2M new transactions
 ```
 
-We're only charging the 2 million.
+We load only those 2 million new transactions.
 
 Pattern:
 
@@ -1587,9 +1570,9 @@ This is:
 
 ---
 
-# 47. SCD and OLAP
+## 47. SCD and OLAP
 
-History of dimensions must be maintained for historical analysis.
+Dimension history must be preserved when historical analysis requires it.
 
 Example:
 
@@ -1612,15 +1595,15 @@ CUSTOMER_KEY SEGMENT VALID_FROM VALID_TO
 932 PREMIUM 2026 NULL
 ```
 
-The historical reports thus reflect the reality of that period.
+Historical reports can then reflect the dimension values that were valid during each period.
 
 ---
 
-# 48. Full OLAP banking example
+## 48. Full OLAP banking example
 
 We assume:
 
-```
+```text
 FACT_TRANSACTION
 
 transaction_key
@@ -1628,11 +1611,11 @@ date_key
 customer_key
 account_key
 branch_key
-% 1
+amount
 transaction_type_key
 ```
 
-Dimension:
+Dimensions:
 
 ```
 DIM_DATE
@@ -1646,60 +1629,53 @@ Business asks:
 
 > What is the monthly value of transactions for each customer segment?
 
-```
-SELECT
-d.year,
-d.month,
-c.segment,
-SUM (f.amount) total_amount
+```sql
+SELECT d.year,
+       d.month,
+       c.segment,
+       SUM(f.amount) AS total_amount
 FROM fact_transaction f
 JOIN dim_date d
-ON d.date_key = f.date_key
+  ON d.date_key = f.date_key
 JOIN dim_customer c
-ON c.customer_key = f.customer_key
-GROUP BY
-d.year,
-d.month,
-c.segment
-ORDER BY
-d.year,
-d.month,
-c.segment;
+  ON c.customer_key = f.customer_key
+GROUP BY d.year,
+         d.month,
+         c.segment
+ORDER BY d.year,
+         d.month,
+         c.segment;
 ```
 
 This is a classic OLAP query.
 
 ---
 
-# 49. Add comparison to previous month
+## 49. Add comparison to previous month
 
-```
-WITH only AS
-(
-SELECT
-d.year,
-d.month,
-c.segment,
-SUM (f.amount) total_amount
-FROM fact_transaction f
-JOIN dim_date d
-ON d.date_key = f.date_key
-JOIN dim_customer c
-ON c.customer_key = f.customer_key
-GROUP BY
-d.year,
-d.month,
-c.segment
+```sql
+WITH monthly AS (
+    SELECT d.year,
+           d.month,
+           c.segment,
+           SUM(f.amount) AS total_amount
+    FROM fact_transaction f
+    JOIN dim_date d
+      ON d.date_key = f.date_key
+    JOIN dim_customer c
+      ON c.customer_key = f.customer_key
+    GROUP BY d.year,
+             d.month,
+             c.segment
 )
-SELECT
-year,
-Month,
-segment,
-total_amount,
-LAG (total_amount)
-PARTITION BY segment
-ORDER BY year, month
-) previous_month
+SELECT year,
+       month,
+       segment,
+       total_amount,
+       LAG(total_amount) OVER (
+           PARTITION BY segment
+           ORDER BY year, month
+       ) AS previous_month
 FROM monthly;
 ```
 
@@ -1711,13 +1687,13 @@ aggregation
 analytic function
 ```
 
-An extremely common pattern in analytics.
+This is an extremely common analytics pattern.
 
 ---
 
-# 50. Patterson OLAP very important: Aggregate → Analyze
+## 50. Pattern OLAP very important: Aggregate → Analyze
 
-Often OLAP interrogation takes two phases.
+OLAP queries often use two phases.
 
 First:
 
@@ -1728,31 +1704,27 @@ aggregation
 then:
 
 ```
-Analytical functions
+analytic functions
 ```
 
 For example:
 
-```
-WITHQ1QX AS
-(
-SELECT
-customer_id,
-Month,
-SUM
-FROM sales
-GROUP BY
-customer_id,
-month
+```sql
+WITH monthly_sales AS (
+    SELECT customer_id,
+           month,
+           SUM(amount) AS amount
+    FROM sales
+    GROUP BY customer_id,
+             month
 )
-SELECT
-customer_id,
-Month,
-% 1% 2
-LAG (amount) OVER (
-PARTITIONQ1QX customer_id
-ORDER BY month
-) previous_month
+SELECT customer_id,
+       month,
+       amount,
+       LAG(amount) OVER (
+           PARTITION BY customer_id
+           ORDER BY month
+       ) AS previous_month
 FROM monthly_sales;
 ```
 
@@ -1770,23 +1742,23 @@ ANALYTIC FUNCTIONS
 REPORT
 ```
 
-It's worth retaining very well.
+This pattern is worth remembering.
 
 ---
 
-# 51. Patterson: Top N per group
+## 51. Pattern: Top N per group
 
 Question:
 
 > Top 3 customers per region.
 
-```
-WITH returns AS
+```sql
+WITH revenue AS
 (
 SELECT
 region,
 customer_id,
-SUM (amount) total_amount
+SUM(amount) total_amount
 FROM sales
 GROUP BY
 region,
@@ -1795,21 +1767,21 @@ customer_id
 ranked AS
 (
 SELECT
-Come back. *,
-ROW_NUMBER () OVER
+r.*,
+ROW_NUMBER() OVER
 PARTITION BY region
 ORDER BY total_amount DESC
 ) rn
-FROM returns
+FROM revenue
 )
 SELECT *
-FROM rank
-WHERE rn = 3;
+FROM ranked
+WHERE rn <= 3;
 ```
 
 Pattern:
 
-```
+```sql
 GROUP BY
     ↓
 ROW_NUMBER
@@ -1821,26 +1793,25 @@ Very common in interviews.
 
 ---
 
-# 52. Pattern: Detection of changes
+## 52. Pattern: Detection of changes
 
 Example:
 
-```
-SELECT
-customer_id,
-status_date,
-status,
-LAG (status) OVER
-PARTITIONQ1QX customer_id
-ORDERQ1QX status_date
-) previous_status
+```sql
+SELECT customer_id,
+       status_date,
+       status,
+       LAG(status) OVER (
+           PARTITION BY customer_id
+           ORDER BY status_date
+       ) AS previous_status
 FROM customer_status;
 ```
 
 Then:
 
-```
-WHERE status = previous_status
+```sql
+WHERE status <> previous_status
 ```
 
 Conceptually we can detect:
@@ -1852,20 +1823,20 @@ BLOCKED → ACTIVE
 
 ---
 
-# 53. Trap: GROUP BY too early
+## 53. Trap: GROUP BY too early
 
-We assume we have:
+Assume we have:
 
 ```
-curator
+customer
 transactions
 accounts
 ```
 
-If we do the wrong game:
+If we join at the wrong grain:
 
 ```
-1 custodian
+1 customer
 10 accounts
 100 transactions
 ```
@@ -1874,19 +1845,19 @@ We can artificially multiply the ranks.
 
 Result:
 
-```
-SUM (amount)
+```sql
+SUM(amount)
 ```
 
-gets it wrong.
+becomes incorrect.
 
 OLAP should always be checked:
 
-> What's the grain of every date?
+> What is the grain of each data set?
 
 ---
 
-# 54. Trap: Join that multiplies invoices
+## 54. Trap: Join that multiplies invoices
 
 Example:
 
@@ -1895,7 +1866,7 @@ FACT_SALES
 1 row
 
 DIM_PROMOTION
-3 rows matching accidentally
+3 accidentally matching rows
 ```
 
 JOIN:
@@ -1918,19 +1889,19 @@ become:
 
 in aggregation.
 
-This is one of the most dangerous DWH bugs.
+This is one of the most dangerous DWH bugs because aggregates may still look plausible.
 
 ---
 
-# 55. Trap: SUM (DISTINCT amount)
+## 55. Trap: SUM(DISTINCT amount)
 
 Sometimes someone tries to solve the doubles with:
 
-```
-SUM (DISTINCT amount)
+```sql
+SUM(DISTINCT amount)
 ```
 
-This NU is usually the solution.
+This is usually **not** the correct solution.
 
 If two valid transactions have:
 
@@ -1939,7 +1910,7 @@ If two valid transactions have:
 100
 ```
 
-SUM (DISTINCT) returns:
+SUM(DISTINCT) revenue:
 
 ```
 100
@@ -1951,54 +1922,54 @@ for:
 200
 ```
 
-We need to fix the joint or the grain.
+We need to fix the join or the grain.
 
 ---
 
-# 56. Trap: function on filtered column
+## 56. Trap: function on filtered column
 
 Example:
 
-```
+```sql
 WHERE TRUNC (transaction_date) =
 DATE '2026-09-23'
 ```
 
-may prevent certain optimization / index access.
+may prevent efficient use of a normal index and can also interfere with partition pruning.
 
 Often it is preferable:
 
-```
-WHERE transaction_date = DATE '2026-09-23'
-AND transaction_date - DATE '2026-09-24'
+```sql
+WHERE transaction_date >= DATE '2026-09-23'
+  AND transaction_date <  DATE '2026-09-24'
 ```
 
-In DWH it is also important for the plucking partition.
+In DWH workloads, this can also matter for partition pruning.
 
 ---
 
-# 57. OLAP and execution plans
+## 57. OLAP and execution plans
 
 In OLAP you have to get used to seeing:
 
-```
-TABLEQ1QX FULL
+```text
+TABLE ACCESS FULL
 PARTITION RANGE
 HASH JOIN
-HASHQ1QX BY
-SORTQ1QX BY
+HASH GROUP BY
+SORT GROUP BY
 WINDOW SORT
 PX COORDINATOR
 ```
 
 For example:
 
-```
+```text
 SELECT STATEMENT
-HASHQ1QX BY
+HASH GROUP BY
 HASH JOIN
 TABLE ACCESS FULL DIM_CUSTOMER
-PARTITIONQ1QX ITERATOR
+PARTITION RANGE ITERATOR
 TABLE ACCESS FULL FACT_TRANSACTION
 ```
 
@@ -2018,26 +1989,26 @@ result
 
 ---
 
-# 58. What to follow in OLAP plans
+## 58. What to follow in OLAP plans
 
 You don't just ask:
 
-> Use the index?
+> Does it use an index?
 
 But:
 
 ```
-How many lines are read?
-How many lines are left?
-Is partition pruning?
+How many rows are read?
+How many rows remain after each operation?
+Is partition pruning happening?
 What join method is chosen?
 Where does the sorting come from?
 Is there spill on TEMP?
-Are the optimiser's estimates correct?
+Are the optimizer's estimates accurate?
 Is there parallel execution?
 ```
 
-This is a much better way to analyze a query DWH.
+This is a much better way to analyze a DWH query.
 
 ---
 
@@ -2045,7 +2016,7 @@ This is a much better way to analyze a query DWH.
 
 ### What is OLAP?
 
-A good answer:
+A concise answer:
 
 > OLAP is the analytical processing of large data volumes, optimized for complex queries, aggregation, historical analysis and reporting, unlike OLTP, which is optimized for short and competing operational transactions.
 
@@ -2075,7 +2046,7 @@ You can answer:
 
 Good answer:
 
-> No. In OLAP workshops, if a large part of the table needs to be processed, Full Table Scan or Partition Scan can be more efficient than access by index.
+> No. In OLAP workloads, if a large part of the table needs to be processed, Full Table Scan or Partition Scan can be more efficient than access by index.
 
 ---
 
@@ -2085,13 +2056,13 @@ Good answer:
 
 ---
 
-### GROUP BY vs analytical functions?
+### GROUP BY vs analytic functions?
 
-> GROUP BY reduces the number of rows by aggregation, while analytical functions calculate values over a set of rows keeping individual rows in result.
+> GROUP BY reduces the number of rows by aggregation, while analytic functions calculate values over a set of rows keeping individual rows in result.
 
 ---
 
-# 60. Mental Model for OLAP
+## 60. Mental Model for OLAP
 
 I would remember OLAP as follows:
 
@@ -2126,24 +2097,24 @@ BI / REPORTING
 
 ---
 
-# 61. The most important things to remember
+## 61. The most important things to remember
 
-If you had to remember only **12 concepts OLAP**, these would be:
+If you had to remember only **12 OLAP concepts**, these would be:
 
-1. **OLAP = analysis, aggregation and historical**, not operational transactions.
-2. The data are often organized in **fact tables + dimensions**.
-3. You must know very well the **Grain** fact table.
+1. **OLAP = analysis, aggregation, and historical reporting**, not operational transactions.
+2. Data is often organized into **fact tables + dimensions**.
+3. You must clearly understand the **grain** of each fact table.
 4. **Star Schema** is the fundamental dimensional model.
 5. GROUP BY is the foundation of aggregation.
 6. ROLLUP, CUBE and GROUPING SETS allow for multidimensional aggregation.
-7. The analytical functions of ROW\ _ NUMBER, RANK, LAG, LEAD, SUM OVER are essential.
-8. The **Aggregate patent → Analyze** occurs very often.
+7. Analytic functions such as `ROW_NUMBER`, `RANK`, `LAG`, `LEAD`, and `SUM OVER` are essential.
+8. The **Aggregate → Analyze** pattern occurs frequently.
 9. For large volumes, **HASH JOIN** is very important.
-10. **Full Table Scan is not automatically bad** in an DWH.
+10. **A **Full Table Scan is not automatically bad** in a DWH.
 11. **Partitioning + partition pruning** are essential for large fact tables.
-12. OLAP performance means reducing the processed volume and understanding DBMS\ _ XPLAN, not just putting indexes.
+12. OLAP performance means reducing the processed volume and understanding `DBMS_XPLAN`, not just putting indexes.
 
-## Link to the following chapters
+## Links to the following chapters
 
 The logical order is now very good:
 
@@ -2160,37 +2131,37 @@ The logical order is now very good:
       ↓
 6. DWH
       ↓
-7. Modeling Dimensional
+7. Dimensional Modeling
       ↓
 8. SCD
       ↓
 9. ETL / ELT
       ↓
-10. Oracle Performance / Optimisation
+10. Oracle Performance / Optimization
 ```
 
-In chapter **DWH**, the concepts here are made of fact, size, grain, star scheme, incremental load, SCD, partitioning will be linked in a complete architecture of **Source → Staging → ETL → DWH → Data Mart → BI**.
+In chapter **DWH**, the concepts here are made of fact, dimension, grain, star schema, incremental load, SCD, partitioning will be linked in a complete architecture of **Source → Staging → ETL → DWH → Data Mart → BI**.
 
 ---
 
 ## Questions and answers
 
-### How would you briefly explain OLAF to a colleague who knows SQL, but not this area?
+### How would you briefly explain OLAP to a colleague who knows SQL but not this area?
 
-OLAF covers analytical works and large scans, aggregation, slicing and dicing, dimensional models and grain. In practice, I first determine what data enters and what result must be obtained, then I check implementation, execution plan and effects on flow.
+OLAP covers analytical workloads, large scans, aggregation, slicing and dicing, dimensional models, and grain. In practice, I first determine the source data and required business result, then validate the aggregation level, joins, execution plan, and impact on the wider reporting flow.
 
-### What are the two most common practical problems related to OLAF?
+### What are two common practical problems related to OLAP?
 
-Two recurring problems are misinterpretation of data or granularity and degradation of performance at real volume. For OLAF, I explicitly follow analytical workloads and large scans, aggregation, slicking and dicing, dimensional models and grain and compare the result with a control set.
+Two recurring problems are incorrect grain or join logic, which can produce wrong aggregates, and performance degradation at production volume. I explicitly validate the dimensional model, fact grain, join cardinality, aggregation logic, partition pruning, and execution plan.
 
 ### How do you check that the result is correct and not just fast?
 
-I compare the number of rows, amounts and keys with the source or with a reference result; I test NULLs, duplicates, limits and rerouting of the batch.I only then check time, resources and execution plan.
+I compare row counts, amounts, business totals, and keys with the source or a trusted reference result; I test NULLs, duplicates, boundary conditions, and reruns. Only then do I evaluate elapsed time, resource usage, TEMP usage, and the execution plan.
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect the functional requirement, grain, schema and keys, expected volume, data distribution, dependencies, execution plans and timings, known errors/logs, partitioning strategy, and acceptance criteria. I also document the rollback or recovery approach.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 
-In a bank flow, OLAF appears together with logging, auditing, reconciliation and impact analysis.
+In a banking flow, OLAP typically appears downstream of ETL and DWH processing, where reporting must remain consistent with source-system totals, audit requirements, reconciliation rules, and historical dimension state.
