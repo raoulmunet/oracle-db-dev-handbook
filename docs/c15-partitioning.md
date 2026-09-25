@@ -12,11 +12,11 @@ Partitioning is one of the most important Oracle techniques for **very large tab
 
 The basic idea is simple:
 
-> A table remains logically a single table, but the data is physically divided into several segments called **** partitions.
+> A table remains logically a single table, but its data is physically divided into segments called **partitions**.
 
 For a Data Developer Oracle, the most important concepts are:
 
-**RANGE / INTERVAL → LIST → HASH → composite partitioning → partition pitching → local / global indexes → partition-wise joins → partition maintenance → EXCHANGE PARTITION.**
+**RANGE / INTERVAL → LIST → HASH → composite partitioning → partition pruning → local / global indexes → partition-wise joins → partition maintenance → EXCHANGE PARTITION.**
 
 ---
 
@@ -34,13 +34,13 @@ FACT_TRANSACTION
 Most reports ask:
 
 ```
-WHERE transaction_date = DATE '2026-09-01'
-AND transaction_date - DATE '2026-10-01'
+WHERE transaction_date >= DATE '2026-09-01'
+  AND transaction_date <  DATE '2026-10-01'
 ```
 
 Without partitioning, Oracle may be forced to examine a very large amount of data.
 
-With lunar partitioning:
+With monthly partitioning:
 
 ```
 FACT_TRANSACTION
@@ -62,16 +62,16 @@ This is **partition pruning**.
 
 ---
 
-# 15.2 Partition table = logical table, multiple physical segments
+## 15.2. Partitioned table = one logical table, multiple physical segments
 
 The application continues to execute:
 
-```
+```sql
 SELECT *
 FROM fact_transaction;
 ```
 
-They don't need to know which partition the data is in.
+Applications do not need to know which partition contains the data.
 
 Oracle automatically decides which partitions need to be accessed.
 
@@ -82,34 +82,34 @@ FACT_TRANSACTION
                         │
        ┌────────────────┼────────────────┐
        │                │                │
-P2026_07Q1QX P2026_09
+P2026_07 P2026_09
        │                │                │
 segment segment segment
 ```
 
 ---
 
-# 15.3 RANGE partitioning
+## 15.3. RANGE partitioning
 
 It's probably the most important type for DWH.
 
-It shall be used when the data are divided by intervals:
+Use it when data is divided into ordered ranges such as:
 
 - date;
 - accounting period;
 - number;
-- ID temporal.
+- time-based IDs.
 
 Example:
 
-```
-CREATEQ1QX fact_transaction
+```sql
+CREATE TABLE fact_transaction
 (
 transaction_id NUMBER,
 transaction_date DATE,
 customer_id NUMBER,
 account_id NUMBER,
-amount NUMBER (15.2)
+amount NUMBER(15,2)
 )
 PARTITION BY RANGE (transaction_date)
 (
@@ -122,10 +122,10 @@ PARTITION p2026_03 VALUES LESS THAN (DATE '2026-04-01')
 Important:
 
 ```
-VALUESQ1QX THAN
+VALUES THAN
 ```
 
-define the exclusive **limit**.
+defines an exclusive upper **boundary**.
 
 Therefore:
 
@@ -133,17 +133,17 @@ Therefore:
 P2026_02
 
 = 2026-02-01
-This Regulation shall be binding in its entirety and directly applicable in all Member States.
+contains dates from 2026-02-01 up to, but not including, 2026-03-01.
 ```
 
 ---
 
-# 15.4 Where does a round end up?
+## 15.4. Where does a row go?
 
 For:
 
-```
-INSERTQ1QX fact_transaction
+```sql
+INSERT INTO fact_transaction
 VALUES (
 1001,
 DATE '2026-02-15',
@@ -153,23 +153,23 @@ DATE '2026-02-15',
 );
 ```
 
-Oracle analyses:
+Oracle evaluates:
 
 ```
 transaction_date = 15-Feb-2026
 ```
 
-and automatically send the row to:
+and automatically sends the row to:
 
 ```
 P2026_02
 ```
 
-The application shall not specify the partition.
+The application does not need to specify the partition.
 
 ---
 
-# 15.5 PARTITION MAXVALUE
+## 15.5. PARTITION MAXVALUE
 
 We can define a catch-all partition:
 
@@ -194,18 +194,18 @@ It is useful to avoid error:
 ORA-14400: inserted partition key does not map to any partition
 ```
 
-But for large DWH-uri, **INTERVAL partitioning** is often a more elegant solution.
+But for large DWH systems, **INTERVAL partitioning** is often a more elegant solution.
 
 ---
 
-# 15.6 INTERVAL partitioning
+## 15.6. INTERVAL partitioning
 
 Oracle can automatically create new partitions.
 
 Monthly example:
 
-```
-CREATEQ1QX fact_transaction
+```sql
+CREATE TABLE fact_transaction
 (
 transaction_id NUMBER,
 transaction_date DATE,
@@ -213,7 +213,7 @@ customer_id NUMBER,
 amount NUMBER
 )
 PARTITION BY RANGE (transaction_date)
-INTERVAL (NUMTOYMINTERVAL (1, 'MONTH'))
+INTERVAL (NUMTOYMINTERVAL(1, 'MONTH'))
 (
 PARTITION p_initial
 VALUES LESS THAN (DATE '2026-01-01')
@@ -228,11 +228,11 @@ transaction_date = DATE '2026-09-15'
 
 Oracle can automatically create the required partition.
 
-For an DWH with monthly charges, this is a very important pattern.
+For a DWH with monthly loads, this is a very important pattern.
 
 ---
 
-# 15.7 LIST partitioning
+## 15.7. LIST partitioning
 
 LIST is useful when the key has a relatively small number of discrete values.
 
@@ -247,7 +247,7 @@ BUSINESS_UNIT
 
 Example:
 
-```
+```sql
 CREATE TABLE sales
 (
 sale_id NUMBER,
@@ -270,12 +270,12 @@ PARTITION p_other VALUES (DEFAULT)
 
 ---
 
-# 15.8 HASH partitioning
+## 15.8. HASH partitioning
 
 HASH partitioning distributes data approximately evenly between partitions.
 
-```
-CREATEQ1QX customer_transaction
+```sql
+CREATE TABLE customer_transaction
 (
 transaction_id NUMBER,
 customer_id NUMBER,
@@ -285,13 +285,13 @@ PARTITION BY HASH (customer_id)
 PARTITIONS 8;
 ```
 
-The Oracle calculates internally something conceptually similar to:
+Oracle calculates internally something conceptually similar to:
 
 ```
 hash (customer_id)
 ```
 
-and choose one of the 8 partitions.
+and chooses one of the 8 partitions.
 
 Main advantage:
 
@@ -302,20 +302,17 @@ relatively uniform distribution of data
 It is useful for:
 
 - very large volumes;
-- Parallelism;
+- parallelism;
 - reduction of hotspots;
-- Partition-wise joins.
+- partition-wise joins.
 
 ---
 
-# 15.9 RANGE vs LIST vs HASH
+## 15.9. RANGE vs. LIST vs. HASH
 
 ♪ Good for you ♪
 ♪ ♪ ♪ ♪ ♪
 * * * * *
-= = sync, corrected by elderman = =
-= = sync, corrected by elderman = =
-= = sync, corrected by elderman = = @ elder _ man
 ♪ Composites are the combination of advantages ♪
 
 For a fact table DWH, very common:
@@ -334,7 +331,7 @@ HASH (customer_id)
 
 ---
 
-# 15.10 Composite partitioning
+## 15.10 Composite partitioning
 
 Oracle allows partitions + subpartitions.
 
@@ -366,8 +363,8 @@ P2026_09
 
 Example:
 
-```
-CREATEQ1QX fact_transaction
+```sql
+CREATE TABLE fact_transaction
 (
 transaction_id NUMBER,
 transaction_date DATE,
@@ -388,7 +385,7 @@ VALUES LESS THAN (DATE '2026-10-01')
 
 ---
 
-# 15.11 Why compose partitioning?
+## 15.11 Why compose partitioning?
 
 Imagine:
 
@@ -414,18 +411,18 @@ P2026_09
 - - SP4 - 75M
 ```
 
-This can especially help parallel execution and joints.
+This can especially help parallel execution and joins.
 
 ---
 
-# 15.12 Partition pruning
+## 15.12 Partition pruning
 
 This is probably the most important concept of **for reviewing and tuning**.
 
 Query:
 
-```
-SELECT SUM (amount)
+```sql
+SELECT SUM(amount)
 FROM fact_transaction
 WHERE transaction_date = DATE '2026-09-01'
 AND transaction_date; DATE '2026-10-01';
@@ -456,9 +453,9 @@ This is:
 
 ---
 
-# 15.13 How do we see him in the execution plan
+## 15.13 How do we see him in the execution plan
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY
@@ -468,14 +465,14 @@ DBMS_XPLAN.DISPLAY
 You can see:
 
 ```
-PARTITIONQ1QX SINGLE
+PARTITION SINGLE
 TABLE ACCESS FULL FACT_TRANSACTION
 ```
 
 or:
 
 ```
-PARTITIONQ1QX ITERATOR
+PARTITION ITERATOR
 TABLE ACCESS FULL FACT_TRANSACTION
 ```
 
@@ -491,27 +488,25 @@ Example:
 ```
 * Operation *
 |--------------------------|--------|-------|
-= = sync, corrected by elderman = = @ elder _ man
-= = sync, corrected by elderman = = @ elder _ man
 ```
 
 It means Oracle is accessing only one partition.
 
 ---
 
-# 15.14 PARTITION RANGE SINGLE
+## 15.14 PARTITION RANGE SINGLE
 
 If exactly one partition is required:
 
 ```
-PARTITIONQ1QX SINGLE
+PARTITION SINGLE
 ```
 
 Example:
 
 ```
-WHERE transaction_date = DATE '2026-09-01'
-AND transaction_date - DATE '2026-10-01'
+WHERE transaction_date >= DATE '2026-09-01'
+  AND transaction_date <  DATE '2026-10-01'
 ```
 
 For monthly partitioning, Oracle can only access:
@@ -522,7 +517,7 @@ P2026_09
 
 ---
 
-# 15.15 PARTITION RANGE ITERATOR
+## 15.15 PARTITION RANGE ITERATOR
 
 If more than one partition needs to be read:
 
@@ -542,18 +537,18 @@ SEP
 The plan may contain:
 
 ```
-PARTITIONQ1QX ITERATOR
+PARTITION ITERATOR
 ```
 
 ---
 
-# 15.16 Predicts must allow the pruning
+## 15.16 Predicts must allow the pruning
 
 Preferably:
 
 ```
-WHERE transaction_date = DATE '2026-09-01'
-AND transaction_date - DATE '2026-10-01'
+WHERE transaction_date >= DATE '2026-09-01'
+  AND transaction_date <  DATE '2026-10-01'
 ```
 
 A common anti-pattern:
@@ -576,16 +571,16 @@ The general principle is the same as in indexes:
 
 ---
 
-# 15.17 Partitioning does not automatically mean performance
+## 15.17 Partitioning does not automatically mean performance
 
-That's a classic technical discussion question.
+That's a classic technical review question.
 
 A partitioned table does not automatically become faster.
 
 If we execute:
 
-```
-SELECT SUM (amount)
+```sql
+SELECT SUM(amount)
 FROM fact_transaction;
 ```
 
@@ -608,7 +603,7 @@ partition-wise joins
 
 ---
 
-# 15.18 Partition pruning vs index
+## 15.18 Partition pruning vs index
 
 There are two different mechanisms.
 
@@ -636,13 +631,13 @@ For example:
 Conceptual plan:
 
 ```
-PARTITIONQ1QX SINGLE
+PARTITION SINGLE
 INDEX RANGE SCAN IDX_FACT_CUSTOMER
 ```
 
 ---
 
-# 15.19 Local indexes
+## 15.19 Local indexes
 
 A local **index** follows the partition structure of the table.
 
@@ -664,8 +659,8 @@ IDX_MAR
 
 Creation:
 
-```
-CREATEQ1QX idx_fact_customer
+```sql
+CREATE idx_fact_customer
 ON fact_transaction (customer_id)
 LOCAL;
 ```
@@ -678,7 +673,7 @@ This greatly simplifies ETL operations and maintenance.
 
 ---
 
-# 15.20 Global indexes
+## 15.20 Global indexes
 
 A global index shall not respect the partition of the table.
 
@@ -708,9 +703,8 @@ certain operations on partitions may require maintenance of the global index.
 
 ---
 
-# 15.21 Local vs global index
+## 15.21 Local vs global index
 
-= = sync, corrected by elderman =
 ♪ ♪ ♪ ♪ ♪
 In line with the table independent of the table
 Very good for DWH good for transverse access
@@ -722,7 +716,7 @@ In a large DWH, local **indexes** are very common.
 
 ---
 
-# 15.22 Local prefixed vs non-prefixed index
+## 15.22 Local prefixed vs non-prefixed index
 
 There is a more advanced distinction.
 
@@ -752,9 +746,9 @@ Both can be useful, depending on the workload.
 
 ---
 
-# 15.23 Partition-wise joins
+## 15.23 Partition-wise joins
 
-Partitioning can accelerate joints between two big tables.
+Partitioning can accelerate joins between two big tables.
 
 For example:
 
@@ -783,7 +777,7 @@ This is:
 
 ---
 
-# 15.24 Full partition-wise join
+## 15.24 Full partition-wise join
 
 When both tables are partitioned compatible with the same key:
 
@@ -799,7 +793,7 @@ It's very suitable for parallel execution.
 
 ---
 
-# 15.25 Partial partitional-wise join
+## 15.25 Partial partitional-wise join
 
 If only one of the tables is properly partitioned, Oracle can redistribute data from the other table.
 
@@ -807,9 +801,9 @@ It is less effective than full partition-wise join, but can still be useful.
 
 ---
 
-# 15.26 Partition maintenance operations
+## 15.26 Partition maintenance operations
 
-A major advantage of partitioning is not only the performance of querys, but also administration.
+A major advantage of partitioning is not only the performance of queries, but also administration.
 
 We can:
 
@@ -827,7 +821,7 @@ without manipulating the entire table.
 
 ---
 
-# 15.27 DROP PARTITION
+## 15.27 DROP PARTITION
 
 We assume that the retention policy is:
 
@@ -837,15 +831,15 @@ We assume that the retention policy is:
 
 We can eliminate an old period:
 
-```
-ALTERQ1QX fact_transaction
+```sql
+ALTER fact_transaction
 DROP PARTITION p2018_01;
 ```
 
 Instead of:
 
-```
-DELETEQ1QX fact_transaction
+```sql
+DELETE fact_transaction
 WHERE transaction_date
 AND transaction_date,
 ```
@@ -854,12 +848,12 @@ For hundreds of millions of rows, the operational difference can be enormous.
 
 ---
 
-# 15.28 TRUNCATE PARTITION
+## 15.28 TRUNCATE PARTITION
 
 We can empty a partition:
 
-```
-ALTERQ1QX fact_transaction
+```sql
+ALTER fact_transaction
 TRUNCATE PARTITION p2026_09;
 ```
 
@@ -877,7 +871,7 @@ reload
 
 ---
 
-# 15.29 EXCHANGE PARTITION
+## 15.29 EXCHANGE PARTITION
 
 This is one of the most important DWH squares.
 
@@ -901,9 +895,9 @@ reconciliation
 
 Then:
 
-```
-ALTERQ1QX fact_transaction
-EXCHANGEQ1QX p2026_09
+```sql
+ALTER fact_transaction
+EXCHANGE p2026_09
 WITH TABLE stg_fact_transaction;
 ```
 
@@ -921,7 +915,7 @@ Instead of moving millions of rows one by one, we can change the association of 
 
 ---
 
-# 15.30 Patterson DWH very important
+## 15.30 Patterson DWH very important
 
 A very good pipeline is:
 
@@ -951,7 +945,7 @@ periodic
 
 ---
 
-# 15.31 Why is EXCHANGE PARTITION so valuable?
+## 15.31 Why is EXCHANGE PARTITION so valuable?
 
 Because it allows:
 
@@ -965,7 +959,7 @@ It's one of the squares that's worth knowing as well as Data Developer.
 
 ---
 
-# 15.32 Statistics on partitioned tables
+## 15.32 Statistics on partitioned tables
 
 Oracle can keep statistics:
 
@@ -977,7 +971,7 @@ SUBPARTITION
 
 You can see:
 
-```
+```sql
 SELECT
 partition_name,
 num_rows,
@@ -997,7 +991,7 @@ We don't necessarily want to recalculate the entire table.
 
 ---
 
-# 15.33 Incremental Statistics
+## 15.33 Incremental Statistics
 
 For very large partitioned tables, Oracle can use **incremental statistics**.
 
@@ -1022,7 +1016,7 @@ EXCHANGE PARTITION
 
 ---
 
-# 15.34 Partitioning + parallel execution
+## 15.34 Partitioning + parallel execution
 
 Partitions provide natural work units for parallel execution.
 
@@ -1045,7 +1039,7 @@ There must be enough suitable volume and workload.
 
 ---
 
-# 15.35 Partitioning in a Star Schema
+## 15.35 Partitioning in a Star Schema
 
 A very common design:
 
@@ -1077,7 +1071,7 @@ and is frequently filtered after the period.
 
 ---
 
-# 15.36 Example DWH bank
+## 15.36 Example DWH bank
 
 Suppose:
 
@@ -1103,7 +1097,7 @@ Design:
 
 ```
 PARTITION BY RANGE (transaction_date)
-INTERVAL (NUMTOYMINTERVAL (1, 'MONTH'))
+INTERVAL (NUMTOYMINTERVAL(1, 'MONTH'))
 ```
 
 Local index:
@@ -1116,13 +1110,13 @@ transaction_type_key
 
 Query:
 
-```
+```sql
 SELECT
 customer_key,
-SUM (amount)
+SUM(amount)
 FROM fact_account_transaction
-WHERE transaction_date = DATE '2026-09-01'
-AND transaction_date - DATE '2026-10-01'
+WHERE transaction_date >= DATE '2026-09-01'
+  AND transaction_date <  DATE '2026-10-01'
 GROUP BY customer_key;
 ```
 
@@ -1142,12 +1136,12 @@ This can be a perfectly reasonable plan for DWH.
 
 ---
 
-# 15.37 Full table scan is not necessarily bad
+## 15.37 Full table scan is not necessarily bad
 
 If the plan shows:
 
 ```
-PARTITIONQ1QX SINGLE
+PARTITION SINGLE
 TABLE ACCESS FULL FACT_TRANSACTION
 ```
 
@@ -1178,7 +1172,7 @@ What I/O?
 
 ---
 
-# 15.38 Overpartitioning
+## 15.38 Overpartitioning
 
 We must not create excessively small partitions.
 
@@ -1208,7 +1202,7 @@ Not just by the total volume.
 
 ---
 
-# 15.39 Choice of partitioning key
+## 15.39 Choice of partitioning key
 
 A very important question.
 
@@ -1249,7 +1243,7 @@ parallelism
 
 ---
 
-# 15.40 Partition pruning static vs dynamic
+## 15.40 Partition pruning static vs dynamic
 
 Simplified, the infant can be determined:
 
@@ -1258,13 +1252,13 @@ Simplified, the infant can be determined:
 Oracle knows the partition directly from the prediction.
 
 ```
-WHERE transaction_date = DATE '2026-09-01'
-AND transaction_date - DATE '2026-10-01'
+WHERE transaction_date >= DATE '2026-09-01'
+  AND transaction_date <  DATE '2026-10-01'
 ```
 
 ### Dynamic
 
-The required partition can be determined during execution, for example in certain joints.
+The required partition can be determined during execution, for example in certain joins.
 
 In the execution plan, Pstart / Pstop may also appear in forms such as:
 
@@ -1276,7 +1270,7 @@ instead of fixed numbers.
 
 ---
 
-# 15.41 Partitioning and constraints
+## 15.41 Partitioning and constraints
 
 Partitioning shall not replace:
 
@@ -1294,7 +1288,7 @@ It must be mentally separated from data integrity.
 
 ---
 
-# 15.42 Partitioning vs sharing
+## 15.42 Partitioning vs sharing
 
 They're different concepts.
 
@@ -1316,13 +1310,13 @@ Partitioning is primarily an internal mechanism for organising the table.
 
 ---
 
-# 15.43 Troubleshooting is not doing pruning
+## 15.43 Troubleshooting is not doing pruning
 
 We assume a month's query is slow.
 
 First verification:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (NULL, NULL, 'ALLSTATS LAST')
@@ -1363,7 +1357,7 @@ Access path inside partition
 
 ---
 
-# 15.44 Example of problem with default conversion
+## 15.44 Example of problem with default conversion
 
 Suppose the partition key is:
 
@@ -1395,7 +1389,7 @@ In SQL performance, we avoid default conversions.
 
 ---
 
-# 15.45 When NU is worth partitioning?
+## 15.45 When NU is worth partitioning?
 
 Not every table has to be partitioned.
 
@@ -1412,18 +1406,18 @@ Partitioning is usually worth it when there are:
 - large volumes;
 - time retention;
 - Loads over periods;
-- querys that filter on the partitioning key;
+- queries that filter on the partitioning key;
 - parallelism needs;
 - administration per piece of data.
 
 ---
 
-# 15.46 Oracle exercise 26ai
+## 15.46 Oracle exercise 26ai
 
 Create:
 
-```
-CREATEQ1QX fact_sales_part
+```sql
+CREATE fact_sales_part
 (
 sale_id NUMBER,
 sale_date DATE,
@@ -1450,7 +1444,7 @@ October
 
 Then:
 
-```
+```sql
 SELECT partition_name, num_rows
 FROM user_tab_partitions
 WHERE table_name = 'FACT_SALES_PART';
@@ -1460,12 +1454,12 @@ According to the statistics collected, they observe the distribution.
 
 ---
 
-# 15.47 Exercise
+## 15.47 Exercise
 
 Run:
 
-```
-SELECT SUM (amount)
+```sql
+SELECT SUM(amount)
 FROM fact_sales_part
 WHERE sale_date = DATE '2026-09-01'
 AND sale_date; DATE '2026-10-01';
@@ -1473,7 +1467,7 @@ AND sale_date; DATE '2026-10-01';
 
 Then:
 
-```
+```sql
 SELECT *
 FROM TABLE (
 DBMS_XPLAN.DISPLAY_CURSOR (NULL, NULL, 'ALLSTATS LAST')
@@ -1483,26 +1477,26 @@ DBMS_XPLAN.DISPLAY_CURSOR (NULL, NULL, 'ALLSTATS LAST')
 Search:
 
 ```
-PARTITIONQ1QX SINGLE
+PARTITION SINGLE
 Pstart
 Pstop
 ```
 
 ---
 
-# 15.48 Local index exercise
+## 15.48 Local index exercise
 
 Create:
 
-```
-CREATEQ1QX ix_fact_sales_customer
+```sql
+CREATE ix_fact_sales_customer
 ON fact_sales_part (customer_id)
 LOCAL;
 ```
 
 Check:
 
-```
+```sql
 SELECT
 index_name,
 partition_name,
@@ -1517,12 +1511,12 @@ Observe:
 
 ---
 
-# 15.49 Exercise × EXCHANGE PARTITION
+## 15.49 Exercise × EXCHANGE PARTITION
 
 Create a compatible staging table:
 
-```
-CREATEQ1QX stg_fact_sales
+```sql
+CREATE stg_fact_sales
 AS
 SELECT *
 FROM fact_sales_part
@@ -1533,15 +1527,15 @@ Charging data for September.
 
 Then perform conceptually:
 
-```
-ALTERQ1QX fact_sales_part
-EXCHANGEQ1QX p2026_09
+```sql
+ALTER fact_sales_part
+EXCHANGE p2026_09
 WITH TABLE stg_fact_sales;
 ```
 
 Then check:
 
-```
+```sql
 SELECT COUNT *
 FROM fact_sales_part
 PARTITION (p2026_09);
@@ -1559,7 +1553,7 @@ Physical division of a table or index into smaller segments, keeping a single lo
 
 ---
 
-### 2. What is the main advantage for querys?
+### 2. What is the main advantage for queries?
 
 **Partition pruning**: Oracle can avoid irrelevant partitions.
 
@@ -1592,8 +1586,8 @@ Removal from execution of partitions that cannot contain data relevant to predic
 In execution plan:
 
 ```
-PARTITIONQ1QX SINGLE
-PARTITIONQ1QX ITERATOR
+PARTITION SINGLE
+PARTITION ITERATOR
 Pstart
 Pstop
 ```
@@ -1639,9 +1633,9 @@ Not necessarily.
 For DWH, one:
 
 ```
-PARTITIONQ1QX SINGLE
+PARTITION SINGLE
 +
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 This may be the best plan.
@@ -1674,13 +1668,13 @@ instead of millions of DELETE operations.
 
 A good answer would be:
 
-> First, I check whether the table is partitioned by a column corresponding to the access square, for example, transaction\ _ data. Then I check the execution of the plane and Pstart / Pstop to confirm partition pounding. If the one-month ratio accesses all partitions, I investigate predictions, conversions and functions applied to partition key. After pruning I analyze access to the pathi in the remaining partition, cardinality, statistics, indexes and if a full scan / parallel scan is more appropriate than an index. For ETL I would also analyze local indexes, incremental statistics and possibly partition exchange loading.
+> First, I check whether the table is partitioned by a column corresponding to the access square, for example, transaction_data. Then I check the execution of the plane and Pstart / Pstop to confirm partition pounding. If the one-month ratio accesses all partitions, I investigate predictions, conversions and functions applied to partition key. After pruning I analyze access to the pathi in the remaining partition, cardinality, statistics, indexes and if a full scan / parallel scan is more appropriate than an index. For ETL I would also analyze local indexes, incremental statistics and possibly partition exchange loading.
 
 This is a very good response for a role of **Oracle Data Developer / DWH**.
 
 ---
 
-# 15.52 Mental model
+## 15.52 Mental model
 
 When you see **Partitioning**, think:
 
@@ -1729,14 +1723,14 @@ COMPOSITE
 
 ---
 
-# 15.53 What must remain
+## 15.53 What must remain
 
-If you were to just remember the key to the technical discussion:
+If you were to just remember the key to the technical review:
 
 1. **Partitioning = Physical Sharing, one logical table.**
 2. For fact tables, the most common is **RANGE/INTERVAL after date**.
 3. The main concept of performance is **partition pruning**.
-4. Check the plum through DBMS\ _ XPLAN, especially **Pstart / Pstop**.
+4. Check the plum through DBMS_XPLAN, especially **Pstart / Pstop**.
 5. PARTITION RANGE SINGLE means that a single partition is required.
 6. A FULL TABLE SCAN on a single large partition can be perfectly correct.
 7. **Local indexes** are extremely useful in DWH.
