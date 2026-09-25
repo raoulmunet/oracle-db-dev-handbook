@@ -8,46 +8,44 @@ sidebar_position: 1
 
 <div className="chapter-kicker">Chapter C01 · Complete course</div>
 
-Below you have a compact but comprehensive course for **1. SQL from fundamental to advanced**, thought especially for Oracle and for your direction of **Data Developer / Oracle / ETL / DWH**.
+This chapter provides a compact but comprehensive course on **SQL from fundamentals to advanced**, with a strong Oracle focus and practical relevance for **Data Developer / Oracle / ETL / DWH** work.
 
-# 1. SQL is fundamentally until advanced
+# 1. SQL from Fundamentals to Advanced
 
-SQL is the language by which you question, transform and modify the data in the database. In Oracle, for a Data Developer, you must master not only the syntax, but also **as Oracle interprets the** interrogation and what impact it has on performance.
+SQL is the language used to query, transform, and modify data in a relational database. In Oracle, a Data Developer must understand not only the syntax, but also **how Oracle interprets a query** and how that affects performance.
 
 ---
 
-## 1.1. Relational model and structure of an interrogation
+## 1.1. Relational model and query structure
 
-A relational basis shall contain mainly:
+A relational database mainly contains:
 
 - tables;
 - columns;
 - rows;
 - primary keys;
-- external keys;
+- foreign keys;
 - constraints;
-- Incas;
+- indexes;
 - views.
 
 Example:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT employee_id,
-first_name,
-salary
-FROM
+       first_name,
+       salary
+FROM employees
 WHERE department_id = 50
 ORDER BY salary DESC;
 ```
 
 Order in which we write:
 
-```
+```sql
 SELECT
-FROM
+FROM employees
 WHERE
 GROUP BY
 HAVING
@@ -67,42 +65,36 @@ ORDER BY
 FETCH
 ```
 
-It's very important.
+This distinction is very important.
 
 For example:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT salary * 12 AS annual_salary
-FROM
-WHERE annual_salary;
+FROM employees
+WHERE annual_salary > 100000;
 ```
 
-does not work in Oracle because the annual\ _ salary alias does not yet exist at the time of evaluation of WHERE.
+does not work in Oracle because the `annual_salary` alias does not yet exist at the time of evaluation of WHERE.
 
 You have to:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT salary * 12 AS annual_salary
-FROM
-WHERE salary * 12 › 100000;
+FROM employees
+WHERE salary * 12 > 100000;
 ```
 
 ---
 
-# 1.2. SELECT
+## 1.2. SELECT
 
 Basic form:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT column1,
 column2
 FROM table_name;
@@ -110,25 +102,21 @@ FROM table_name;
 
 All columns:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT *
-FROM employment;
+FROM employees;
 ```
 
 In the real code it is preferable to list the columns:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT employee_id,
 first_name,
 last_name,
 salary
-FROM employment;
+FROM employees;
 ```
 
 Advantages:
@@ -139,53 +127,45 @@ Advantages:
 
 ---
 
-# 1.3. Expressions and aliases
+## 1.3. Expressions and aliases
 
 You can calculate values directly in SQL:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT employee_id,
-Salary,
+salary,
 salary * 12 AS annual_salary
-FROM employment;
+FROM employees;
 ```
 
 Oracle concatenation:
 
-(date: image / svg + xml)
 
-SQL
-```
-SELECT first_name; ' '; last_name; AS; full_name;
-FROM employment;
+```sql
+SELECT first_name || ' ' || last_name AS full_name
+FROM employees;
 ```
 
 Alias:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT salary * 12 annual_salary
-FROM employment;
+FROM employees;
 ```
 
 or more explicitly:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT salary * 12 AS annual_salary
-FROM employment;
+FROM employees;
 ```
 
 ---
 
-# 1.4. NULL
+## 1.4. NULL
 
 NULL does not mean:
 
@@ -201,37 +181,29 @@ It means:
 
 Wrong:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 WHERE commission_pct = NULL
 ```
 
 Right:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 WHERE commission_pct IS NULL
 ```
 
 or:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 WHERE commission_pct IS NOT NULL
 ```
 
 Operations with NULL typically produce NULL:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 salary + NULL
 ```
 
@@ -239,22 +211,22 @@ salary + NULL
 
 ---
 
-# 1.5. NVL, COALESCE and NULLIF
+## 1.5. NVL, COALESCE, and NULLIF
 
 ### NVL
 
-Specific oracles:
+Oracle-specific:
 
 ```
-NVL (commission_pct, 0)
+NVL(commission_pct, 0)
 ```
 
 Example:
 
-```
+```sql
 SELECT salary,
-NVL (commission_pct, 0)
-FROM employment;
+NVL(commission_pct, 0)
+FROM employees;
 ```
 
 ---
@@ -264,17 +236,17 @@ FROM employment;
 Returns the first non-NULL value:
 
 ```
-COALESCE (phone_mobile, phone_home, phone_office)
+COALESCE(phone_mobile, phone_home, phone_office)
 ```
 
-It is standard SQL and allows for several arguments.
+It is standard SQL and accepts multiple arguments.
 
 ---
 
 ### NULLIF
 
 ```
-NULLIF (a, b)
+NULLIF(a, b)
 ```
 
 Returns NULL if:
@@ -283,35 +255,34 @@ Returns NULL if:
 a = b
 ```
 
-Otherwise return a.
+Otherwise, it returns `a`.
 
-Very useful to avoid zero division:
+Very useful for avoiding division by zero:
 
-```
-% 1% 2
+```sql
+amount / NULLIF(quantity, 0)
 ```
 
 ---
 
-# 1.6. WHERE
+## 1.6. WHERE
 
 Operators:
 
-```
+```text
 =
-♪ ♪
-!
-;
-;
-=
-=
+<> or !=
+>
+<
+>=
+<=
 ```
 
 Example:
 
-```
+```sql
 SELECT *
-FROM
+FROM employees
 WHERE salary = 10000;
 ```
 
@@ -319,15 +290,15 @@ WHERE salary = 10000;
 
 ## BETWEEN
 
-```
+```sql
 WHERE salary BETWEEN 5000 AND 10000
 ```
 
 logically equivalent to:
 
-```
-WHERE salary = 5000
-AND salary = 10000
+```sql
+WHERE salary >= 5000
+  AND salary <= 10000
 ```
 
 The limits are included.
@@ -336,13 +307,13 @@ The limits are included.
 
 ## IN
 
-```
+```sql
 WHERE department_id IN (10, 20, 30)
 ```
 
 for:
 
-```
+```sql
 WHERE department_id = 10
 OR department_id = 20
 OR department_id = 30
@@ -350,23 +321,23 @@ OR department_id = 30
 
 ---
 
-# 1.7. LIKE and text searches
+## 1.7. LIKE and text searches
 
-```
+```sql
 WHERE last_name LIKE 'S%'
 ```
 
 means:
 
 ```
-start with S
+starts with S
 ```
 
 Wildcards:
 
 ```
 % → 0 or more characters
-_ → exactly a character
+_ → exactly one character
 ```
 
 Examples:
@@ -401,15 +372,14 @@ generally cannot use a normal B-tree index effectively.
 
 ---
 
-# 1.8. AND, OR and precedence of operators
+## 1.8. AND, OR, and operator precedence
 
-```
+```sql
 WHERE department_id = 10
-OR department_id = 20
-AND salary
+   OR (department_id = 20 AND salary > 5000)
 ```
 
-AND takes priority over OR.
+`AND` has higher precedence than `OR`.
 
 So Oracle interprets:
 
@@ -418,15 +388,15 @@ department_id = 10
 OR
 (
 department_id = 20
-AND salary › 5000
+AND salary > 5000
 )
 ```
 
 If you want something else:
 
-```
+```sql
 WHERE (department_id = 10 OR department_id = 20)
-AND salary is 5000;
+  AND salary > 5000;
 ```
 
 Use parentheses when the expression becomes complex.
@@ -435,7 +405,7 @@ Use parentheses when the expression becomes complex.
 
 # 1.9. ORDER BY
 
-```
+```sql
 ORDER BY salary
 ```
 
@@ -445,41 +415,41 @@ default:
 ASC
 ```
 
-Decreaser:
+Descending order:
 
-```
+```sql
 ORDER BY salary DESC
 ```
 
 More columns:
 
-```
+```sql
 ORDER BY department_id,
-Salary DESC;
+salary DESC;
 ```
 
-Oracle sort first by department, then inside each department by salary.
+Oracle sorts first by department and then, within each department, by salary.
 
 ---
 
-# 1.10 DISTINCT
+## 1.10. DISTINCT
 
-```
-SELECTQ1QX department_id
-FROM employment;
+```sql
+SELECT DISTINCT department_id
+FROM employees;
 ```
 
-Remove the duplicates from the final result.
+Removes duplicate rows from the final result.
 
 With several columns:
 
-```
+```sql
 SELECT DISTINCT department_id,
 job_id
-FROM employment;
+FROM employees;
 ```
 
-the uniqueness is for the combination:
+uniqueness applies to the combination:
 
 ```
 department_id + job_id
@@ -489,93 +459,83 @@ Attention: DISTINCT may require sorting or hashing and may be costly for large v
 
 ---
 
-# 1.11. Scalar functions
+## 1.11. Scalar functions
 
-The scalar functions receive a row and return a value.
+Scalar functions operate on values from a row and return a single value.
 
 Examples:
 
-```
-UPPER (last_name)
-LOWER (last_name)
-TRIM (name)
-SUBSTR (name, 1.10)
-LENGTH (name)
-ROUND (amount 2)
+```sql
+UPPER(last_name)
+LOWER(last_name)
+TRIM(name)
+SUBSTR(name, 1, 10)
+LENGTH(name)
+ROUND(amount, 2)
 ```
 
 Example:
 
-```
-SELECT UPPER (last_name),
-LENGTH (last_name)
-FROM employment;
+```sql
+SELECT UPPER(last_name),
+LENGTH(last_name)
+FROM employees;
 ```
 
 ---
 
-# 1.12. Data Conversion
+## 1.12. Data conversion
 
 Very important in Oracle.
 
-### TO\ _ CHAR
+### TO_CHAR
 
 ```
-TO_CHAR (hire_date, 'YYYY-MM-DD')
+TO_CHAR(hire_date, 'YYYY-MM-DD')
 ```
 
 or:
 
-(date: image / svg + xml)
 
-SQL
-```
-TO_CHAR (amount, '999G999D99')
+```sql
+TO_CHAR(amount, '999G999D99')
 ```
 
 ---
 
-### TO\ _ DATE
+### TO_DATE
 
-(date: image / svg + xml)
 
-SQL
-```
-TO_DATE ('2026-09-23', 'YYYY-MM-DD')
+```sql
+TO_DATE('2026-09-23', 'YYYY-MM-DD')
 ```
 
 ---
 
-### TO\ _ NUMBER
+### TO_NUMBER
 
-(date: image / svg + xml)
 
-SQL
-```
-TO_NUMBER ('123.45')
+```sql
+TO_NUMBER('123.45')
 ```
 
-Avoid default conversions.
+Avoid implicit conversions.
 
 Instead of:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 WHERE numeric_column = '123'
 ```
 
 Better:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 WHERE numeric_column = 123
 ```
 
-Default conversions can cause:
+Implicit conversions can cause:
 
 ```
 ORA-01722
@@ -585,24 +545,24 @@ and performance issues.
 
 ---
 
-# 1.13. CASE
+## 1.13. CASE
 
 It is one of the most important SQL constructions.
 
-```
+```sql
 SELECT employee_id,
-Salary,
-CASE
-WHEN salary = 15000 THEN 'HIGH'
-WHEN salary = 8000 THEN 'MEDIUM'
-ELSE 'LOW'
-ENDQ1QX salary_category
-FROM employment;
+       salary,
+       CASE
+           WHEN salary >= 15000 THEN 'HIGH'
+           WHEN salary >= 8000  THEN 'MEDIUM'
+           ELSE 'LOW'
+       END AS salary_category
+FROM employees;
 ```
 
 It can be used in:
 
-```
+```sql
 SELECT
 ORDER BY
 GROUP BY
@@ -612,7 +572,7 @@ aggregates
 Very useful example:
 
 ```
-SUM (
+SUM(
 CASE
 WHEN status = 'SUCCESS' THEN 1
 ELSE 0
@@ -622,14 +582,12 @@ END
 
 ---
 
-# 1.14. Aggregated functions
+## 1.14. Aggregate functions
 
 The most important:
 
-(date: image / svg + xml)
 
-SQL
-```
+```text
 COUNT
 SUM
 AVG
@@ -639,50 +597,42 @@ MAX
 
 Example:
 
-(date: image / svg + xml)
 
-SQL
-```
-SELECT COUNT (*),
-AVG (salary)
-MAX (salary)
-FROM employment;
+```sql
+SELECT COUNT(*) AS employee_count,
+       AVG(salary) AS avg_salary,
+       MAX(salary) AS max_salary
+FROM employees;
 ```
 
 Important difference:
 
-(date: image / svg + xml)
 
-SQL
-```
-COUNT *
+```sql
+COUNT(*)
 ```
 
-count all rows.
+counts all rows.
 
-(date: image / svg + xml)
 
-SQL
-```
-COUNT (commission_pct)
+```sql
+COUNT(commission_pct)
 ```
 
-Only count non-NULL values.
+counts only non-NULL values.
 
 ---
 
-# 1.15. GROUP BY
+## 1.15. GROUP BY
 
 Example:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT department_id,
-COUNT (*) AS employee_count,
-AVG (salary) AS avg_salary
-FROM
+       COUNT(*) AS employee_count,
+       AVG(salary) AS avg_salary
+FROM employees
 GROUP BY department_id;
 ```
 
@@ -702,36 +652,32 @@ if a column appears in SELECT and is not aggregated, it should generally occur i
 
 Wrong:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT department_id,
-last_name,
-AVG (salary)
-FROM
+       last_name,
+       AVG(salary)
+FROM employees
 GROUP BY department_id;
 ```
 
 ---
 
-# 1.16. HAVING
+## 1.16. HAVING
 
-WHERE filters the lines.
+`WHERE` filters rows.
 
-HAVING filters the groups.
+`HAVING` filters groups.
 
 Example:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT department_id,
-AVG (salary)
-FROM
-GROUPQ1QX department_id
-HAVING AVG (salary)
+       AVG(salary) AS avg_salary
+FROM employees
+GROUP BY department_id
+HAVING AVG(salary) > 10000;
 ```
 
 Conceptual order:
@@ -748,9 +694,9 @@ HAVING
 
 ---
 
-# 1.17. JOIN
+## 1.17. JOIN
 
-JOIN-s are essential for SQL.
+Joins are essential in SQL.
 
 Suppose:
 
@@ -771,40 +717,36 @@ department_name
 
 ## INNER JOIN
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT e.employee_id,
-d.department_name
-FROM employment e
-JOIN departments
-ON d.department_id = e.department_id;
+       d.department_name
+FROM employees e
+JOIN departments d
+  ON d.department_id = e.department_id;
 ```
 
-Return only the rows that have the correspondent in both tables.
+Returns only rows that have a matching row in both tables.
 
 ---
 
-# 1.18. LEFT JOIN
+## 1.18. LEFT JOIN
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT e.employee_id,
 d.department_name
-FROM employment e
+FROM employees e
 LEFT JOIN departments d
 ON d.department_id = e.department_id;
 ```
 
-Return:
+Returns:
 
 ```
 all employees
 +
-department if there is
+the department when one exists
 ```
 
 If there is no department:
@@ -815,31 +757,31 @@ department_name = NULL
 
 ---
 
-# 1.19. Classic LEFT JOIN + WHERE
+## 1.19. Classic LEFT JOIN + WHERE trap
 
 You have:
 
-```
+```sql
 SELECT *
-FROM employment e
+FROM employees e
 LEFT JOIN departments d
 ON d.department_id = e.department_id
 WHERE d.location_id = 100;
 ```
 
-In practice, you've turned the JOIN- almost into an INNER JOIN.
+In practice, this effectively turns the `LEFT JOIN` into an `INNER JOIN` for rows where `d.location_id` is NULL.
 
 To keep employees without department:
 
-```
+```sql
 SELECT *
-FROM employment e
+FROM employees e
 LEFT JOIN departments d
 ON d.department_id = e.department_id
 AND d.location_id = 100;
 ```
 
-The difference between the condition laid down in:
+The placement of the condition in:
 
 ```
 ON
@@ -847,38 +789,38 @@ ON
 
 and:
 
-```
+```sql
 WHERE
 ```
 
-It's very important.
+This distinction is very important.
 
 ---
 
-# 1.20. SELF JOIN
+## 1.20. SELF JOIN
 
-A table is connected with himself.
+A table is joined to itself.
 
-Example manager employed:
+Example: employee and manager:
 
-```
+```sql
 SELECT e.first_name AS employee,
-m.first_name AS manager
-FROM employment e
-LEFT JOIN employees
-ON m.employee_id = e.manager_id;
+       m.first_name AS manager
+FROM employees e
+LEFT JOIN employees m
+  ON m.employee_id = e.manager_id;
 ```
 
 ---
 
-# 1.21. Cartesian Join
+## 1.21. Cartesian join
 
 If you forget the Join condition:
 
-```
+```sql
 SELECT *
-FROM employment e,
-departments d,
+FROM employees e,
+     departments d;
 ```
 
 you can get:
@@ -899,40 +841,38 @@ It's one of the classic SQL errors.
 
 ---
 
-# 1.22.
+## 1.22. Subqueries
 
 Example:
 
-```
+```sql
 SELECT *
-FROM
-WHERE salary
-(
-SELECT AVG (salary)
-FROM
+FROM employees
+WHERE salary > (
+    SELECT AVG(salary)
+    FROM employees
 );
 ```
 
 The subquery calculates:
 
 ```
-AVG (salary)
+AVG(salary)
 ```
 
-And the outside query uses the result.
+The outer query then uses that result.
 
 ---
 
-# 1.23. Correlated Subquery
+## 1.23. Correlated subquery
 
-```
-SELECT is.
-FROM employment e
-WHERE salary
-(
-SELECT AVG (e2.salary)
-FROM employees e2
-WHERE e2.department_id = e.department_id
+```sql
+SELECT e.*
+FROM employees e
+WHERE e.salary > (
+    SELECT AVG(e2.salary)
+    FROM employees e2
+    WHERE e2.department_id = e.department_id
 );
 ```
 
@@ -940,7 +880,7 @@ Meaning:
 
 > employees who have their salary above the average of their department.
 
-The external and inner subquery shall be correlated by:
+The outer query and inner subquery are correlated through:
 
 ```
 e.department_id
@@ -948,11 +888,11 @@ e.department_id
 
 ---
 
-# 1.24. EXISTS
+## 1.24. EXISTS
 
 Very important.
 
-```
+```sql
 SELECT *
 FROM customers c
 WHERE EXISTS (
@@ -964,11 +904,11 @@ WHERE o.customer_id = c.customer_id
 
 It means:
 
-> return the client if there is at least one order.
+> return the customer if at least one order exists.
 
 Oracle is not actually interested in the value of:
 
-```
+```sql
 SELECT 1
 ```
 
@@ -976,11 +916,11 @@ but the existence of a row.
 
 ---
 
-# 1.25. NOT EXISTS
+## 1.25. NOT EXISTS
 
 Example:
 
-```
+```sql
 SELECT *
 FROM customers c
 WHERE NOT EXISTS (
@@ -1001,11 +941,11 @@ It's an extremely important pattern in:
 
 ---
 
-# 1.26. IN vs EXISTS
+## 1.26. IN vs EXISTS
 
 You could write:
 
-```
+```sql
 WHERE customer_id IN (
 SELECT customer_id
 FROM orders
@@ -1014,7 +954,7 @@ FROM orders
 
 or:
 
-```
+```sql
 WHERE EXISTS (
 SELECT 1
 FROM orders o
@@ -1022,7 +962,7 @@ WHERE o.customer_id = c.customer_id
 )
 ```
 
-The optimiser can transform both shapes.
+The optimizer can transform both forms.
 
 You don't have to remember the old rule:
 
@@ -1030,26 +970,26 @@ You don't have to remember the old rule:
 
 That's not true.
 
-The Oracle Optimizer decides according to statistics and structure.
+Oracle Optimizer decides based on statistics, cardinality, and query structure.
 
 ---
 
-# 1.27. NOT IN and NULL is an important trap
+## 1.27. NOT IN and NULL: an important trap
 
 You have:
 
-```
+```sql
 WHERE customer_id NOT IN (
 SELECT customer_id
 FROM orders
 );
 ```
 
-If the subquery contains an NULL, the result may become unexpected.
+If the subquery returns a `NULL`, the result may be unexpected because of SQL three-valued logic.
 
 Safer:
 
-```
+```sql
 WHERE NOT EXISTS (
 SELECT 1
 FROM orders o
@@ -1057,15 +997,15 @@ WHERE o.customer_id = c.customer_id
 );
 ```
 
-For anti-joints, NOT EXISTS is often the clearest approach.
+For anti-joins, `NOT EXISTS` is often the clearest approach.
 
 ---
 
-# 1.28. UNION and UNION ALL
+## 1.28. UNION and UNION ALL
 
 ### UNION
 
-```
+```sql
 SELECT customer_id
 FROM customers_2025
 
@@ -1075,13 +1015,13 @@ SELECT customer_id
 FROM customers_2026;
 ```
 
-Eliminate duplicates.
+Eliminates duplicates.
 
 ---
 
 ### UNION ALL
 
-```
+```sql
 SELECT customer_id
 FROM customers_2025
 
@@ -1091,7 +1031,7 @@ SELECT customer_id
 FROM customers_2026;
 ```
 
-Keep the duplicates.
+Keeps duplicates.
 
 ETL/DWH often prefers:
 
@@ -1099,15 +1039,15 @@ ETL/DWH often prefers:
 UNION ALL
 ```
 
-if the duplicate does not have to be removed, as it avoids the additional deduction operation.
+if the duplicate does not have to be removed, as it avoids the additional duplicate-elimination operation.
 
 ---
 
-# 1.29. INTERSECT
+## 1.29. INTERSECT
 
 Returns common values:
 
-```
+```sql
 SELECT customer_id
 FROM source_customers
 
@@ -1119,11 +1059,11 @@ FROM dwh_customers;
 
 ---
 
-# 1.30. MINUS
+## 1.30. MINUS
 
 Very useful in reconciliation:
 
-```
+```sql
 SELECT customer_id
 FROM source_customers
 
@@ -1141,24 +1081,24 @@ Excellent for ETL checks.
 
 ---
 
-# 1.31. CTE
+## 1.31. CTE
 
 Example:
 
-```
+```sql
 WITH dept_stats AS (
-SELECT department_id,
-AVG (salary) AS avg_salary
-FROM
-GROUPQ1QX department_id
+    SELECT department_id,
+           AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department_id
 )
 SELECT e.employee_id,
-e.salary,
-d.avg_salary
-FROM employment e
+       e.salary,
+       d.avg_salary
+FROM employees e
 JOIN dept_stats d
-ON d.department_id = e.department_id
-WHERE e.salary n.e.d.avg_salary;
+  ON d.department_id = e.department_id
+WHERE e.salary > d.avg_salary;
 ```
 
 Advantages:
@@ -1166,13 +1106,13 @@ Advantages:
 - more readable query;
 - separate logic;
 - easy to debug;
-- Very useful in complex DWH querys.
+- Very useful in complex DWH queries.
 
 ---
 
-# 1.32. Recursive / hierarchical queries
+## 1.32. Recursive / hierarchical queries
 
-The Oracle has a classic:
+Oracle has a classic:
 
 ```
 START WITH
@@ -1181,38 +1121,38 @@ CONNECT BY
 
 Example:
 
-```
+```sql
 SELECT employee_id,
-manager_id,
-LEVEL
-FROM
+       manager_id,
+       LEVEL
+FROM employees
 START WITH manager_id IS NULL
 CONNECT BY PRIOR employee_id = manager_id;
 ```
 
 Useful for:
 
-- Organigrams;
+- organizational charts;
 - categories;
 - trees;
-- parental-child structures.
+- parent-child structures.
 
 ---
 
-# 1.33. Analytical functions include one of the most important advanced topics.
+## 1.33. Analytic functions
 
-Unlike GROUP BY, the analytical functions **do not remove the individual rows**.
+Unlike `GROUP BY`, analytic functions **do not collapse individual rows**.
 
 Example:
 
-```
+```sql
 SELECT employee_id,
-department_id,
-Salary,
-AVG (salary)
-PARTITIONQ1QX department_id
-) AS dept_avg
-FROM employment;
+       department_id,
+       salary,
+       AVG(salary) OVER (
+           PARTITION BY department_id
+       ) AS dept_avg
+FROM employees;
 ```
 
 The result keeps each employee, but adds the department average.
@@ -1229,31 +1169,31 @@ rows → logical group → each row remains
 
 ---
 
-# 1.34. ROW\ _ NUMBER
+## 1.34. ROW_NUMBER
 
-```
-ROW_NUMBER () OVER
-PARTITIONQ1QX department_id
-ORDER BY salary DESC
+```sql
+ROW_NUMBER() OVER (
+    PARTITION BY department_id
+    ORDER BY salary DESC
 )
 ```
 
 Example:
 
-```
+```sql
 SELECT *
 FROM (
-SELECT is. *,
-ROW_NUMBER () OVER
-PARTITIONQ1QX department_id
-ORDER BY salary DESC
-) rn
-FROM employment e
+    SELECT e.*,
+           ROW_NUMBER() OVER (
+               PARTITION BY department_id
+               ORDER BY salary DESC
+           ) AS rn
+    FROM employees e
 )
-WHERE rn = 3;
+WHERE rn <= 3;
 ```
 
-Return:
+Returns:
 
 > the first 3 employees by salary from each department.
 
@@ -1261,7 +1201,7 @@ Pattern very common.
 
 ---
 
-# 1.35. ROW\ _ NUMBER vs RANK vs DENSE\ _ RANK
+## 1.35. ROW_NUMBER vs RANK vs DENSE_RANK
 
 Data:
 
@@ -1274,7 +1214,7 @@ Salary
 80
 ```
 
-### ROW\ _ NUMBER
+### ROW_NUMBER
 
 ```
 100 →
@@ -1292,7 +1232,7 @@ Salary
 80 → 4
 ```
 
-### DENSE _ RANK
+### DENSE_RANK
 
 ```
 100 →
@@ -1303,18 +1243,18 @@ Salary
 
 ---
 
-# 1.36. LAG and LEAD
+## 1.36. LAG and LEAD
 
 Extremely useful for temporal data.
 
-```
+```sql
 SELECT account_id,
-transaction_date,
-% 1% 2
-LAG (amount) OVER (
-PARTITIONQ1QX account_id
-ORDERQ1QX transaction_date
-) AS previous_amount
+       transaction_date,
+       amount,
+       LAG(amount) OVER (
+           PARTITION BY account_id
+           ORDER BY transaction_date
+       ) AS previous_amount
 FROM transactions;
 ```
 
@@ -1325,25 +1265,24 @@ LEAD → next row.
 Very useful for:
 
 - differences between periods;
-- the detection of changes;
+- change detection;
 - SCD;
 - audit;
 - banking transactions.
 
 ---
 
-# 1.37. Total Running
+## 1.37. Running total
 
-```
+```sql
 SELECT account_id,
-transaction_date,
-% 1% 2
-SUM (amount) OVER (
-PARTITIONQ1QX account_id
-ORDERQ1QX transaction_date
-ROWS BETWEEN UNBOUNDED PRECEDING
-ANDQ1QX ROW
-) AS running_balance
+       transaction_date,
+       amount,
+       SUM(amount) OVER (
+           PARTITION BY account_id
+           ORDER BY transaction_date
+           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+       ) AS running_balance
 FROM transactions;
 ```
 
@@ -1359,56 +1298,44 @@ Very relevant in banking.
 
 ---
 
-# 1.38. FIRST\ _ VALUE and LAST\ _ VALUE
+## 1.38. FIRST_VALUE and LAST_VALUE
 
-(date: image / svg + xml)
 
-SQL
-```
-FIRST_VALUE (amount) OVER (...)
+```sql
+FIRST_VALUE(amount) OVER (...)
 ```
 
 and:
 
-(date: image / svg + xml)
 
-SQL
-```
-LAST_VALUE (amount) OVER (...)
+```sql
+LAST_VALUE(amount) OVER (...)
 ```
 
-Attention: LAST\ _ VALUE is affected by window frame and is a classic source of confusion.
+Be careful: `LAST_VALUE` is affected by the window frame and is a classic source of confusion.
 
 ---
 
-# 1.39. Conditional Aggregation
+## 1.39. Conditional aggregation
 
 A very important pattern:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT customer_id,
-
-SUM (
-CASE
-WHEN transaction_type = 'CREDIT'
-THEN amount
-ELSE 0
-END
-) AS credit_total
-
-SUM (
-CASE
-WHEN transaction_type = 'DEBIT'
-THEN amount
-ELSE 0
-END
-) AS debit_total
-
+       SUM(
+           CASE
+               WHEN transaction_type = 'CREDIT' THEN amount
+               ELSE 0
+           END
+       ) AS credit_total,
+       SUM(
+           CASE
+               WHEN transaction_type = 'DEBIT' THEN amount
+               ELSE 0
+           END
+       ) AS debit_total
 FROM transactions
-
 GROUP BY customer_id;
 ```
 
@@ -1421,15 +1348,15 @@ Very used in:
 
 ---
 
-# 1.40. PIVOT
+## 1.40. PIVOT
 
-Oracle can turn values into columns:
+Oracle can pivot values into columns:
 
-```
+```sql
 SELECT *
 FROM sales
 PIVOT (
-SUM (amount)
+SUM(amount)
 FOR year IN (
 2024 AS y2024,
 2025 AS y2025,
@@ -1452,39 +1379,35 @@ in:
 
 ---
 
-# 1.41. MERGE
+## 1.41. MERGE
 
 Very important in ETL.
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 MERGE INTO target t
-USING
-ON (t.customer_id = s.customer_id)
-
-WHENQ1QX THEN
-UPDATE SET
-t.customer_name = s.customer_name
-
+USING source s
+   ON (t.customer_id = s.customer_id)
+WHEN MATCHED THEN
+    UPDATE SET
+        t.customer_name = s.customer_name
 WHEN NOT MATCHED THEN
-INSERT (
-customer_id,
-customer_name
-)
-VALUES (
-s.customer_id,
-s.customer_name
-);
+    INSERT (
+        customer_id,
+        customer_name
+    )
+    VALUES (
+        s.customer_id,
+        s.customer_name
+    );
 ```
 
 Concept:
 
 ```
-There are → UPDATE
+match exists → UPDATE
 
-there are no → INSERT
+no match → INSERT
 ```
 
 It is the basis of many processes:
@@ -1497,13 +1420,11 @@ and SCD.
 
 ---
 
-# 1.42. INSERT
+## 1.42. INSERT
 
-(date: image / svg + xml)
 
-SQL
-```
-INSERT INTO employment (
+```sql
+INSERT INTO employees (
 employee_id,
 first_name,
 salary
@@ -1515,13 +1436,11 @@ VALUES (
 );
 ```
 
-Or insert query:
+Or insert from a query:
 
-(date: image / svg + xml)
 
-SQL
-```
-INSERTQ1QX target_table
+```sql
+INSERT INTO target_table
 SELECT *
 FROM source_table;
 ```
@@ -1530,72 +1449,64 @@ Very common in ETL.
 
 ---
 
-# 1.43. UPDATE
+## 1.43. UPDATE
 
-(date: image / svg + xml)
 
-SQL
-```
-UPDATE
+```sql
+UPDATE employees
 SET salary = salary * 1.05
 WHERE department_id = 50;
 ```
 
-extreme attention to:
+Pay close attention to:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 WHERE
 ```
 
 Without WHERE:
 
-(date: image / svg + xml)
 
-SQL
-```
-UPDATE
+```sql
+UPDATE employees
 SET salary = salary * 1.05;
 ```
 
-You update all rows.
+This updates all rows.
 
 ---
 
-# 1.44. DELETE vs TRUNCATE
+## 1.44. DELETE vs TRUNCATE
 
 ### DELETE
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 DELETE FROM stage_transactions;
 ```
 
 DML.
 
-He could have:
+It can include a:
 
-```
+```sql
 WHERE
 ```
 
-and can be rollback-looking before commit.
+and can be rolled back before `COMMIT`.
 
 ---
 
 ### TRUNCATE
 
-```
+```sql
 TRUNCATE TABLE stage_transactions;
 ```
 
 DDL.
 
-It is much more effective for fully emptying a table.
+It is generally more efficient for completely emptying a table.
 
 Frequently used for:
 
@@ -1605,32 +1516,26 @@ STAGING tables
 
 ---
 
-# 1.45. COMMIT and ROLLBACK
+## 1.45. COMMIT and ROLLBACK
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 COMMIT;
 ```
 
-confirm the transaction.
+confirms the transaction.
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 ROLLBACK;
 ```
 
-cancels unconfirmed changes.
+cancels uncommitted changes.
 
 Example:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 UPDATE accounts
 SET balance = balance - 100
 WHERE account_id = 1;
@@ -1646,12 +1551,10 @@ The two operations should be treated as one logical transaction.
 
 ---
 
-# 1.46. SAVEPOINT
+## 1.46. SAVEPOINT
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SAVEPOINT before_step2;
 ```
 
@@ -1661,13 +1564,13 @@ Then:
 ROLLBACK TO before_step2;
 ```
 
-Allow partial rollback within the transaction.
+Allows a partial rollback within the transaction.
 
 ---
 
-# 1.47. Data and time
+## 1.47. Date and time
 
-Modern oracles have types such as:
+Modern Oracle versions provide types such as:
 
 ```
 DATE
@@ -1675,7 +1578,7 @@ TIMESTAMP
 TIMESTAMP WITH TIME ZONE
 ```
 
-DATE Oracle includes:
+Oracle `DATE` includes:
 
 ```
 day
@@ -1692,68 +1595,58 @@ Example:
 SYSDATE
 ```
 
-Server date.
+Returns the database server date and time.
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SYSTIMESTAMP
 ```
 
-includes higher accuracy and timezones.
+includes fractional seconds and time zone information.
 
 ---
 
-# 1.48. TRUNC for data
+## 1.48. TRUNC for dates
 
 Very important:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 TRUNC (transaction_date)
 ```
 
-delete the time component.
+removes the time component for comparison purposes.
 
 Example:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 WHERE TRUNC (transaction_date) = DATE '2026-09-23'
 ```
 
-But this form can prevent the use of a normal index on the transaction _ data.
+But this form can prevent efficient use of a normal index on `transaction_date`.
 
 Preferably often:
 
-(date: image / svg + xml)
 
-SQL
-```
-WHERE transaction_date = DATE '2026-09-23'
-AND transaction_date - DATE '2026-09-24'
+```sql
+WHERE transaction_date >= DATE '2026-09-23'
+  AND transaction_date <  DATE '2026-09-24'
 ```
 
-This is an example of SQL correctly functioning but also performing.
+This is an example of writing SQL that is both functionally correct and more index-friendly.
 
 ---
 
-# 1.49.
+## 1.49. Sargability and function-based indexes
 
 An important concept for optimization.
 
-Less favourable query:
+Less favorable query:
 
-(date: image / svg + xml)
 
-SQL
-```
-WHERE UPPER (last_name) = 'SMITH'
+```sql
+WHERE UPPER(last_name) = 'SMITH'
 ```
 
 If you have a normal index:
@@ -1762,29 +1655,29 @@ If you have a normal index:
 INDEX (last_name)
 ```
 
-Oracle can't always use it efficiently.
+Oracle may not be able to use it efficiently.
 
 Alternatives:
 
-```
+```sql
 WHERE last_name = 'SMITH'
 ```
 
 or function-based index:
 
-```
-CREATEQ1QX idx_emp_upper_name
-ON employed (UPPER (last_name));
+```sql
+CREATE INDEX idx_emp_upper_name
+ON employees (UPPER(last_name));
 ```
 
 ---
 
-# 1.50. Conversion and indexes
+## 1.50. Conversions and indexes
 
 Problem:
 
-```
-WHERE TO_CHAR (order_id) = '123'
+```sql
+WHERE TO_CHAR(order_id) = '123'
 ```
 
 if:
@@ -1795,7 +1688,7 @@ order_id NUMBER
 
 Better:
 
-```
+```sql
 WHERE order_id = 123
 ```
 
@@ -1805,50 +1698,50 @@ Practical rule:
 
 ---
 
-# 1.51. Bind variables
+## 1.51. Bind variables
 
 Instead of:
 
-```
+```sql
 WHERE customer_id = 123
 ```
 
 in applications, the following shall be used:
 
-```
+```sql
 WHERE customer_id =: customer_id
 ```
 
 Advantages:
 
-- re-use of cursor;
+- cursor reuse;
 - less hard parsing;
-- shared pool more efficiently;
+- more efficient use of the shared pool;
 - protection from SQL injection in applications;
 - more predictable performance.
 
 ---
 
-# 1.52. Execution Plan
+## 1.52. Execution plan
 
 Oracle decides how to execute the query.
 
 Simplified example:
 
-```
+```sql
 SELECT STATEMENT
 TABLE ACCESS BY INDEX ROWID EMPLOYEES
 INDEX RANGE SCAN IDX_EMP_DEPT
 ```
 
-Read in general:
+Execution plans are generally read:
 
 > From the bottom up.
 
 First:
 
-```
-INDERANGE SCAN
+```text
+INDEX RANGE SCAN
 ```
 
 then:
@@ -1859,73 +1752,73 @@ TABLE ACCESS BY INDEX ROWID
 
 then:
 
-```
+```sql
 SELECT
 ```
 
-Just as we started talking in the chat room about DBMS\ _ XPLAN.
+In Oracle, `DBMS_XPLAN` is commonly used to display and inspect execution plans.
 
 ---
 
-# 1.53. Full Table Scan
+## 1.53. Full table scan
 
-```
-TABLEQ1QX FULL
+```text
+TABLE ACCESS FULL
 ```
 
-does not automatically mean problem.
+does not automatically indicate a problem.
 
 It can be the best strategy if:
 
 - the table is small;
 - a large part of the table must be read;
 - the query is DWH;
-- Sequential access is more effective than thousands of looks through the index.
+- sequential access is cheaper than thousands of indexed lookups.
 
 ---
 
-# 1.54. INDEX UNIQUE SCAN
+## 1.54. INDEX UNIQUE SCAN
 
 It usually appears for:
 
-```
+```sql
 WHERE primary_key =: value
 ```
 
 or UNIQUE index.
 
-The Oracle knows that the result can have a maximum of one line.
+Oracle knows that the lookup can return at most one row.
 
 ---
 
-# 1.55. INDEX RANGE SCAN
+## 1.55. INDEX RANGE SCAN
 
 Example:
 
-```
+```sql
 WHERE salary BETWEEN 5000 AND 10000
 ```
 
 or:
 
-```
+```sql
 WHERE department_id = 50
 ```
 
 on a non-unique index.
 
-The index can return several times.
+The index can return multiple rows.
 
 ---
 
-# 1.56. Cardinal
+## 1.56. Cardinality
 
 One of the most important concepts of optimization.
 
-Cardinality represents the optimiser's estimation for:
+Cardinality represents the optimizer's estimate of:
 
 ```
-how many lines will produce an operation
+how many rows an operation will produce
 ```
 
 Example:
@@ -1937,17 +1830,17 @@ A-rows = 1,000,000
 
 It's a very important signal.
 
-The optimiser estimated 10 lines, but in reality it was a million.
+The optimizer estimated 10 rows, but the actual result was one million rows.
 
 This can cause the Oracle to choose a very bad plan.
 
 ---
 
-# 1.57.
+## 1.57. Selectivity
 
 A condition:
 
-```
+```sql
 WHERE customer_id = 123
 ```
 
@@ -1963,7 +1856,7 @@ The index is very attractive.
 
 Instead:
 
-```
+```sql
 WHERE status = 'ACTIVE'
 ```
 
@@ -1977,18 +1870,18 @@ the index may not be useful.
 
 Oracle may prefer:
 
-```
-FULLQ1QX SCAN
+```text
+TABLE ACCESS FULL
 ```
 
 ---
 
-# 1.58. Statistics
+## 1.58. Statistics
 
-Optimizer uses statistics:
+The optimizer uses statistics such as:
 
 ```
-row number
+row count
 number of distinct values
 distribution of values
 histograms
@@ -2001,7 +1894,7 @@ Incorrect statistics → wrong estimates → wrong plan.
 
 ---
 
-# 1.59. Histograms
+## 1.59. Histograms
 
 Example:
 
@@ -2014,17 +1907,17 @@ SUSPENDED 0.5%
 CLOSED 0.5%
 ```
 
-A simple statistical type:
+A simple statistic such as:
 
 ```
-3 separate values
+3 distinct values
 ```
 
 does not describe the distribution.
 
-Histogram can help the optimiser understand that:
+A histogram can help the optimizer understand thto:
 
-```
+```sql
 WHERE status = 'SUSPENDED'
 ```
 
@@ -2032,7 +1925,7 @@ is very selective.
 
 ---
 
-# 1.60. JOIN algorithms
+## 1.60. Join algorithms
 
 Oracle may mainly use:
 
@@ -2063,7 +1956,7 @@ Very good for:
 
 - large volumes;
 - DWH;
-- Joins between big sets.
+- joins between large row sets.
 
 ---
 
@@ -2071,15 +1964,15 @@ Very good for:
 
 Both sets are ordered by the Join key and then combined.
 
-Rarely than the other two, but important to know.
+Less common than the other two in many workloads, but still important to understand.
 
 ---
 
-# 1.61. Predicted pushdown and early filtration
+## 1.61. Predicate pushdown and early filtering
 
 General principle:
 
-> remove data that are not necessary as early as possible.
+> remove unnecessary rows as early as possible.
 
 For example, it is more effective to get quickly from:
 
@@ -2087,25 +1980,25 @@ For example, it is more effective to get quickly from:
 100 million rows
 ```
 
-at:
+to:
 
 ```
 10,000 rows
 ```
 
-than to do joints and sorting on all 100 million.
+than to perform joins and sorts on all 100 million rows.
 
-The optimiser often tries to do so automatically.
+The optimizer often tries to do so automatically.
 
 ---
 
-# 1.62. Top-queries
+## 1.62. Top-N queries
 
 In modern Oracle:
 
-```
+```sql
 SELECT *
-FROM
+FROM employees
 ORDER BY salary DESC
 FETCH FIRST 10 ROWS ONLY;
 ```
@@ -2113,14 +2006,14 @@ FETCH FIRST 10 ROWS ONLY;
 For the top 10 per group, you usually use:
 
 ```
-ROW_NUMBER ()
+ROW_NUMBER()
 ```
 
 ---
 
-# 1.63. Decoupling
+## 1.63. Deduplication
 
-Highly important pattern in ETL.
+A highly important ETL pattern.
 
 You have:
 
@@ -2129,14 +2022,14 @@ customer_id
 timestamp
 ```
 
-and you want the last row for every customer:
+and you want the latest row for each customer:
 
-```
+```sql
 SELECT *
 FROM (
-SELECT. *,
-ROW_NUMBER () OVER
-PARTITIONQ1QX customer_id
+SELECT s.*,
+ROW_NUMBER() OVER
+PARTITION  customer_id
 ORDER BY update_timestamp DESC
 ) rn
 FROM staging_customer
@@ -2144,35 +2037,35 @@ FROM staging_customer
 WHERE rn = 1;
 ```
 
-This is one of the most useful SQL squares for Data Developer.
+This is one of the most useful SQL patterns for a Data Developer.
 
 ---
 
-# 1.64. Detection of duplicates
+## 1.64. Detecting duplicates
 
-```
+```sql
 SELECT customer_id,
-COUNT *
+       COUNT(*) AS cnt
 FROM customers
-GROUPQ1QX customer_id
-HAVING COUNT (*)
+GROUP BY customer_id
+HAVING COUNT(*) > 1;
 ```
 
 Or for several columns:
 
-```
+```sql
 GROUP BY customer_id,
-source_system
-HAVING COUNT (*)
+         source_system
+HAVING COUNT(*) > 1
 ```
 
 ---
 
-# 1.65. Detection of invalid data
+## 1.65. Detecting invalid data
 
 Example ETL:
 
-```
+```sql
 SELECT *
 FROM staging
 WHERE source_customer_id IS NULL;
@@ -2180,15 +2073,15 @@ WHERE source_customer_id IS NULL;
 
 Or values that can't be converted:
 
-Modern oracles can allow approaches such as:
+Modern Oracle versions provide functions such as:
 
-```
-VALIDATE_CONVERSION value
+```sql
+VALIDATE_CONVERSION(value AS NUMBER)
 ```
 
 Example:
 
-```
+```sql
 SELECT value
 FROM staging
 WHERE VALIDATE_CONVERSION (value AS NUMBER) = 0;
@@ -2198,39 +2091,37 @@ Very useful for Data Quality.
 
 ---
 
-# 1.66. Reconciliation Source vs. Target
+## 1.66. Source vs. target reconciliation
 
 A critical pattern in DWH.
 
 Number of rows:
 
-```
-SELECT COUNT *
+```sql
+SELECT COUNT(*)
 FROM source;
 ```
 
 versus:
 
-```
-SELECT COUNT *
+```sql
+SELECT COUNT(*)
 FROM target;
 ```
 
 Differences:
 
-```
+```sql
 SELECT business_key
-FROM
-
+FROM source
 MINUS
-
 SELECT business_key
 FROM target;
 ```
 
 and vice versa:
 
-```
+```sql
 SELECT business_key
 FROM target
 
@@ -2242,19 +2133,19 @@ FROM source;
 
 ---
 
-# 1.67. Incremental Loading
+## 1.67. Incremental loading
 
 Instead of loading the entire table:
 
-```
+```sql
 SELECT *
 FROM transactions;
 ```
 
-you can only take the new data:
+you can load only new or changed data:
 
-```
-WHERE update_timestamp
+```sql
+WHERE update_timestamp > :last_watermark
 ```
 
 Pattern:
@@ -2277,7 +2168,7 @@ This is a fundamental concept for ETL.
 
 ---
 
-# 1.68. SQL in OLTP vs SQL in DWH
+## 1.68. SQL in OLTP vs. SQL in DWH
 
 In OLTP you usually have:
 
@@ -2291,7 +2182,7 @@ short transactions
 
 Example:
 
-```
+```sql
 SELECT *
 FROM account
 WHERE account_id =: id;
@@ -2300,7 +2191,7 @@ WHERE account_id =: id;
 In DWH:
 
 ```
-million / billion rows
+millions / billions of rows
 scans
 aggregation
 hash joins
@@ -2310,43 +2201,41 @@ parallelism
 
 Example:
 
-(date: image / svg + xml)
 
-SQL
-```
+```sql
 SELECT customer_segment,
-SUM (amount)
+SUM(amount)
 FROM fact_transactions
 WHERE transaction_date = DATE '2026-01-01'
 GROUP BY customer_segment;
 ```
 
-SQL good in OLTP is not necessarily SQL good in DWH.
+SQL that is efficient in OLTP is not necessarily efficient in DWH.
 
 ---
 
-# 1.69. SQL patents that are worth recognizing immediately
+## 1.69. SQL patterns worth recognizing immediately
 
-For Data Developer level, you should see the query and admit instantly:
+At Data Developer level, you should recognize these patterns immediately:
 
 ```
 EXISTS
-→ there is relationship
+→ existence of a related row
 
 NOT EXISTS
-→ missing relationship
+→ missing related row
 
 ROW_NUMBER
-→ ranking / deducting / late row
+→ ranking / deduplication / latest row
 
 LAG / LEAD
-→ Time comparison
+→ time-based comparison
 
 SUM OVER
-→ total running
+→ running total
 
 GROUP BY + HAVING
-→ aggregation + group filtration
+→ aggregation + group filtering
 
 CASE + SUM
 → conditional aggregation
@@ -2355,7 +2244,7 @@ MERGE
 → UPSERT
 
 MINUS
-→ Reconciliation
+→ reconciliation
 
 CTE
 → decomposition of a complex query
@@ -2363,15 +2252,15 @@ CTE
 
 ---
 
-# 1.70. The most important SQL mistakes to avoid
+## 1.70. The most important SQL mistakes to avoid
 
 In practice, they cause a lot of problems:
 
-1. default conversions;
+1. implicit conversions;
 2. NOT IN with NULL;
 3. Cartesian joins by accident;
 4. functions applied unnecessarily on indexed columns;
-5. SELECT\ *
+5. `SELECT *` when unnecessary;
 6. DISTINCT used to hide a wrong JOIN;
 7. Useless GROUP BY;
 8. UNION when UNION ALL is sufficient;
@@ -2381,18 +2270,18 @@ In practice, they cause a lot of problems:
 12. the assumption that Full Table Scan is automatically bad;
 13. ignoring cardinality;
 14. ignoring NULL;
-15. properly functional query, but extremely expensive.
+15. a functionally correct query that is unnecessarily expensive.
 
 ---
 
-# 1.71. Mental Model for Advanced SQL
+## 1.71. Mental model for advanced SQL
 
 For any more complex query, think it in this order:
 
 ```
 1. What's the initial dataset?
 
-2. What do I have between tables?
+2. What relationships and join keys exist between tables?
 
 3. What rows must be removed?
 
@@ -2407,27 +2296,27 @@ For any more complex query, think it in this order:
 7. Do I have to check missing?
 → NOT EXISTS
 
-8. Do I have to pick a single line out of a group?
+8. Do I have to pick a single row from a group?
 → ROW_NUMBER
 
 9. Does it have to be inserted / updated?
 → MERGE
 
-10. How many lines do I estimate at each stage?
+10. How many rows do I estimate at each stage?
 
 11. What execution plan should I expect to see?
 ```
 
-The last two questions make the difference between someone who knows **** and someone who starts thinking like an **Oracle Data Developer**.
+The last two questions often distinguish someone who knows SQL syntax from someone who starts thinking like an **Oracle Data Developer**.
 
 ---
 
 ## What would I consider mandatory for your level
 
-Of all the chapter, I would put the maximum emphasis on:
+Across this chapter, I would place the strongest emphasis on:
 
 ```
-JOIN-uri
+JOINs
     ↓
 GROUP BY / HAVING
     ↓
@@ -2463,28 +2352,28 @@ indexes
 Nested Loops / Hash Join
 ```
 
-These are the SQL core that I would expect from an **Senior Oracle / Data Developer**, including for roles such as the Data Developer you are studying.
+These topics form the SQL core I would expect from a **Senior Oracle / Data Developer**.
 
 ---
 
 ## Questions and answers
 
-### How would you briefly explain the fundamental SQL until advanced to a colleague who knows the SQL, but not this area?
+### How would you briefly explain SQL from fundamentals to advanced to a colleague who knows basic SQL?
 
-SQL fundamentally up to advanced covers SELECT, project, filtering and NULL semantics, joins, subqueries, EXISTS and set operators, CTES, hierarchical queries and analytical functions. In practice, determine first what data enter and what result must be obtained, then check implementation, execution plan and effects on flow.
+SQL from fundamentals to advanced covers projection, filtering, NULL semantics, joins, subqueries, `EXISTS`, set operators, CTEs, hierarchical queries, and analytic functions. In practice, first determine the input data and required result, then validate the implementation, execution plan, and impact on the wider data flow.
 
-### What are the two most common practical problems related to SQL fundamentally until advanced?
+### What are two common practical problems when working with advanced SQL?
 
-Two recurring problems are the misinterpretation of data or granularity and the degradation of performance at real volume. For SQL fundamentally until advanced, I explicitly follow SELECT, project, filtering and NULL semantics, joins, subqueries, EXISTS and set operators, CTES, hierarchical queries and analytical functions and compare the result with a control set.
+Two recurring problems are misunderstanding the data grain and suffering performance degradation at production scale. I explicitly verify projection, filtering, NULL semantics, joins, subqueries, `EXISTS`, set operators, CTEs, hierarchical queries, and analytic functions, then compare the result with a trusted control set.
 
 ### How do you check that the result is correct and not just fast?
 
-I compare the number of rows, amounts and keys with the source or with a reference result; I test NULLs, duplicates, limits and rerouting of the batch.I only then check time, resources and execution plan.
+I compare row counts, amounts, and keys with the source or a reference result; I test NULLs, duplicates, boundary conditions, and batch reruns. Only then do I evaluate execution time, resource usage, and the execution plan.
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect the functional requirement, data grain, schema and keys, volume, data distribution, dependencies, execution plans and timings, errors/logs, and acceptance criteria. I also document how to roll back to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 
-In a bank flow, the fundamental SQL until advanced occurs along with logging, auditing, reconciliation and impact analysis.
+In a banking flow, advanced SQL is often combined with logging, auditing, reconciliation, and impact analysis.
