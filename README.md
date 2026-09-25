@@ -20,9 +20,11 @@ npm run serve
 
 ## GitHub Pages
 
-1. Create the GitHub repository `oracle-db-dev-handbook`.
-2. Push this project to `main`.
-3. In **Settings → Pages**, choose **GitHub Actions** as the source.
-4. The included workflow builds and deploys the site automatically.
+The published handbook is available at:
+
+<https://raoulmunet.github.io/oracle-db-dev-handbook/>
+
+The included GitHub Actions workflow builds and deploys the site automatically
+after each push to `main`.
 
 `docusaurus.config.js` derives the GitHub owner and repository name from GitHub Actions environment variables, so project pages and `<username>.github.io` repositories both work without hard-coding your username.
