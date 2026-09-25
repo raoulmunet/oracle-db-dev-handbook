@@ -8,24 +8,24 @@ sidebar_position: 12
 
 <div className="chapter-kicker">Chapter C12 · Complete course</div>
 
-Below is module **12. Oracle** indexes in the same line as previous modules: short but comprehensive enough for practical work, tuning, DWH and technical discussion.
+This chapter covers **Oracle indexes** in a concise but practical way for SQL tuning, OLTP, and DWH workloads.
 
-# 12. Oracle indexes
+# C12. Oracle Indexes
 
 ## 1. What is an index
 
-A **index** is a separate data structure from the table used by Oracle to find some lines more quickly.
+An **index** is a separate data structure that Oracle can use to locate rows more efficiently.
 
 Without the index, Oracle may be forced to read a large part or even the entire table:
 
 ```text
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 With a suitable index, Oracle can quickly locate the values sought and then access the appropriate rows:
 
 ```text
-INDERANGE SCAN
+INDEX RANGE SCAN
    ↓
 TABLE ACCESS BY INDEX ROWID
 ```
@@ -66,13 +66,13 @@ must also update the indexes.
 
 Therefore:
 
-> More indexes automatically improve performance.
+> More indexes do **not** automatically improve performance.
 
 ---
 
-# 2.B-tree index
+## 2. B-tree index
 
-It's the standard type and most important of the Oracle index.
+It is Oracle's standard and most commonly used index type.
 
 ```sql
 CREATE INDEX ix_customers_email
@@ -128,7 +128,7 @@ CUSTOMER_ID
 4
 5
 ...
-10.000,000
+10,000,000
 ```
 
 Search:
@@ -141,9 +141,9 @@ It's very selective.
 
 ---
 
-# 3. Unique index
+## 3. Unique index
 
-A single index does not allow two identical entries for the combination of indexed columns.
+A unique index does not allow two identical entries for the combination of indexed columns.
 
 ```sql
 CREATE UNIQUE INDEX ux_customers_email
@@ -175,13 +175,13 @@ INDEX
 physical access structure
 ```
 
-In the technical discussion it's good to say:
+A useful distinction is:
 
 > PRIMARY KEY and UNIQUE are logical constraints. The index is a physical structure used for access and sometimes for the implementation of constraints.
 
 ---
 
-# 4. Composite index
+## 4. Composite index
 
 An index may contain several columns.
 
@@ -211,7 +211,7 @@ and may also be used for:
 WHERE customer_id = 100
 ```
 
-But it's generally less suitable for:
+But it is generally less suitable for:
 
 ```sql
 WHERE order_date = DATE '2026-01-01'
@@ -221,7 +221,7 @@ because the first column of the index is missing.
 
 ---
 
-## 4.1 Leading Column
+### 4.1. Leading column
 
 The first column is commonly called:
 
@@ -259,7 +259,7 @@ AND transaction_date >= DATE '2026-01-01'
 
 ---
 
-# 5. How to choose the order of columns
+## 5. How to choose column order
 
 There is no simplistic rule:
 
@@ -267,9 +267,9 @@ There is no simplistic rule:
 
 The following should be considered:
 
-- the real querys;
-- predications used together;
-- equity;
+- the real queries;
+- predicates used together;
+- equality predicates;
 - range conditions,
 - sorting;
 - selectivity;
@@ -293,7 +293,7 @@ Especially for ETL lookups.
 
 ---
 
-# 6. Range Scan Index
+## 6. INDEX RANGE SCAN
 
 Example:
 
@@ -321,9 +321,9 @@ INDEX RANGE SCAN IX_TRANSACTIONS_ACCOUNT
 Read from the bottom up:
 
 ```text
-INDERANGE SCAN
+INDEX RANGE SCAN
         ↓
-get ROWID-uri
+get ROWIDs
 
 TABLE ACCESS BY INDEX ROWID
         ↓
@@ -332,7 +332,7 @@ read the rows in the table
 
 ---
 
-# 7. Unique Scan Index
+## 7. INDEX UNIQUE SCAN
 
 If Oracle is looking for an exact value in a unique index:
 
@@ -351,7 +351,7 @@ CUSTOMER_ID = PRIMARY KEY
 the plan may contain:
 
 ```text
-INDEUNIQUE SCAN
+INDEX UNIQUE SCAN
 ```
 
 Conceptual example:
@@ -366,7 +366,7 @@ The Oracle knows that at most one row can correspond to the value.
 
 ---
 
-# 8.TABLE ACCESS FULL vs index
+## 8.TABLE ACCESS FULL vs index
 
 One very important thing:
 
@@ -391,7 +391,7 @@ an index on `status` may not be useful.
 Oracle may prefer:
 
 ```text
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 instead of doing:
@@ -408,7 +408,7 @@ In an DWH this behavior is very common.
 
 ---
 
-# 9. Selectivity
+## 9. Selectivity
 
 Selectivity indicates how restrictive a sermon is.
 
@@ -444,7 +444,7 @@ B-tree can be less useful here.
 
 ---
 
-# 10. Cardinality
+## 10. Cardinality
 
 The cardinal in the execution plan is the estimated number of lines.
 
@@ -456,20 +456,20 @@ E-Rows = 10
 
 means:
 
-> The optimiser estimates that the operation will produce about 10 rows.
+> The optimizer estimates that the operation will produce about 10 rows.
 
 The estimation of cardinality influences the choice between:
 
 ```text
-INDERANGE SCAN
-TABLEQ1QX FULL
+INDEX RANGE SCAN
+TABLE ACCESS FULL
 NESTED LOOPS
 HASH JOIN
 ```
 
 ---
 
-# 11. Bitmap index
+## 11. Bitmap index
 
 Bitmap indexes are very important in DWH.
 
@@ -514,7 +514,7 @@ AND segment = 'PREMIUM'
 
 ---
 
-# 12. Bitmap index: where is good
+## 12. Bitmap index: where is good
 
 In particular:
 
@@ -548,7 +548,7 @@ Bitmap indexes can be very effective.
 
 ---
 
-# 13. Bitmap index: where NU is good
+## 13. Bitmap index: where NU is good
 
 In OLTP systems with many:
 
@@ -572,7 +572,7 @@ DWH → B-tree + Bitmap + Partitioning
 
 ---
 
-# 14. Function-based index
+## 14. Function-based index
 
 Problem:
 
@@ -612,7 +612,7 @@ can use the index.
 
 ---
 
-# 15. Important example with TRUNC (data)
+## 15. Important example with TRUNC (data)
 
 Query:
 
@@ -648,7 +648,7 @@ This shape is more sargable.
 
 ---
 
-# 16. Or function-based index
+## 16. Or function-based index
 
 If the application has to use:
 
@@ -671,7 +671,7 @@ A new index should not be the first automatic solution for any performance probl
 
 ---
 
-# 17. LIKE and indexes
+## 17. LIKE and indexes
 
 This query can well use an B-tree index:
 
@@ -703,7 +703,7 @@ We don't know where it starts.
 
 ---
 
-# 18. Default Conversion
+## 18. Default Conversion
 
 We assume:
 
@@ -738,7 +738,7 @@ Important principle:
 
 ---
 
-# 19. Descending index
+## 19. Descending index
 
 Oracle allows downward indexation:
 
@@ -757,7 +757,7 @@ But Oracle can go through an B-tree and vice versa, so that an `DESC` index shou
 
 ---
 
-# 20. Reverse key index
+## 20. Reverse key index
 
 Example:
 
@@ -800,7 +800,7 @@ does not normally benefit from the orderly ownership of the index.
 
 ---
 
-# 21. Index-organized table
+## 21. Index-organized table
 
 In a normal table:
 
@@ -813,7 +813,7 @@ TABLE
 In an IOT:
 
 ```text
-PRIMARYQ1QX INDEX
+PRIMARY INDEX
         ↓
 the row is stored directly in the index structure
 ```
@@ -833,7 +833,7 @@ It is particularly useful for tables that are predominantly accessed through pri
 
 ---
 
-# 22. Partioned indexes
+## 22. Partioned indexes
 
 For partitioned tables, indexes may be:
 
@@ -887,7 +887,7 @@ But maintenance operations on partitions can be more complicated.
 
 ---
 
-# 23. Example DWH
+## 23. Example DWH
 
 We assume:
 
@@ -924,7 +924,7 @@ But design has to be decided on the basis of real work.
 
 ---
 
-# 24. Domain index
+## 24. Domain index
 
 An `DOMAIN INDEX` is implemented through a specialized extension.
 
@@ -942,7 +942,7 @@ ON documents(content)
 INDEXTYPE IS CTXSYS.CONTEXT;
 ```
 
-For the Data Developer technical discussion, it is generally enough to know what it represents; it is not as important as:
+For the Data Developer technical review, it is generally enough to know what it represents; it is not as important as:
 
 ```text
 B-tree
@@ -956,7 +956,7 @@ Partioned
 
 ---
 
-# 25. Covering index
+## 25. Covering index
 
 Conceptually, an index may contain all the necessary columns of the query.
 
@@ -984,7 +984,7 @@ TABLE ACCESS BY INDEX ROWID
 The plan could only be:
 
 ```text
-INDERANGE SCAN
+INDEX RANGE SCAN
 ```
 
 This concept is commonly called:
@@ -997,7 +997,7 @@ Although Oracle does not have an identical `INCLUDE` clause SQL Server for class
 
 ---
 
-# 26. Clustering factor
+## 26. Clustering factor
 
 `CLUSTERING_FACTOR` indicates about how well the physical order of the rows in the table corresponds to the index order.
 
@@ -1026,16 +1026,16 @@ ROWID- are dispersed through many blocks
 A clustering bad factor can make Oracle prefer:
 
 ```text
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 for bigger crowns.
 
 ---
 
-# 27. Statistics
+## 27. Statistics
 
-The optimiser decides whether to use an index based on the estimated cost.
+The optimizer decides whether to use an index based on the estimated cost.
 
 He needs statistics like:
 
@@ -1064,7 +1064,7 @@ A good index with bad statistics can produce a bad plan.
 
 ---
 
-# 28. Histograms
+## 28. Histograms
 
 We assume:
 
@@ -1093,18 +1093,18 @@ WHERE status = 'FAILED'
 The first one could favor:
 
 ```text
-FULLQ1QX SCAN
+FULL SCAN
 ```
 
 and the second:
 
 ```text
-INDERANGE SCAN
+INDEX RANGE SCAN
 ```
 
 ---
 
-# 29. Sargability
+## 29. Sargability
 
 A sermon is sargable when it allows efficient access through the index.
 
@@ -1147,7 +1147,7 @@ WHERE last_name LIKE '%ION%'
 
 ---
 
-# 30. ACCESS vs FILTER predicates
+## 30. ACCESS vs FILTER predicates
 
 In `DBMS_XPLAN`, Oracle can show:
 
@@ -1180,7 +1180,7 @@ For tuning, the difference is important.
 
 ---
 
-# 31. How to check if the index is used
+## 31. How to check if the index is used
 
 Example:
 
@@ -1207,15 +1207,15 @@ FROM TABLE(
 We can see:
 
 ```text
-INDERANGE SCAN
-INDEUNIQUE SCAN
-TABLEQ1QX FULL
+INDEX RANGE SCAN
+INDEX UNIQUE SCAN
+TABLE ACCESS FULL
 TABLE ACCESS BY INDEX ROWID
 ```
 
 ---
 
-# 32. Read the bottom-up plan
+## 32. Read the bottom-up plan
 
 Example:
 
@@ -1232,7 +1232,7 @@ TABLE ACCESS BY INDEX ROWID
 Logical reading:
 
 ```text
-2. INDERANGE SCAN
+2. INDEX RANGE SCAN
       ↓
 Find ROWID-uri
 
@@ -1249,7 +1249,7 @@ It should not simply be read after the number `Id`.
 
 ---
 
-# 33. Why Oracle can ignore an index
+## 33. Why Oracle can ignore an index
 
 The most common reasons:
 
@@ -1272,12 +1272,12 @@ The most common reasons:
 
 9. The query uses another better access
 
-10. data distribution is different from optimiser estimation
+10. data distribution is different from optimizer estimation
 ```
 
 ---
 
-# 34. Skip Scan Index
+## 34. Skip Scan Index
 
 We assume:
 
@@ -1313,7 +1313,7 @@ It's an interesting optimization, but it doesn't replace the correct design of i
 
 ---
 
-# 35. Full Scan Index
+## 35. Full Scan Index
 
 It may occur:
 
@@ -1333,7 +1333,7 @@ if the index already provides the necessary order.
 
 ---
 
-# 36. Fast Full Scan Index
+## 36. Fast Full Scan Index
 
 It may occur:
 
@@ -1357,7 +1357,7 @@ FULL TABLE SCAN index
 
 ---
 
-# 37. Cost of indexes at DML
+## 37. Cost of indexes at DML
 
 We assume a table of:
 
@@ -1401,7 +1401,7 @@ but only if this is justified operationally.
 
 ---
 
-# 38. Real Scenario DWH
+## 38. Real Scenario DWH
 
 We have:
 
@@ -1457,7 +1457,7 @@ can be much more effective than a simple global B-tree per date.
 
 ---
 
-# 39. Scenario ETL lookup
+## 39. Scenario ETL lookup
 
 ETL receives:
 
@@ -1495,7 +1495,7 @@ This is a classic indexation situation for ETL/DWH.
 
 ---
 
-# 40. Oracle Exercises 26ai
+## 40. Oracle Exercises 26ai
 
 ## Exercise 1
 
@@ -1531,7 +1531,7 @@ FROM TABLE(
 Identify:
 
 ```text
-INDERANGE SCAN
+INDEX RANGE SCAN
 TABLE ACCESS BY INDEX ROWID
 ```
 
@@ -1645,7 +1645,7 @@ It's suitable for lookups and range scans with reasonable selectivity.
 
 ## 4. What is a composite index?
 
-> An index on several columns. The order of columns is important because leading columns influence which querys can use it effectively.
+> An index on several columns. The order of columns is important because leading columns influence which queries can use it effectively.
 
 ---
 
@@ -1653,7 +1653,7 @@ It's suitable for lookups and range scans with reasonable selectivity.
 
 Good answer:
 
-> Because the optimiser estimates that another method is cheaper. For example, the query can return too many rows, selectivity can be weak, statistics can be incorrect, a function or conversion can affect the prediction, or the full scan can be simply more efficient.
+> Because the optimizer estimates that another method is cheaper. For example, the query can return too many rows, selectivity can be weak, statistics can be incorrect, a function or conversion can affect the prediction, or the full scan can be simply more efficient.
 
 ---
 
@@ -1687,7 +1687,7 @@ Good answer:
 
 ---
 
-# 42. Mental pattern for tuning
+## 42. Mental pattern for tuning
 
 When you see a slow query, don't start with:
 
@@ -1740,7 +1740,7 @@ or no index
 
 ---
 
-# 43. What must remain
+## 43. What must remain
 
 For a Data Developer Oracle you must remember very well:
 
@@ -1757,14 +1757,14 @@ Local / Global partitioned indexes
 and be able to explain:
 
 ```text
-INDEUNIQUE SCAN
-INDERANGE SCAN
+INDEX UNIQUE SCAN
+INDEX RANGE SCAN
 INDEFULL SCAN
 INDEX FAST FULL SCAN
 INDESKIP SCAN
 
 TABLE ACCESS BY INDEX ROWID
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 But the most important idea is:
@@ -1798,7 +1798,7 @@ INDEXURI ORACLE
                            |
         -----------------------------------------
         |                    |                  |
-B-TREEQ1QX SPECIALE
+B-TREE SPECIALE
         |                    |                  |
 --cardinality --------
 ♪ Reduced ♪
@@ -1806,8 +1806,8 @@ Unique Composite DWH FBI Reverse Domain
    |
 Lookup / Range
    |
-INDEUNIQUE SCAN
-INDERANGE SCAN
+INDEX UNIQUE SCAN
+INDEX RANGE SCAN
 INDESKIP SCAN
 INDEFULL SCAN
 INDEX FAST FULL SCAN
