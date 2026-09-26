@@ -7,8 +7,8 @@ const isUserSite = repository === `${owner}.github.io`;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Oracle Data Developer Handbook',
-  tagline: 'Complete C01–C40 course for Oracle data development',
+  title: 'Oracle DB Developer Handbook',
+  tagline: 'Practical reference for Oracle SQL, PL/SQL, DWH and data engineering',
   favicon: 'img/favicon.ico',
   url: `https://${owner}.github.io`,
   baseUrl: isUserSite ? '/' : `/${repository}/`,
@@ -29,14 +29,14 @@ const config = {
   ]],
   themeConfig: {
     navbar: {
-      title: 'Oracle Data Developer',
+      title: 'Oracle DB Developer',
       items: [
         {type:'docSidebar', sidebarId:'courseSidebar', position:'left', label:'Handbook'},
         {to:'/glossary', label:'Glossary', position:'left'},
         {href:`https://github.com/${owner}/${repository}`, label:'GitHub', position:'right'},
       ],
     },
-    footer: {style:'dark', links:[{title:'Handbook',items:[{label:'Start',to:'/intro'},{label:'Glossary',to:'/glossary'}]}], copyright:`Copyright © ${new Date().getFullYear()} · Oracle Data Developer Handbook`},
+    footer: {style:'dark', links:[{title:'Handbook',items:[{label:'Start',to:'/intro'},{label:'Glossary',to:'/glossary'}]}], copyright:`Copyright © ${new Date().getFullYear()} · Oracle DB Developer Handbook`},
     prism: {theme: prismThemes.github, darkTheme: prismThemes.dracula, additionalLanguages:['sql','bash','java']},
   },
 };
