@@ -29,7 +29,7 @@ const config = {
   ]],
   themeConfig: {
     navbar: {
-      title: 'Oracle DB Developer',
+      title: 'Oracle DB Developer Handbook',
       items: [
         {type:'docSidebar', sidebarId:'courseSidebar', position:'left', label:'Handbook'},
         {to:'/glossary', label:'Glossary', position:'left'},
