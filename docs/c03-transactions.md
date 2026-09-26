@@ -98,7 +98,7 @@ Oracle does not allow an operation to complete if it violates the constraint.
 
 ### Isolation
 
-Competitive transactions must not produce inconsistent results.
+Concurrent transactions must not produce inconsistent results.
 
 If:
 
@@ -190,7 +190,7 @@ After COMMIT:
 - the changes become final;
 - the other sessions may see them;
 - transaction locks are released;
-- The they can no longer be rolled back.
+- They can no longer be rolled back.
 
 Important:
 
@@ -693,7 +693,7 @@ Simplified:
 ```
 query started
     |
-♪ A long time ♪
+| A long time |
 query still needs an older version
 
 old UNDO version
@@ -1008,7 +1008,7 @@ B waits for row 1
 I mean:
 
 ```
-A ------- B.
+A ---> B
 ^      |
 |      v
 +------+
@@ -1360,11 +1360,11 @@ Example:
 ```
 main transaction
     |
-+ -- changes account
+    +-- modifies account
     |
-+ -- autonomous procedure
+    +-- autonomous procedure
             |
-+ -- Commit
+            +-- commit
 ```
 
 An autonomous transaction should not be confused with:
@@ -1411,13 +1411,13 @@ The logic is:
 ```
 success
    |
-+ --
+   +--> COMMIT
 
 failure
    |
-+ --
+   +--> ROLLBACK
    |
-+ --
+   +--> RAISE
 ```
 
 `RAISE` propagates the original exception to the caller.
@@ -1529,20 +1529,20 @@ It is worth repeating this experiment a few times.
 You can summarize Oracle's concurrency as follows:
 
 ```
-Oracle concurrency
+                   Oracle concurrency
                           |
           +---------------+---------------+
           |                               |
-READERS WRITERS
+        READERS                         WRITERS
           |                               |
           v                               v
-MVCC  LOCKS
+        MVCC                           ROW LOCKS
           |                               |
           v                               v
-consistent read TX / TM Locks
+   Consistent Read                 TX / TM Locks
           |
           v
-UNDO
+         UNDO
 ```
 
 and above all:
@@ -1586,8 +1586,6 @@ This phrase focuses a very large part of the philosophy of Oracle concurrency.
 A natural next step would be a complete two-session DataGrip lab using `V$SESSION`, blocking sessions, TX/TM locks, `FOR UPDATE`, `NOWAIT`, `SKIP LOCKED`, and an intentionally generated deadlock.
 
 ---
-
-## Questions and answers
 
 ### How would you briefly explain Oracle transactions and concurrency to a colleague who knows SQL?
 

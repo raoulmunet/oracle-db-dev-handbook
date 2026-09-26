@@ -8,13 +8,13 @@ sidebar_position: 38
 
 <div className="chapter-kicker">Chapter C38 · Complete course</div>
 
-## 38. Banking Data Concesses
+## 38. Banking Data Concepts
 
 This chapter links the concepts of **Oracle, SQL, PL/SQL, ETL and DWH** to the data models found in banks. For a **Oracle Data Developer / DWH Developer**, it is important to understand not only the tables, but also **the business significance of** data: client, account, contract, balance, transaction, interest, exposure, limits, reconciliation and reporting.
 
 ---
 
-# 1. The basic conceptual model of a bank
+## 1. The basic conceptual model of a bank
 
 A simplified model can be seen as follows:
 
@@ -51,7 +51,7 @@ In real systems, relationships are much more complex.
 
 ---
 
-# 2. Customer vs. Party
+## 2. Customer vs. Party
 
 The term "banking" frequently appears:
 
@@ -77,10 +77,10 @@ party_type
 name
 country
 tax_id
-stasis
+status
 ```
 
-The party\ _ type may be:
+The party_type may be:
 
 ```
 INDIVIDUAL
@@ -112,7 +112,7 @@ PARTY
 
 ---
 
-# 3. CIF - Customer Information File
+## 3. CIF - Customer Information File
 
 In many banking systems you will meet:
 
@@ -156,7 +156,7 @@ CIF- is very important in:
 
 ---
 
-# 4.KYC
+## 4.KYC
 
 KYC means:
 
@@ -216,7 +216,7 @@ In time.
 
 ---
 
-# 5. Account
+## 5. Account
 
 The account is one of the most important entities.
 
@@ -233,7 +233,7 @@ product_id
 current
 open_date
 close_date
-stasis
+status
 ```
 
 Examples of accounts:
@@ -257,7 +257,7 @@ status: ACTIVE
 
 ---
 
-# 6. Account vs Contract
+## 6. Account vs Contract
 
 This difference is very important.
 
@@ -302,7 +302,7 @@ N accounts
 
 ---
 
-# 7. Banking Product
+## 7. Banking Product
 
 The product describes what the customer bought.
 
@@ -339,7 +339,7 @@ product_type = LOAN
 
 ---
 
-# 8. Transaction
+## 8. Transaction
 
 The transaction is a financial event.
 
@@ -355,7 +355,7 @@ value_date
 % 1
 current
 transaction_type
-stasis
+status
 counterparty
 ```
 
@@ -373,7 +373,7 @@ REVERSAL
 
 ---
 
-# 9. Booking Data vs Value Data
+## 9. Booking Data vs Value Data
 
 A very important difference in banking.
 
@@ -407,11 +407,11 @@ For example:
 interest calculation
 ```
 
-can use value _ data, not booking _ data.
+can use value _data, not booking _data.
 
 ---
 
-# 10. Debit and Credit
+## 10. Debit and Credit
 
 From an accounting perspective:
 
@@ -443,7 +443,7 @@ Total Debit = Total Credit
 
 ---
 
-# 11. Double-entry accounting
+## 11. Double-entry accounting
 
 Banking systems generally rely on the principle of:
 
@@ -493,7 +493,7 @@ posting_id transaction_id account_id
 
 ---
 
-# 12. Ledger and General Ledger
+## 12. Ledger and General Ledger
 
 Two important concepts:
 
@@ -509,7 +509,7 @@ Example:
 ```
 loan accounts
 card accounts
-curator accounts
+customer accounts
 ```
 
 GL contains aggregated accounting.
@@ -536,7 +536,7 @@ GL
 
 ---
 
-# 13. Balance
+## 13. Balance
 
 For an account there may be several types of balance.
 
@@ -569,7 +569,7 @@ blocked_amount
 
 ---
 
-# 14. Snapshot Balance
+## 14. Snapshot Balance
 
 The daily balance is frequently maintained in DWH.
 
@@ -588,7 +588,7 @@ current
 Data:
 
 ```
-ACCOUNTQ1QX BALANCE
+ACCOUNT | BALANCE
 A100 2026-09-20 10000
 A100 2026-09-21 12000
 A100 2026-09-22 9500
@@ -602,7 +602,7 @@ Periodic Snapshot Fact
 
 ---
 
-# 15. Loan
+## 15. Loan
 
 Concepts such as:
 
@@ -633,7 +633,7 @@ outstanding_principal
 
 ---
 
-# 16. Principal and Interest
+## 16. Principal and Interest
 
 Credit:
 
@@ -660,7 +660,7 @@ feet
 
 ---
 
-# 17. Loan Schedule
+## 17. Loan Schedule
 
 The rates are planned in:
 
@@ -691,7 +691,7 @@ Example:
 
 ---
 
-# 18. Outstanding
+## 18. Outstanding
 
 An extremely common term:
 
@@ -722,7 +722,7 @@ Main Outstanding
 
 ---
 
-# 19. Past Due / Overdue
+## 19. Past Due / Overdue
 
 If the payment had to be made at:
 
@@ -748,7 +748,7 @@ past_due 1500
 
 ---
 
-# 20. DPD = Days Past Due
+## 20. DPD = Days Past Due
 
 A very important indicator:
 
@@ -787,7 +787,7 @@ Common categories:
 
 ---
 
-# 21. Exhibition
+## 21. Exhibition
 
 The exposure is the amount that the bank has exposed to a client or counterparty.
 
@@ -819,7 +819,7 @@ Exposals approximately:
 
 ---
 
-# 22. Limit Credit
+## 22. Limit Credit
 
 Products such as:
 
@@ -859,7 +859,7 @@ available_limit = 12,500
 
 ---
 
-# 23. Collateral
+## 23. Collateral
 
 Collateral = loan guarantee.
 
@@ -897,7 +897,7 @@ COLLATERAL
 
 ---
 
-# 24. LTV - Loan To Value
+## 24. LTV - Loan To Value
 
 For guaranteed loans:
 
@@ -921,7 +921,7 @@ LTV = 80%
 
 ---
 
-# 25. Currency and FX
+## 25. Currency and FX
 
 Banks work multi-currency.
 
@@ -971,7 +971,7 @@ and fx.to_currency = 'RON';
 
 ---
 
-# 26. Exchange rate types
+## 26. Exchange rate types
 
 In banking systems there may be:
 
@@ -999,7 +999,7 @@ rate_type
 
 ---
 
-# 27. Payment
+## 27. Payment
 
 A payment may contain:
 
@@ -1027,7 +1027,7 @@ REVERSED
 
 ---
 
-# 28. Settlement
+## 28. Settlement
 
 Settlement represents the financial finalisation of the transaction.
 
@@ -1047,7 +1047,7 @@ After setting, the transfer is considered financially completed.
 
 ---
 
-# 29. Clearing vs Settlement
+## 29. Clearing vs Settlement
 
 ### Clearing
 
@@ -1073,7 +1073,7 @@ Settlement
 
 ---
 
-# 30. Transactions Card
+## 30. Transactions Card
 
 Simplified flow:
 
@@ -1115,7 +1115,7 @@ book balance
 
 ---
 
-# 31. Authorization and Hold
+## 31. Authorization and Hold
 
 When you pay by card:
 
@@ -1148,7 +1148,7 @@ available balance = 4000
 
 ---
 
-# 32. Reverse
+## 32. Reverse
 
 Some transactions need to be cancelled.
 
@@ -1184,7 +1184,7 @@ It keeps auditing the trailer.
 
 ---
 
-# 33. Status-based processing
+## 33. Status-based processing
 
 In banking, a lot of processes are based on states.
 
@@ -1214,7 +1214,7 @@ From the perspective of SQL/ETL it is essential to understand the correct state 
 
 ---
 
-# 34. EOD - End of Day
+## 34. EOD - End of Day
 
 A very important concept.
 
@@ -1236,7 +1236,7 @@ reconciliation
 Regulation reporting
 ```
 
-Flux:
+Flow:
 
 ```
 Close business day
@@ -1256,7 +1256,7 @@ Open next business day
 
 ---
 
-# 35. BOD = Beginning of Day
+## 35. BOD = Beginning of Day
 
 After EOD there may be:
 
@@ -1274,7 +1274,7 @@ that prepares the systems for the next day.
 
 ---
 
-# 36. Business Data
+## 36. Business Data
 
 Very important in banking:
 
@@ -1307,7 +1307,7 @@ as a data business.
 
 ---
 
-# 37. Reconciliation
+## 37. Reconciliation
 
 Reconciliation checks that two systems are consistent.
 
@@ -1342,7 +1342,7 @@ compared to the source.
 
 ---
 
-# 38. GL Reconciliation
+## 38. GL Reconciliation
 
 A very important control:
 
@@ -1367,7 +1367,7 @@ The difference shall be:
 
 ---
 
-# 39. Data Linage
+## 39. Data Lineage
 
 For banking reporting you need to be able to explain:
 
@@ -1406,7 +1406,7 @@ Data Lineage
 
 ---
 
-# 40. Auditability
+## 40. Auditability
 
 In banking systems it is very important to be able to answer:
 
@@ -1431,7 +1431,7 @@ batch_id
 
 ---
 
-# 41. Source System
+## 41. Source System
 
 In an DWH banking there are many source systems.
 
@@ -1462,7 +1462,7 @@ source_system_id
 
 ---
 
-# 42. Golden Record
+## 42. Golden Record
 
 For a customer there may be data in:
 
@@ -1491,7 +1491,7 @@ in Enterprise DWH.
 
 ---
 
-# 43. Customer 360
+## 43. Customer 360
 
 Customer 360 tries to provide the complete picture:
 
@@ -1511,7 +1511,7 @@ In DWH it is often built through the integration of several sources.
 
 ---
 
-# 44. Banking DWH = Dimensional model
+## 44. Banking DWH = Dimensional model
 
 A simplified model:
 
@@ -1548,7 +1548,7 @@ DIM_CURRENCY
 
 ---
 
-# 45. Transaction Fact
+## 45. Transaction Fact
 
 Example:
 
@@ -1572,7 +1572,7 @@ The grain must be clearly defined:
 
 ---
 
-# 46. Balance Fact
+## 46. Balance Fact
 
 Other grain:
 
@@ -1597,7 +1597,7 @@ available_balance
 
 ---
 
-# 47.
+## 47.
 
 Example:
 
@@ -1621,12 +1621,12 @@ Grain:
 
 ---
 
-# 48. Data Quality in Banking
+## 48. Data Quality in Banking
 
 Examples of rules:
 
 ```
-account_idQ1QX NULL
+account_id IS NULL
 Existing customer_id
 valid current
 numeric amount
@@ -1650,7 +1650,7 @@ opening_balance
 
 ---
 
-# 49. Example SQL; calculation balance
+## 49. Example SQL; calculation balance
 
 We assume:
 
@@ -1681,7 +1681,7 @@ group by account_id;
 
 ---
 
-# 50. Example SQL - DPD
+## 50. Example SQL - DPD
 
 ```
 select
@@ -1706,7 +1706,7 @@ instead of SYSDATE.
 
 ---
 
-# 51. Example SQL
+## 51. Example SQL
 
 ```
 select
@@ -1735,7 +1735,7 @@ group by l.customer_id,
 
 ---
 
-# 52. Example ETL bank
+## 52. Example ETL bank
 
 Typical flow:
 
@@ -1772,7 +1772,7 @@ or other tools.
 
 ---
 
-# 53. Idempotency
+## 53. Idempotency
 
 In banking, the batches must be able to be resumed without doubling the data.
 
@@ -1805,7 +1805,7 @@ values (...);
 
 ---
 
-# 54. Late-arriving date
+## 54. Late-arriving date
 
 Some transactions may end up in DWH after closing the day.
 
@@ -1822,11 +1822,11 @@ This is:
 Late-arriving fact
 ```
 
-ETL- needs to know how to handle this case.
+ETL needs to know how to handle this case.
 
 ---
 
-# 55. Regulatory reporting
+## 55. Regulatory reporting
 
 Banks generate numerous reports to:
 
@@ -1866,79 +1866,7 @@ historical FX rates
 
 ---
 
-## Questions and answers
-
-It's worth acknowledging right away:
-
-♪ Concept ♪ ♪ Meaning ♪
-♪ ♪ ♪ ♪ ♪
-= = sync, corrected by elderman = =
-* Know Your Customer *
-* * * * *
-= = = Operational account / accounting account = = =
-Contractual relationship
-Posting and recording
-= = sync, corrected by elderman = = @ elder _ man
-♪ Balance ♪ ♪ Balance ♪
-The available balance balance available
-The remaining amount
-* * *
-The Bank's exposure
-♪ Collateral ♪ ♪ Guarantee ♪
-= = sync, corrected by elderman = = @ elder _ man
-* * * * * * *
-* * * * * * *
-Business Data
-= = sync, corrected by elderman = =
-Reverse Operation
-= = sync, corrected by elderman = =
-Data Lineage
-
----
-
-## Questions and answers
-
-### 1. What is the difference between Account and Contract?
-
-The contract is the contractual relationship and the account is the operational / accounting structure associated with it. A contract may have several accounts.
-
-### 2. What is the difference between booking data and value data?
-
-Booking data represents the date of transaction accounting, and value data represents the date from which the transaction produces financial effect.
-
-### 3. What is DPD?
-
-```
-Days Past Due
-```
-
-Number of days with which a financial obligation has exceeded the payment deadline.
-
-### 4. What is exposure?
-
-The total amount to which the bank is financially exposed for a client or counterparty.
-
-### 5. What is reconciliation?
-
-The process by which data or values in two systems are compared to identify differences.
-
-### 6. Why are data business and not SYSDATE used?
-
-Because the EOD processes can continue after midnight, and the operational day may differ from the calendar date of the server.
-
-### 7. Why is a reverse is preferable to an DELETE?
-
-Because it keeps:
-
-```
-Trail audit
-historical consistency
-Traceability
-```
-
----
-
-# 58. Real script DWH
+## 58. Real script DWH
 
 Suppose the bank has:
 
@@ -2013,7 +1941,7 @@ Data Quality
 
 ---
 
-# 59. Mental Model for Banking Data
+## 59. Mental Model for Banking Data
 
 for review, you can memorize this structure:
 
@@ -2069,7 +1997,7 @@ For an **Oracle Data Developer in an** bank, the most important ideas are:
 
 1. **Customer → Contract → Account → Transaction** is the basic conceptual chain.
 2. A contract can have several accounts.
-3. booking\ _ data, value\ _ data and business\ _ data have different meanings.
+3. booking_data, value_data and business_data have different meanings.
 4. Financial transactions are usually represented by **debit / credit postings**.
 5. The available balance may be different from the accounting balance.
 6. For credits you must understand **principal, interest, outstanding, overdue, DPD and** exposture.
@@ -2094,6 +2022,63 @@ This is one of the most important ways of thinking for an **Oracle / DWH Data De
 
 ## Questions and answers
 
+Key banking data concepts include:
+
+| Concept | Meaning |
+| --- | --- |
+| Know Your Customer (KYC) | Customer identity and due diligence checks |
+| Operational account | Account used to record customer transactions |
+| Accounting account | Ledger account used to record postings |
+| Balance | The amount recorded on the account |
+| Available balance | The amount currently available for transactions |
+| Bank exposure | The bank's exposure to a customer or counterparty |
+| Collateral | An asset pledged to secure an obligation |
+| Guarantee | A commitment to meet an obligation if the borrower does not |
+
+Related concepts include business data, reverse operations, and data lineage.
+
+---
+
+### 1. What is the difference between Account and Contract?
+
+The contract is the contractual relationship and the account is the operational / accounting structure associated with it. A contract may have several accounts.
+
+### 2. What is the difference between booking data and value data?
+
+Booking data represents the date of transaction accounting, and value data represents the date from which the transaction produces financial effect.
+
+### 3. What is DPD?
+
+```
+Days Past Due
+```
+
+Number of days with which a financial obligation has exceeded the payment deadline.
+
+### 4. What is exposure?
+
+The total amount to which the bank is financially exposed for a client or counterparty.
+
+### 5. What is reconciliation?
+
+The process by which data or values in two systems are compared to identify differences.
+
+### 6. Why are data business and not SYSDATE used?
+
+Because the EOD processes can continue after midnight, and the operational day may differ from the calendar date of the server.
+
+### 7. Why is a reverse is preferable to an DELETE?
+
+Because it keeps:
+
+```
+Trail audit
+historical consistency
+Traceability
+```
+
+---
+
 ### How would you briefly explain Banking Data Concepts to a colleague who knows SQL, but not this area?
 
 Banking Data Concepts covers custodian, account, product and party concepts, translation, posting data and value data, ledger balance vs available balance. In practice, first, I determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
@@ -2108,7 +2093,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

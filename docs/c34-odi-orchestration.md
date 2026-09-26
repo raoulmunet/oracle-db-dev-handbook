@@ -75,11 +75,11 @@ JOIN dwh.dim_account
 ON...
 ```
 
-SQL- is executed directly by the Oracle.
+SQL is executed directly by the Oracle.
 
 ---
 
-# 2. Architecture ODI
+## 2. Architecture ODI
 
 The important components are:
 
@@ -103,11 +103,11 @@ Oracle / SQL Server / Files / APIS / etc.
 
 ODI does not necessarily move data through its own engine.
 
-In many cases it generates and coordinates the SQL- executed in source and target systems.
+In many cases it generates and coordinates the SQL executed in source and target systems.
 
 ---
 
-# 3. Reposition
+## 3. Reposition
 
 ODI keeps the configuration and metadata in repostors.
 
@@ -155,7 +155,7 @@ Work Representation
 
 ---
 
-# 4. Topology
+## 4. Topology
 
 Topology describes the infrastructure with which ODI works.
 
@@ -177,20 +177,20 @@ Oracle
 Server Date
 DWH_ORACLE
 
-Physical Scheme
+Physical Schema
 DWHPRD.DWH
 
-Logical Scheme
+Logical Schema
 DWH_TARGET
 ```
 
 ---
 
-# 5. Physical Schema vs Logical Schema
+## 5. Physical Schema vs Logical Schema
 
 This difference is very important.
 
-## Physical Scheme
+## Physical Schema
 
 Describe the real database.
 
@@ -207,7 +207,7 @@ Scheme:
 DWH
 ```
 
-## Logical Scheme
+## Logical Schema
 
 It's a logical alias used in mappings.
 
@@ -229,7 +229,7 @@ and ODI decides where the scheme is physically based according to **Context**.
 
 ---
 
-# 6. Contexts
+## 6. Contexts
 
 The context allows separation of environments.
 
@@ -266,7 +266,7 @@ This is a very important concept for deployment.
 
 ---
 
-# 7. Model and Datastore
+## 7. Model and Datastore
 
 A **Model** describes a data source or target.
 
@@ -301,7 +301,7 @@ Constraints
 
 ---
 
-# 8. Mapping
+## 8. Mapping
 
 Mapping is one of the main ODI objects.
 
@@ -332,7 +332,7 @@ DIM_CUSTOMER
 SQL simplified equivalent:
 
 ```
-INSERTQ1QX dim_customer
+INSERT INTO dim_customer
 (
 customer_id,
 customer_name,
@@ -354,7 +354,7 @@ Knowledge Modules say to a large extent **how** will be executed.
 
 ---
 
-# 9. Knowledge Modules - KM
+## 9. Knowledge Modules - KM
 
 Knowledge Modules are one of the particularities of ODI.
 
@@ -397,7 +397,7 @@ bulk loading
 
 ---
 
-# 10. IKM = Integration Knowledge Module
+## 10. IKM = Integration Knowledge Module
 
 **IKM = Integration Knowledge Module**
 
@@ -419,7 +419,7 @@ MERGE INTO dim_customer
 USING stg_customer
 ON (d.customer_id = s.customer_id)
 
-WHENQ1QX THEN
+WHEN OTHERS THEN
 UPDATE SET
 d.customer_name = s.customer_name
 
@@ -438,7 +438,7 @@ IKM defines the technical pattern by which the mapping is materialized.
 
 ---
 
-# 11. CKM = Check Knowledge Module
+## 11. CKM = Check Knowledge Module
 
 **CKM = Check Knowledge Module**
 
@@ -467,7 +467,7 @@ SOURCE
 
 ---
 
-# 12. RKM = Reverse Knowledge Module
+## 12. RKM = Reverse Knowledge Module
 
 **RKM = Reverse Knowledge Module**
 
@@ -496,7 +496,7 @@ The process is called **reverse engineering**.
 
 ---
 
-# 13. JKM * Journalizing Knowledge Module
+## 13. JKM * Journalizing Knowledge Module
 
 **JKM = Journalizing Knowledge Module**
 
@@ -525,7 +525,7 @@ It's very useful in incremental charges.
 
 ---
 
-# 14. Package
+## 14. Package
 
 A **Package** orchestrates several ODI steps.
 
@@ -556,7 +556,7 @@ You can think of a Package as a little workflow.
 
 ---
 
-# 15. Scenario
+## 15. Scenario
 
 A **Scenario** is the executable version of an ODI object.
 
@@ -588,7 +588,7 @@ In Production, usually **is performed the** script, not the development object.
 
 ---
 
-# 16. Load Plan
+## 16. Load Plan
 
 The Load Plan is the upper level of orchestration.
 
@@ -627,18 +627,17 @@ LOAD_DWH
 
 ---
 
-# 17. Package vs. Scenario vs. Load Plan
+## 17. Package vs. Scenario vs. Load Plan
 
 It is one of the most common ODI questions.
 
-♪ ♪
-♪ ♪ ♪ ♪ ♪
-= = sync, corrected by elderman = =
-Packageworkflow development
-♪ Scenario ♪ ♪ Executable version ♪
-♪ Load Plan ♪ ♪ orchestrating enterprise ♪
+| ODI object | Purpose |
+| --- | --- |
+| Package | Development workflow that coordinates steps |
+| Scenario | Generated, executable version of an ODI object |
+| Load Plan | Orchestrates execution of scenarios and other steps |
 
-Flux:
+Flow:
 
 ```
 Mapping
@@ -654,7 +653,7 @@ But a Load Plan can execute several scripts directly.
 
 ---
 
-# 18. Variables
+## 18. Variables
 
 ODI Variables allows for process parametrization.
 
@@ -685,7 +684,7 @@ or conceptually by parametric / binds, depending on the implementation.
 
 ---
 
-# 19. Incremental Lead
+## 19. Incremental Lead
 
 One of the most important ETL implementation.
 
@@ -713,7 +712,7 @@ FROM source_transactions
 WHERE update_timestamp
 ```
 
-Flux:
+Flow:
 
 ```
 get last successful timestamp
@@ -731,14 +730,14 @@ update control table
 
 ---
 
-# 20. Control Table
+## 20. Control Table
 
 A very good pattern is the use of a control table.
 
 For example:
 
 ```
-CREATEQ1QX etl_batch_control
+CREATE TABLE etl_batch_control
 (
 batch_id NUMBER,
 process_name VARCHAR2 (100),
@@ -756,7 +755,7 @@ error_message VARCHAR2 (4000)
 Example:
 
 ```
-BATCH_IDQ1QX STATUS
+BATCH_ID | STATUS
 --------   ------------------  ---------
 10021 DIM_CUSTOMER SUCCESS
 10022 DIM_ACCOUNT SUCCESS
@@ -768,14 +767,14 @@ This helps enormously to:
 ```
 audit
 monitoring
-debuting
+debugging
 restart
 reconciliation
 ```
 
 ---
 
-# 21. Restartability
+## 21. Restartability
 
 A serious ETL must be able to resume after an error.
 
@@ -807,7 +806,7 @@ This concept is called:
 
 ---
 
-# 22. Idempotency
+## 22. Idempotency
 
 Another very important concept.
 
@@ -816,7 +815,7 @@ A ETL process is **ideal** if you can execute it again without producing incorre
 Wrong example:
 
 ```
-INSERTQ1QX fact_sales
+INSERT INTO fact_sales
 SELECT *
 FROM stg_sales;
 ```
@@ -850,7 +849,7 @@ according to architecture.
 
 ---
 
-# 23. Error handling
+## 23. Error handling
 
 An ETL process should differentiate:
 
@@ -887,7 +886,7 @@ invalid amount
 transaction duplicates
 ```
 
-Sometimes the job can go on, and the lines are sent to:
+Sometimes the job can go on, and the rows are sent to:
 
 ```
 ETL_ERROR
@@ -897,12 +896,12 @@ QUARANTINE
 
 ---
 
-# 24. Pattern of Error Table
+## 24. Pattern of Error Table
 
 For example:
 
 ```
-CREATEQ1QX etl_error
+CREATE TABLE etl_error
 (
 batch_id NUMBER,
 process_name VARCHAR2 (100),
@@ -925,7 +924,7 @@ Account does not exist in DIM_ACCOUNT
 
 ---
 
-# 25. Dependency Management
+## 25. Dependency Management
 
 In DWH, order matters.
 
@@ -954,11 +953,11 @@ Customer
 Account
 ```
 
-The Load Planet can implement these dependencies.
+The Load Plan can implement these dependencies.
 
 ---
 
-# 26. Parallelism
+## 26. Parallelism
 
 Some processes are independent.
 
@@ -1001,7 +1000,7 @@ locks
 
 ---
 
-# 27. Full example of bank DWH
+## 27. Full example of bank DWH
 
 Let's assume the sources:
 
@@ -1066,16 +1065,13 @@ END_BATCH
 
 ---
 
-# 28. Source-to-target mapping
+## 28. Source-to-target mapping
 
 ODI frequently implements type specifications:
 
-♪ Source ♪ Transformation ♪ Target ♪
+| Source | Transformation | Target |
 - - - - - - - - -
-= = sync, corrected by elderman = =
-= = sync, corrected by elderman = = @ elder _ man
 * * * *
-= = sync, corrected by elderman = =
 
 Conceptual:
 
@@ -1092,7 +1088,7 @@ ON dc.country_code = c.country;
 
 ---
 
-# 29. ODI and SCD Type 2
+## 29. ODI and SCD Type 2
 
 A very common case.
 
@@ -1120,7 +1116,7 @@ ODI can implement this pattern with mappings + IKM or logic PL/SQL.
 
 ---
 
-# 30. ODI and SQL/PLSQL
+## 30. ODI and SQL/PLSQL
 
 A good ODI Developer Data must know very well SQL.
 
@@ -1153,7 +1149,7 @@ So PL/SQL remains very important.
 
 ---
 
-# 31. Agent ODI
+## 31. Agent ODI
 
 ODI Agent runs scripts and load crying.
 
@@ -1182,7 +1178,7 @@ according to architecture.
 
 ---
 
-# 32. Schedulating
+## 32. Schedulating
 
 DWH is often programmed.
 
@@ -1208,7 +1204,7 @@ job dependence
 
 ---
 
-# 33. Reconciliation
+## 33. Reconciliation
 
 An DWH does not just have to end the SUCCESS status.
 
@@ -1236,10 +1232,10 @@ Then:
 Other checks:
 
 ```
-SELECT COUNT *
+SELECT COUNT(*)
 FROM source_transactions;
 
-SELECT COUNT *
+SELECT COUNT(*)
 FROM fact_transactions
 WHERE batch_id =: batch_id;
 ```
@@ -1261,7 +1257,7 @@ WHERE batch_id =: batch_id;
 
 ---
 
-# 34. Logging and monitoring
+## 34. Logging and monitoring
 
 A good pipeline must allow quick answer to questions:
 
@@ -1269,10 +1265,10 @@ A good pipeline must allow quick answer to questions:
 Did the job start?
 When?
 How long did it take?
-How many lines did he read?
-How many did he insert?
-How many did he reject?
-Where did he fail?
+How many rows did the process read?
+How many rows did it insert?
+How many rows did it reject?
+Where did it fail?
 Can it resume?
 ```
 
@@ -1286,13 +1282,13 @@ rows_read
 rows_inserted
 rows_updated
 rows_rejected
-stasis
+status
 error_code
 ```
 
 ---
 
-# 35. Example of robust orchestration
+## 35. Example of robust orchestration
 
 A design much closer to production is:
 
@@ -1343,7 +1339,7 @@ Otherwise we can lose data on the next incremental charge.
 
 ---
 
-# 36. Wrong pattern vs correct pattern
+## 36. Wrong pattern vs correct pattern
 
 ### Wrong
 
@@ -1377,12 +1373,12 @@ update watermark
 
 ---
 
-# 37. Example of watermark control
+## 37. Example of watermark control
 
 Table:
 
 ```
-CREATEQ1QX etl_watermark
+CREATE TABLE etl_watermark
 (
 process_name VARCHAR2 (100) PRIMARY KEY,
 last_success_ts TIMESTAMP
@@ -1418,7 +1414,7 @@ This is an extremely important pattern in ETL.
 
 ---
 
-# 38. Boundary Timestamp
+## 38. Boundary Timestamp
 
 A safer option is to set at the beginning of the batch:
 
@@ -1445,7 +1441,7 @@ So the batch has a deterministic window.
 
 ---
 
-# 39. A mature DWH pipeline
+## 39. A mature DWH pipeline
 
 A serious DWH pipeline usually has the following properties:
 
@@ -1463,7 +1459,7 @@ These words are also very good for review.
 
 ---
 
-# 40. ODI should not be seen in isolation
+## 40. ODI should not be seen in isolation
 
 One of the most important ideas for a Data Developer is:
 
@@ -1497,96 +1493,14 @@ remain the same.
 
 ---
 
-## Questions and answers
-
-### 1. What is ODI?
-
-Oracle platform data integration and orchestration, strongly oriented to architecture ELT and the use of the database's database for transformations.
-
-### 2. What is the difference between Mapping and Package?
-
-Mapping describes data transformation, and the Packager orchestrates several steps.
-
-### 3. What is Scenario?
-
-The executable and versed version of an ODI object.
-
-### 4. What is the Load Plan?
-
-Orchestra for several scripts, with support for addictions, parallelism, restart and error handling.
-
-### 5. Physical Schema vs Logical Schema?
-
-Physical Schema represents the real scheme; Logical Schema is the alias used by mappings and is mapped through Context to the physical environment.
-
-### 6. What is Context?
-
-Allows the same mapping to be used in DEV, TEST and PROD.
-
-### 7. What is IKM?
-
-Knowledge Module which controls how data is integrated into the target.
-
-### 8. LKM?
-
-Controls the loading mechanism between source and staging / target.
-
-### 9. CKM?
-
-Controls data quality checks and constraints.
-
-### 10. How do you implement incremental loading?
-
-Usually with watermark / last success load, CDC or comparison of keys and timetables.
-
-### 11. How do you make an ETL restartable?
-
-Persisting the state of the batch and separating the steps so that the processes already completed do not need to be resumed.
-
-### 12. What does idempotent mean?
-
-The same batch can be rerouted without creating duplicate or inconsistent data.
-
----
-
-## Questions and answers
-
-**Question:**
-
-> A Load Plan ODI charges 500 million transactions. The process fails after 3 hours at 90%. What are you doing?
-
-A good answer:
-
-```
-First I identify the exact step that failed and the technical cause.
-
-I wouldn't automatically resume the entire batch.
-
-I'd check if each stage is restartable and idempotent.
-
-The Load Planul must allow the resumption of the failed step.
-
-The data already loaded must either be able to stay,
-be removed / reprocessed at the base.
-
-I'd check and control the backgammon, the watermark and reconciliation,
-to make sure they weren't advanced before full success.
-```
-
-It's much better than:
-
-> I'm restarting the job.
-
----
-
-# 43. Oracle Exercise 26ai
+## 43. Oracle Exercise 26ai
 
 You can simulate orchestration without ODI.
 
 Create:
 
 ```
-CREATEQ1QX etl_control
+CREATE TABLE etl_control
 (
 batch_id NUMBER,
 process_name VARCHAR2 (50),
@@ -1620,7 +1534,7 @@ load_dim_account;
 load_fact_transaction;
 
 EXCEPTION
-WHENQ1QX THEN
+WHEN OTHERS THEN
 -- log error
 RAISE;
 END;
@@ -1632,7 +1546,7 @@ The next step is to add:
 ```
 batch_id
 logging
-stasis
+status
 restartability
 watermark
 reconciliation
@@ -1642,7 +1556,7 @@ The exact same concepts will then exist in a Lost Plan ODI.
 
 ---
 
-# 44. What Must Stay
+## 44. What Must Stay
 
 for review and practice, I would first retain the following mental map:
 
@@ -1655,7 +1569,7 @@ Topology Development Implementation
         │            │            │
 Datastore
         │            ↓            │
-♪ Mapping ♪
+| Mapping |
         │            ↓            │
 Package
         │            ↓            │
@@ -1712,6 +1626,84 @@ ODI is the tool that implements and orchestrates these concepts. for review of D
 
 ## Questions and answers
 
+### 1. What is ODI?
+
+Oracle platform data integration and orchestration, strongly oriented to architecture ELT and the use of the database's database for transformations.
+
+### 2. What is the difference between Mapping and Package?
+
+Mapping describes data transformation, and the Packager orchestrates several steps.
+
+### 3. What is Scenario?
+
+The executable and versed version of an ODI object.
+
+### 4. What is the Load Plan?
+
+Orchestra for several scripts, with support for addictions, parallelism, restart and error handling.
+
+### 5. Physical Schema vs Logical Schema?
+
+A Physical Schema represents the real schema; a Logical Schema is the alias used by mappings and is mapped through a Context to the physical environment.
+
+### 6. What is Context?
+
+Allows the same mapping to be used in DEV, TEST and PROD.
+
+### 7. What is IKM?
+
+Knowledge Module which controls how data is integrated into the target.
+
+### 8. LKM?
+
+Controls the loading mechanism between source and staging / target.
+
+### 9. CKM?
+
+Controls data quality checks and constraints.
+
+### 10. How do you implement incremental loading?
+
+Usually with watermark / last success load, CDC or comparison of keys and timetables.
+
+### 11. How do you make an ETL restartable?
+
+Persisting the state of the batch and separating the steps so that the processes already completed do not need to be resumed.
+
+### 12. What does idempotent mean?
+
+The same batch can be rerouted without creating duplicate or inconsistent data.
+
+---
+
+**Question:**
+
+> A Load Plan ODI charges 500 million transactions. The process fails after 3 hours at 90%. What are you doing?
+
+A good answer:
+
+```
+First I identify the exact step that failed and the technical cause.
+
+I wouldn't automatically resume the entire batch.
+
+I'd check if each stage is restartable and idempotent.
+
+The Load Planul must allow the resumption of the failed step.
+
+The data already loaded must either be able to stay,
+be removed / reprocessed at the base.
+
+I'd check and control the backgammon, the watermark and reconciliation,
+to make sure they weren't advanced before full success.
+```
+
+It's much better than:
+
+> I'm restarting the job.
+
+---
+
 ### How would you briefly explain ODI / ETL orchestration to a colleague who knows SQL, but not this area?
 
 ODI / ETL orchestration covers ODI repositions, topology, contexts and agents, models, datastores and mappings, Knowledge Modules: RKM, LKM, IKM, CKM, JKM. In practice, first determine what data enter and what result to achieve, then check implementation, execution plan and effects on flow.
@@ -1726,8 +1718,8 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 
-A load plan has parallel steps, but FACT _ TRANSACTION starts before DIM _ CUSTOMER.
+A load plan has parallel steps, but FACT _TRANSACTION starts before DIM _CUSTOMER.

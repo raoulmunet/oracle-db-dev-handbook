@@ -76,7 +76,7 @@ FROM user_tables
 WHERE table_name = 'ORDERS';
 ```
 
-### NUM _ ROWS
+### NUM _ROWS
 
 The approximate number of rows in the table at the time of collection of statistics.
 
@@ -90,7 +90,7 @@ This is very important for estimating the cost of:
 TABLE ACCESS FULL
 ```
 
-### AVG_ROW _ LEN
+### AVG_ROW _LEN
 
 Average size of a row.
 
@@ -203,7 +203,7 @@ A highly selective predicate is often a good candidate for indexed access.
 
 ## 6. Cardinality
 
-**Cardinality** is the number of lines the optimizer estimates an operation will produce.
+**Cardinality** is the number of rows the optimizer estimates an operation will produce.
 
 The approximate relationship is:
 
@@ -232,7 +232,7 @@ In DBMS_PLAN, the estimated cardinality usually appears as:
 E-Rows
 ```
 
-And the real number of lines:
+And the actual number of rows:
 
 ```
 A-Rows
@@ -493,7 +493,7 @@ Oracle may decide to create histograms for the relevant columns.
 
 ---
 
-## 14. DBMS _ STATS
+## 14. DBMS _STATS
 
 The standard Oracle package for optimizer statistics is:
 
@@ -519,12 +519,12 @@ It collects statistics for the table and, depending on the options, columns / in
 
 ## 15. GATHER_SCHEMA_STATS
 
-For a scheme:
+For a schema:
 
 ```sql
 BEGIN
 DBMS_STATS.GATHER_SCHEMA_STATS (
-Ownname = =
+ownname => 'HR'
 );
 END;
 /
@@ -551,7 +551,7 @@ BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
 Ownname = "USER,"
 Tabnames = "'ORDERS'"
-method_opt = = 'FOR ALL COLUMNS SIZE AUTO'
+method_opt => 'FOR ALL COLUMNS SIZE AUTO'
 );
 END;
 /
@@ -588,14 +588,14 @@ END;
 
 ## 18. SAMPLE_SIZE
 
-Oracle doesn't have to read every line.
+Oracle does not have to read every row.
 
-He can use sampling.
+It can use sampling.
 
 In most modern situations it is advisable:
 
 ```
-estimate_percent = = DBMS_STATS.AUTO_SAMPLE_SIZE
+estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE
 ```
 
 Example:
@@ -605,8 +605,8 @@ BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
 Ownname = "USER,"
 Tabnames = "'ORDERS'"
-estimate_percent = = DBMS_STATS.AUTO_SAMPLE_SIZE,
-method_opt = = 'FOR ALL COLUMNS SIZE AUTO',
+estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE,
+method_opt => 'FOR ALL COLUMNS SIZE AUTO',
 waterfalls = TRUE
 );
 END;
@@ -746,7 +746,7 @@ FROM user_tab_partitions
 WHERE table_name = 'FACT_SALES';
 ```
 
-This is very important because ETL- can only modify the last partition.
+This is very important because ETL can only modify the last partition.
 
 ---
 
@@ -870,7 +870,7 @@ insufficient statistics
         ↓
 sample
         ↓
-estimated improve cardinal
+estimated versus actual cardinality
 ```
 
 But it doesn't have to be seen as a replacement for the right statistics.
@@ -906,7 +906,7 @@ LAST_ANALYZED
 If you have:
 
 ```sql
-SELECT COUNT *
+SELECT COUNT(*)
 FROM orders;
 ```
 
@@ -934,7 +934,7 @@ It's not necessarily a problem.
 
 The optimizer doesn't need exact values at all times.
 
-He needs estimates good enough to choose the plan.
+The optimizer needs estimates that are accurate enough to choose an execution plan.
 
 ---
 
@@ -943,7 +943,7 @@ He needs estimates good enough to choose the plan.
 Suppose:
 
 ```sql
-CREATE ix_orders_status
+m=>m_orders_status
 ON orders (status);
 ```
 
@@ -1018,7 +1018,7 @@ What table reads first?
 If it estimates:
 
 ```
-CUSTOMER predicated → 3 rows
+CUSTOMER filter → 3 rows
 ```
 
 It can start there.
@@ -1026,7 +1026,7 @@ It can start there.
 If it estimates:
 
 ```
-CUSTOMER predicated → 500,000 rows
+CUSTOMER filter → 500,000 rows
 ```
 
 can choose another order.
@@ -1063,7 +1063,7 @@ CONNECT BY level = 1000000;
 Index:
 
 ```sql
-CREATE ix_stat_test_status
+m=>m_stat_test_status
 ON stat_test (status);
 ```
 
@@ -1074,7 +1074,7 @@ BEGIN
 DBMS_STATS.GATHER_TABLE_STATS (
 Ownname = "USER,"
 Tabnames = "'STAT_TEST'"
-method_opt = = 'FOR ALL COLUMNS SIZE AUTO',
+method_opt => 'FOR ALL COLUMNS SIZE AUTO',
 waterfalls = TRUE
 );
 END;
@@ -1116,7 +1116,7 @@ WHERE status = 'SUSPENDED';
 Use:
 
 ```sql
-SELECT / * + GATHER_PLAN_STATISTICS * /
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
 FROM stat_test
 WHERE status = 'SUSPENDED';
@@ -1323,77 +1323,6 @@ E-Rows vs A-Rows
 
 ---
 
-## Questions and answers
-
-### 1. What are Oracle Statistics?
-
-Information on volume, data distribution, columns and indexes used by CBO to estimate cardinality and costs.
-
----
-
-### 2. What is cardinality?
-
-Estimated number of rows produced by an operation.
-
----
-
-### 3. What is selectivity?
-
-The proportion of rows that satisfy a prediction.
-
----
-
-### 4. What does NUM_DISTINCT mean?
-
-The average number of distinct values of a column.
-
----
-
-### 5. What is a histogram?
-
-A statistic whereby Oracle can understand that the values of a column are not evenly distributed.
-
----
-
-### 6. What is clustering factor?
-
-A measure of the correlation between the order of index values and the physical distribution of rows in the table.
-
----
-
-### 7. Why can Oracle ignore an existing index?
-
-Because, based on the estimated selectivity and cost, a full scan can be cheaper.
-
----
-
-### 8. What do you check when E-Rows differ enormously from A-Rows?
-
-In particular:
-
-```
-stale / missing statistics
-histograms
-data skew
-collum correlations
-expressions
-partition statistics
-```
-
----
-
-### 9. How is DBMS doing?
-
-Collect and manage statistics used by the optimizer.
-
----
-
-### 10. Why are statistics important in an DWH?
-
-Because large volumes and ETL-s can quickly change the distribution of data, and wrong cardinalities can cause very expensive joins and access paths.
-
----
-
 ## 36. Oracle Exercises 26ai
 
 For your lab DEV_LAB, I would do the following exercises:
@@ -1402,7 +1331,7 @@ For your lab DEV_LAB, I would do the following exercises:
 2. Create:
 
 ```sql
-CREATE ix_stat_test_status
+m=>m_stat_test_status
 ON stat_test (status);
 ```
 
@@ -1450,7 +1379,7 @@ E-Rows
 A-Rows
 ```
 
-8. Add 2 million lines without collecting statistics.
+8. Add 2 million rows without collecting statistics.
 9. Reexecute the query and observe the estimates.
 10. Run again:
 
@@ -1535,6 +1464,75 @@ That's where we need to investigate.
 
 ## Questions and answers
 
+### 1. What are Oracle Statistics?
+
+Information on volume, data distribution, columns and indexes used by CBO to estimate cardinality and costs.
+
+---
+
+### 2. What is cardinality?
+
+Estimated number of rows produced by an operation.
+
+---
+
+### 3. What is selectivity?
+
+The proportion of rows that satisfy a prediction.
+
+---
+
+### 4. What does NUM_DISTINCT mean?
+
+The average number of distinct values of a column.
+
+---
+
+### 5. What is a histogram?
+
+A statistic whereby Oracle can understand that the values of a column are not evenly distributed.
+
+---
+
+### 6. What is clustering factor?
+
+A measure of the correlation between the order of index values and the physical distribution of rows in the table.
+
+---
+
+### 7. Why can Oracle ignore an existing index?
+
+Because, based on the estimated selectivity and cost, a full scan can be cheaper.
+
+---
+
+### 8. What do you check when E-Rows differ enormously from A-Rows?
+
+In particular:
+
+```
+stale / missing statistics
+histograms
+data skew
+collum correlations
+expressions
+partition statistics
+```
+
+---
+
+### 9. How is DBMS doing?
+
+Collect and manage statistics used by the optimizer.
+
+---
+
+### 10. Why are statistics important in an DWH?
+
+Because large volumes and ETLs can quickly change the distribution of data, and wrong cardinalities can cause very expensive joins and access paths.
+
+---
+
 If we had to reduce the entire module to seven ideas:
 
 1. **Statistics are the basis of the Cost-Based Optimizer decisions.**
@@ -1551,15 +1549,13 @@ The most important concept of the module is:
 
 ---
 
-## Questions and answers
-
 ### How would you briefly explain Statistics to a colleague who knows SQL, but not this area?
 
-Statistics cover tables, collum and index statistics, NUM _ ROWS, NDV, density and histograms, stale statistics and gathering strategy. In practice, first, I determine what data enter and what result should be obtained, then I check implementation, execution plan and effects on flow.
+Statistics cover tables, collum and index statistics, NUM _ROWS, NDV, density and histograms, stale statistics and gathering strategy. In practice, first, I determine what data enter and what result should be obtained, then I check implementation, execution plan and effects on flow.
 
 ### What are the two most common practical issues related to Statistics?
 
-Two recurring problems are the misinterpretation of data or granularity and degradation of performance at real volume. For Statistics, I explicitly follow tables, collum and index statistics, NUM _ ROWS, NDV, density and histograms, stale statistics and gathering strategy and compare the result with a control set.
+Two recurring problems are the misinterpretation of data or granularity and degradation of performance at real volume. For Statistics, I explicitly follow tables, collum and index statistics, NUM _ROWS, NDV, density and histograms, stale statistics and gathering strategy and compare the result with a control set.
 
 ### How do you check that the result is correct and not just fast?
 
@@ -1567,7 +1563,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

@@ -10,7 +10,7 @@ sidebar_position: 32
 
 Below you have the course for **32. Backup / Recovery is conceptual**, at the level of **Oracle Data Developer / PL/SQL Developer / DWH Developer**, not DBA. The idea is to understand very well the mechanism, terminology and what happens when incidents occur.
 
-# 32. Backup / Recovery
+## 32. Backup / Recovery
 
 ## 1. Why you need to know a Data Developer Backup / Recovery
 
@@ -23,9 +23,9 @@ As a developer you will not necessarily manage the full backup strategy, but you
 - what RMAN does;
 - what is Point-In-Time Recovery;
 - the difference between recovery and Flashback;
-- what effect COMMIT, NOLOGGING, DDL operations and ETL batchs have on the possibility of recovery.
+- what effect COMMIT, NOLOGGING, DDL operations and ETL batches have on the possibility of recovery.
 
-Especially in DWH/ETL, where you run big batchs, an incident doesn't always mean we restore base. Sometimes the solution can be:
+Especially in DWH/ETL, where you run big batches, an incident doesn't always mean we restore base. Sometimes the solution can be:
 
 ```
 ROLLBACK
@@ -39,7 +39,7 @@ You need to know which concept applies.
 
 ---
 
-# 2. The Three Fundamental Words
+## 2. The Three Fundamental Words
 
 You have to differentiate them clearly:
 
@@ -56,7 +56,7 @@ Creating a copy of the data.
 Conceptual example:
 
 ```
-Database
+FROM customers
    ↓
 RMAN
    ↓
@@ -120,7 +120,7 @@ RECOVER = bring it to its correct state
 
 ---
 
-# 3. Simple Example
+## 3. Simple Example
 
 Suppose:
 
@@ -164,7 +164,7 @@ RECOVER
 
 ---
 
-# 4. REDO is the basis of the Recovery
+## 4. REDO is the basis of the Recovery
 
 The link with the course on **Redo / Undo** is essential.
 
@@ -200,7 +200,7 @@ This is why REDO is used in recovery.
 
 ---
 
-# 5.UNDO vs REDO in recovery
+## 5.UNDO vs REDO in recovery
 
 It's a very important difference.
 
@@ -229,7 +229,7 @@ Helps to:
 
 ```
 Crash Recovery
-Instant Recovery
+Instance Recovery
 Media Recovery
 Date
 ```
@@ -249,7 +249,7 @@ REDO → forces
 
 ---
 
-# 6. Why COMMIT- can be safe before the block reaches the datafils
+## 6. Why COMMIT- can be safe before the block reaches the datafiles
 
 Suppose:
 
@@ -261,11 +261,11 @@ WHERE account_id = 10;
 COMMIT;
 ```
 
-The Oracle must not immediately write the modified block in the datafils.
+The Oracle must not immediately write the modified block in the datafiles.
 
 Instead, it must ensure that the necessary REDO information is written.
 
-Flux:
+Flow:
 
 ```
 UPDATE
@@ -301,7 +301,7 @@ This is the principle:
 
 ---
 
-# 7. Online Redo Logs
+## 7. Online Redo Logs
 
 Oracle has several online redo logs groups.
 
@@ -340,7 +340,7 @@ GROUP 2 → CURRENT
 
 ---
 
-# 8. ARCHIVELOG mode
+## 8. ARCHIVELOG mode
 
 This is where the serious recovery begins.
 
@@ -377,7 +377,7 @@ These files allow the recovery of changes produced after backup.
 
 ---
 
-# 9. NOARCHIVELOG vs ARCHIVELOG
+## 9. NOARCHIVELOG vs ARCHIVELOG
 
 ## NOARCHIVELOG
 
@@ -425,12 +425,12 @@ recover by Wednesday
 
 ---
 
-# 10. Important types of recovery
+## 10. Important types of recovery
 
 For the level of developer you must distinguish at least:
 
 ```
-Instant Recovery
+Instance Recovery
 Crash Recovery
 Media Recovery
 Point-In-Time Recovery
@@ -439,7 +439,7 @@ Flashback
 
 ---
 
-# 11. Instant / Crash Recovery
+## 11. Instance / Crash Recovery
 
 Example:
 
@@ -484,7 +484,7 @@ Crash, automatic restore
 
 ---
 
-# 12. Roll Forward + Roll Back
+## 12. Roll Forward + Roll Back
 
 The Oracle Recovery can be conceptually understood in two phases.
 
@@ -533,7 +533,7 @@ RECOVERY
 
 ---
 
-# 13. Media Recovery
+## 13. Media Recovery
 
 Media recovery occurs when you lose or corrupt physical components.
 
@@ -568,7 +568,7 @@ Data files recovered
 
 ---
 
-# 14. RMAN
+## 14. RMAN
 
 The standard Oracle instrument for backup and recovery is:
 
@@ -610,7 +610,7 @@ You don't have to manage the RMAN strategy.
 
 ---
 
-# 15. Physical Backup vs Logical Backup
+## 15. Physical Backup vs Logical Backup
 
 They need to be differentiated.
 
@@ -666,17 +666,14 @@ It's not the same with RMAN.
 
 ---
 
-# 16. RMAN vs. Data Pump
+## 16. RMAN vs. Data Pump
 
 Very common technical discussion question.
 
 Date Pump
-♪ ♪ ♪ ♪ ♪
+| | | | |
 Physical backing up for logical export
-= = sync, corrected by elderman = =
-= = sync, corrected by elderman = =
 Date of entry into force
-= = sync, corrected by elderman = =
 
 To be memorized:
 
@@ -686,7 +683,7 @@ RMAN
 
 ---
 
-# 17. Point-In-Time Recovery
+## 17. Point-In-Time Recovery
 
 Suppose:
 
@@ -729,7 +726,7 @@ I mean:
 
 ---
 
-# 18. SCN and Recovery
+## 18. SCN and Recovery
 
 The Oracle doesn't think about the recoveryjust in hours.
 
@@ -763,7 +760,7 @@ SCN is much more accurate than 13: 00.
 
 ---
 
-# 19. Checkpoint and Recovery
+## 19. Checkpoint and Recovery
 
 The checkpoint reduces the amount of recovery required.
 
@@ -803,7 +800,7 @@ Checkpoint
 
 ---
 
-# 20. Control File in recovery
+## 20. Control File in recovery
 
 The file control contains critical structural information about the database.
 
@@ -830,7 +827,7 @@ for redundancy.
 
 ---
 
-# 21. What happens if you accidentally delete data
+## 21. What happens if you accidentally delete data
 
 Example:
 
@@ -862,7 +859,7 @@ The choice depends on the incident.
 
 ---
 
-# 22. Flashback vs Backup / Recovery
+## 22. Flashback vs Backup / Recovery
 
 Flashback and recovery are not the same thing.
 
@@ -886,7 +883,7 @@ You didn't restore the base from the backup.
 
 ---
 
-# 23. Flashback Query
+## 23. Flashback Query
 
 Very useful for the developer.
 
@@ -895,7 +892,7 @@ Example:
 ```
 SELECT *
 FROM custodian
-ASQ1QX TIMESTAMP
+AS OF TIMESTAMP
 TO_TIMESTAMP (
 '2026-09-23 10:00:00',
 'YYYY-MM-DD HH24:MI:SS'
@@ -916,7 +913,7 @@ It can help enormously to investigate an incident.
 
 ---
 
-# 24. Recovery after a Wrong DELETE
+## 24. Recovery after a Wrong DELETE
 
 Suppose:
 
@@ -948,7 +945,7 @@ If the data is still available via Flashback Query, you can conceptually rebuild
 
 ---
 
-# 25. Flashback depends on UNDO
+## 25. Flashback depends on UNDO
 
 Flashback Query has an important limitation.
 
@@ -979,7 +976,7 @@ Flashback
 
 ---
 
-# 26. Flashback Database
+## 26. Flashback Database
 
 There is also a much stronger mechanism:
 
@@ -1011,7 +1008,7 @@ Flashback Database
 
 ---
 
-# 27. Recovery in Oracle Multitenant
+## 27. Recovery in Oracle Multitenant
 
 In modern Oracle architecture you have:
 
@@ -1052,11 +1049,11 @@ schema = DEV_LAB / HR /...
 Objects = tables, procedures, packages...
 ```
 
-An incident in a table in DEV\ _ LAB does not automatically mean recovery of the entire CDB.
+An incident in a table in DEV_LAB does not automatically mean recovery of the entire CDB.
 
 ---
 
-# 28. Backup / Recovery in DWH
+## 28. Backup / Recovery in DWH
 
 This is where Data Developer gets very relevant.
 
@@ -1072,7 +1069,7 @@ FACT_TRANSACTION
 AGGREGATES
 ```
 
-There is an error at FACT\ _ TRANSACTION.
+There is an error at FACT_TRANSACTION.
 
 You have to ask yourself:
 
@@ -1105,7 +1102,7 @@ error logging
 
 ---
 
-# 29. Technical Recovery vs Applicational Recovery
+## 29. Technical Recovery vs Applicational Recovery
 
 It's a very useful distinction.
 
@@ -1125,7 +1122,7 @@ recover
 
 ## Applicational Recovery
 
-The application or ETL- repairs the data:
+The application or ETL repairs the data:
 
 ```
 rerun batch
@@ -1151,7 +1148,7 @@ and recharge the data rather than do data recovery.
 
 ---
 
-# 30. NOLOGGING is an important trap
+## 30. NOLOGGING is an important trap
 
 Some bulk operations may use:
 
@@ -1164,7 +1161,7 @@ to reduce REDO.
 For example conceptual:
 
 ```
-CREATEQ1QX fact_sales_new
+CREATE TABLE fact_sales_new
 NOLOGGING
 AS
 SELECT *
@@ -1200,7 +1197,7 @@ Very relevant in DWH.
 
 ---
 
-# 31. Complete Example
+## 31. Complete Example
 
 We have:
 
@@ -1243,7 +1240,7 @@ Scheme:
 BACKUP
                │
                ▼
-Datafils T0
+Datafiles T0
                │
 * RESTORE
                ▼
@@ -1260,26 +1257,18 @@ Current data
 
 ---
 
-# 32. The most important scenarios
+## 32. The most important scenarios
 
 for review, think of it this way:
 
-Main Concept
-♪ ♪ ♪ ♪ ♪
-♪ ♪ ♪ ♪
-Date of lost = Restore + Recover
-= = sync, corrected by elderman = =
-= = sync, corrected by elderman = = @ elder _ man
-Table lost
-= = sync, corrected by elderman = = @ elder _ man
-= = sync, corrected by elderman = = @ elder _ man
-Transaction without COMMIT - Rollback via UNDO
-= = sync, corrected by elderman = = @ elder _ man
-♪ ♪ ♪ ♪ ♪
+| Scenario | Typical response |
+| --- | --- |
+| Data files are lost | Restore the files, then recover them with redo |
+| A table is dropped | Use an appropriate Flashback feature or restore/recovery procedure |
+| An uncommitted transaction must be canceled | Roll back using UNDO |
+| A committed change must be reversed | Use an approved recovery or Flashback approach |
 
----
-
-# 33. Very important mental model
+## 33. Very important mental model
 
 You can memorize the whole chapter like this:
 
@@ -1319,56 +1308,7 @@ UNDO → rollback undrawn transactions
 
 ---
 
-## Questions and answers
-
-A good answer to:
-
-**) What is the difference between backup, restoration and recovery?
-
-would be:
-
-> Backup creates a copy of its base or components. Restore means returning backup files to the disk, and recovery means applying REDO information over those files to bring them to the desired state or to the most recent recoverable state.
-
-For:
-
-What is the role of archived redo logs?
-
-> Archived redo logs keep redo logs completed and allow the application of the changes produced after backup, being essential for media recovery and point-intime recovery in a base located in ARCHIVELOG mode.
-
-For:
-
-What is the difference between REDO and UNDO?
-
-> REDO allows restoration of the changes and is fundamental to recovery; UNDO allows cancellation of the changes and provides rollback, read consistency and certain Flashback features.
-
----
-
-## Questions and answers
-
-1. What is the difference between BACKUP, RESTORE and RECOVER?
-2. What is RMAN?
-3. What is an archived redo log?
-4. What is the difference between ARCHIVELOG and NOARCHIVELOG?
-5. Why is REDO necessary for recovery?
-6. What role does UNDO play in court recovery?
-7. What is crash recovery?
-8. What is media recovery?
-9. What is Point-In-Time Recovery?
-10. What is an SCN?
-11. What is the connection between checkpoint and recovery?
-12. What's the difference between RMAN and Data Pump?
-13. What's the difference between Flashback and backup?
-14. What is Flashback Query?
-15. What does NOLOGGING have to do with the recovery?
-16. What would you do if an ETL accidentally deleted data and gives COMMIT?
-17. Should the base be restored if an DWH batch fails?
-18. How does ARCHIVELOG influence the possibility of recovery?
-19. What happens to an uncleared transaction after a crash?
-20. Why can an COMMIT be confirmed before DBWn writes the blocks in the datafils?
-
----
-
-# 36. Exercises for Oracle 26ai
+## 36. Exercises for Oracle 26ai
 
 In your lab FREE / FREEPDB1, you can check several concepts without actually making the disaster recovery.
 
@@ -1376,14 +1316,14 @@ Check base mode:
 
 ```
 SELECT log_mode
-FROM v $database;
+FROM V$database;
 ```
 
 See current SCN-:
 
 ```
 SELECT current_scn
-FROM v $database;
+FROM V$database;
 ```
 
 See redo logs:
@@ -1393,8 +1333,8 @@ SELECT
 group #,
 sequence #,
 bytes / 1024 / 1024 AS size_mb,
-stasis
-FROM v $log
+status
+FROM V$log
 ORDER BY group #;
 ```
 
@@ -1404,7 +1344,7 @@ See checkpoint SCN of datafiles:
 SELECT
 # tabs,
 checkpoint_change #
-FROM v $datafile_header;
+FROM V$datafile_header;
 ```
 
 If you have privileges, check the archived logs:
@@ -1415,8 +1355,8 @@ sequence #,
 first_change #,
 next_change #,
 archived,
-stasis
-FROM v $archived_log
+status
+FROM V$archived_log
 ORDER BY sequence # DESC
 FETCH FIRST 20 ROWS ONLY;
 ```
@@ -1431,14 +1371,14 @@ AS OF TIMESTAMP SYSTIMESTAMP - INTERVAL '5' MINUTE
 
 ---
 
-# 37. Final scheme to memorize
+## 37. Final scheme to memorize
 
 ```
 BACKUP / RECOVERY
                          │
        ┌─────────────────┼───────────────────┐
        │                 │                   │
-BACKUPQ1QX RECOVER
+BACKUP → RESTORE → RECOVER
        │                 │                   │
 RMAN copy of backup
        │                                     │
@@ -1457,7 +1397,7 @@ and:
 Crash:
 Datafiles + REDO + UNDO
           ↓
-Instant Recovery
+Instance Recovery
 ```
 
 and:
@@ -1487,6 +1427,51 @@ The key idea of the whole chapter is:
 
 ## Questions and answers
 
+A good answer to:
+
+**) What is the difference between backup, restoration and recovery?
+
+would be:
+
+> Backup creates a copy of its base or components. Restore means returning backup files to the disk, and recovery means applying REDO information over those files to bring them to the desired state or to the most recent recoverable state.
+
+For:
+
+What is the role of archived redo logs?
+
+> Archived redo logs keep redo logs completed and allow the application of the changes produced after backup, being essential for media recovery and point-intime recovery in a base located in ARCHIVELOG mode.
+
+For:
+
+What is the difference between REDO and UNDO?
+
+> REDO allows restoration of the changes and is fundamental to recovery; UNDO allows cancellation of the changes and provides rollback, read consistency and certain Flashback features.
+
+---
+
+1. What is the difference between BACKUP, RESTORE and RECOVER?
+2. What is RMAN?
+3. What is an archived redo log?
+4. What is the difference between ARCHIVELOG and NOARCHIVELOG?
+5. Why is REDO necessary for recovery?
+6. What role does UNDO play in instance recovery?
+7. What is crash recovery?
+8. What is media recovery?
+9. What is Point-In-Time Recovery?
+10. What is an SCN?
+11. What is the connection between checkpoint and recovery?
+12. What's the difference between RMAN and Data Pump?
+13. What's the difference between Flashback and backup?
+14. What is Flashback Query?
+15. What does NOLOGGING have to do with the recovery?
+16. What would you do if an ETL accidentally deleted data and gives COMMIT?
+17. Should the base be restored if an DWH batch fails?
+18. How does ARCHIVELOG influence the possibility of recovery?
+19. What happens to an uncleared transaction after a crash?
+20. Why can an COMMIT be confirmed before DBWn writes the blocks in the datafiles?
+
+---
+
 ### How would you briefly explain Backup / Recovery conceptually to a colleague who knows SQL, but not this area?
 
 Backup / Recovery conceptual covers backup vs restore vs recovery, RMAN concepts, redo and archived redo in media recovery. In practice, first, I determine what data enter and what result to achieve, then I check implementation, execution plan and effects on flow.
@@ -1501,7 +1486,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

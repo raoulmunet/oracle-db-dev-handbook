@@ -51,9 +51,9 @@ because the target may contain transformations, aggregates, foreign exchange con
 
 ---
 
-# 2. Why reconciliation is important
+## 2. Why reconciliation is important
 
-In a banking DWH, for example, the fact that ETL- has ended with SUCCESS status does not automatically mean that the data are correct.
+In a banking DWH, for example, the fact that ETL has ended with SUCCESS status does not automatically mean that the data are correct.
 
 You can have:
 
@@ -74,7 +74,7 @@ It is particularly important for:
 - accounts;
 - payments;
 - invoices;
-- curator swings,
+- customer swings,
 - regular reporting;
 - the date of the migration;
 - batch processing;
@@ -83,7 +83,7 @@ It is particularly important for:
 
 ---
 
-# 3. Main Types of Reconciliation
+## 3. Main Types of Reconciliation
 
 We can look at reconciliation on multiple levels.
 
@@ -92,10 +92,10 @@ We can look at reconciliation on multiple levels.
 The simplest verification:
 
 ```
-SELECT COUNT *
+SELECT COUNT(*)
 FROM source_transactions;
 
-SELECT COUNT *
+SELECT COUNT(*)
 FROM dwh_transactions;
 ```
 
@@ -123,7 +123,7 @@ That's why the row count is just the first level of control.
 
 ---
 
-# 4. Control totals
+## 4. Control totals
 
 A much stronger mechanism is the use of **control totals**.
 
@@ -161,7 +161,7 @@ This control is much more relevant.
 
 ---
 
-# 5. Multiple Control totals
+## 5. Multiple Control totals
 
 In practice it is good to use more control values.
 
@@ -191,7 +191,7 @@ This set forms a simple **reconciliation signature**.
 
 ---
 
-# 6. Reconciliation on Business Key
+## 6. Reconciliation on Business Key
 
 One of the most important checks is the comparison of keys.
 
@@ -221,11 +221,13 @@ SELECT transaction_id
 FROM source_transactions;
 ```
 
-These are existing records in target but not in source.
+These are rows present in the target but absent from the source. `MINUS` uses set
+semantics and removes duplicate rows, so use grouped counts as well when
+reconciling duplicate multiplicities.
 
 ---
 
-# 7. FULL OUTER JOIN for reconciliation
+## 7. FULL OUTER JOIN for reconciliation
 
 A very useful approach:
 
@@ -235,13 +237,14 @@ s.transaction_id AS source_id,
 t.transaction_id AS target_id,
 s.amount AS source_amount,
 t.amount AS target_amount
-FROM source_transactions
+FROM source_transactions s
 FULL OUTER JOIN dwh_transactions t
-ON t.transaction_id = s.transaction_id
-WHERE
-s.transaction_id IS NULL
-OR t.transaction_id IS NULL
-OR s.amount n.e.c.;
+   ON t.transaction_id = s.transaction_id
+WHERE s.transaction_id IS NULL
+    OR t.transaction_id IS NULL
+    OR (s.amount <> t.amount
+          OR (s.amount IS NULL AND t.amount IS NOT NULL)
+          OR (s.amount IS NOT NULL AND t.amount IS NULL));
 ```
 
 This query can identify:
@@ -254,7 +257,7 @@ different amount
 
 ---
 
-# 8. Reconciliation on Columns
+## 8. Reconciliation on Columns
 
 Sometimes the row exists in both systems, but the values differ.
 
@@ -287,15 +290,17 @@ SELECT
 s.transaction_id,
 s.amount source_amount,
 t.amount target_amount
-FROM source_transactions
-JOIN dwh_transactions
-ON t.transaction_id = s.transaction_id
-WHERE NVL (s.amount, -1)
+FROM source_transactions s
+JOIN dwh_transactions t
+   ON t.transaction_id = s.transaction_id
+WHERE s.amount <> t.amount
+    OR (s.amount IS NULL AND t.amount IS NOT NULL)
+    OR (s.amount IS NOT NULL AND t.amount IS NULL)
 ```
 
 ---
 
-# 9. Attention to NULL
+## 9. Attention to NULL
 
 This query may be wrong:
 
@@ -325,8 +330,7 @@ That's why we need to treat NULL explicitly.
 For example:
 
 ```
-WHERE
-♪ ♪ ♪ ♪ ♪ ♪
+WHERE (s.amount <> t.amount)
 OR (s.amount IS NULL AND t.amount IS NOT NULL)
 OR (s.amount IS NOT NULL AND t.amount IS NULL)
 ```
@@ -340,7 +344,7 @@ NVL (t.amount, -999999999);
 
 ---
 
-# 10. Reconciliation by Groups
+## 10. Reconciliation by Groups
 
 In DWH aggregate reconciliation is very useful.
 
@@ -355,7 +359,7 @@ SUM (amount) AS total_amount
 FROM source_transactions
 GROUP BY
 business_date,
-Currency,
+currency;
 ```
 
 Result:
@@ -374,7 +378,7 @@ So we can quickly identify the area where the problem exists.
 
 ---
 
-# 11. Granularity of reconciliation
+## 11. Granularity of reconciliation
 
 A very important principle:
 
@@ -411,7 +415,7 @@ This approach greatly reduces the time of troubleshooting.
 
 ---
 
-# 12. Reconciliation in an ETL
+## 12. Reconciliation in an ETL
 
 A mature ETL flow can look like this:
 
@@ -439,7 +443,7 @@ Therefore reconciliation is not done only at the end of the flow.
 
 ---
 
-# 13. Source → Staging reconciliation
+## 13. Source → Staging reconciliation
 
 We're checking if the extraction was complete.
 
@@ -479,7 +483,7 @@ FROM stg_transactions;
 
 ---
 
-# 14. Staging → DWH reconciliation
+## 14. Staging → DWH reconciliation
 
 Here the situation is more complicated because the data can be transformed.
 
@@ -523,7 +527,7 @@ The following shall be added to the list:
 
 ---
 
-# 15. Reconciliation in SCD Type 2
+## 15. Reconciliation in SCD Type 2
 
 For SCD2 reconciliation becomes more interesting.
 
@@ -540,13 +544,13 @@ CURRENT_FLAG
 
 Rules to be validated:
 
-One power line:
+One current row per customer:
 
 ```
 SELECT customer_id
 FROM dim_customer
 WHERE current_flag = 'Y'
-GROUPQ1QX customer_id
+GROUP BY customer_id
 HAVING COUNT (*)
 ```
 
@@ -565,7 +569,7 @@ Periods overlap.
 
 ---
 
-# 16. Financial Reconciliation
+## 16. Financial Reconciliation
 
 In banking or accounting systems, the most important controls are on financial values.
 
@@ -603,7 +607,7 @@ This kind of reconciliation is extremely important in banking.
 
 ---
 
-# 17. Debit / Credit reconciliation
+## 17. Debit / Credit reconciliation
 
 Example:
 
@@ -637,7 +641,7 @@ indicates a problem that needs to be investigated.
 
 ---
 
-# 18. Reconciliation for batchs
+## 18. Reconciliation for batches
 
 In a batch system it is very useful to keep statistics for each run.
 
@@ -685,7 +689,7 @@ So the flow can be right.
 
 ---
 
-# 19. Reconciliation Formula
+## 19. Reconciliation Formula
 
 A common rule is:
 
@@ -714,18 +718,18 @@ This is a very important rule in ETL.
 
 ---
 
-# 20. Reject reconciliation
+## 20. Reject reconciliation
 
 If certain data are rejected because of Data Quality, they must be accounted for.
 
 Example:
 
 ```
-SELECT COUNT *
+SELECT COUNT(*)
 FROM etl_reject;
 
 SELECT reason_code,
-COUNT *
+COUNT(*)
 FROM etl_reject
 GROUP BY reason_code;
 ```
@@ -746,15 +750,15 @@ Total:
 
 ---
 
-# 21. Duplicate Reconciliation
+## 21. Duplicate Reconciliation
 
 A very important control:
 
 ```
 SELECT transaction_id,
-COUNT *
+COUNT(*)
 FROM dwh_transactions
-GROUPQ1QX transaction_id
+GROUP BY transaction_id
 HAVING COUNT (*)
 ```
 
@@ -762,7 +766,7 @@ If the query returns lines, we have business key duplicates.
 
 ---
 
-# 22. Hash-based reconciliation
+## 22. Hash-based reconciliation
 
 For large volumes we can calculate a hash of values.
 
@@ -815,7 +819,7 @@ charter encoding
 
 ---
 
-# 23. Example of normalization before hash
+## 23. Example of normalization before hash
 
 Safer:
 
@@ -834,7 +838,7 @@ This is how we avoid ambiguities.
 
 ---
 
-# 24. Reconciliation table
+## 24. Reconciliation table
 
 In large projects there is often a dedicated table.
 
@@ -858,7 +862,7 @@ difference_count
 source_amount
 target_amount
 difference_amount
-stasis
+status
 created_at
 ```
 
@@ -877,7 +881,7 @@ OK status
 
 ---
 
-# 25. Example of automatic calculation
+## 25. Example of automatic calculation
 
 ```
 INSERT INTO etl_reconciliation (
@@ -886,14 +890,14 @@ process_name,
 source_count,
 target_count,
 difference_count,
-stasis
+status
 )
 SELECT
 batch_id,
 'LOAD_TRANSACTIONS',
-♪ ♪
+| |
 I can't.
-♪ ♪ ♪ ♪
+| | | |
 CASE
 WHEN s.cnt = t.cnt
 THEN 'OK'
@@ -910,7 +914,7 @@ WHERE batch_id =: batch_id) t;
 
 ---
 
-# 26. tolerance
+## 26. tolerance
 
 Sometimes values don't have to be absolutely identical.
 
@@ -942,7 +946,7 @@ This is called **reconciliation tolerance**.
 
 ---
 
-# 27. Absolute vs Percenage tolerance
+## 27. Absolute vs Percenage tolerance
 
 We can have:
 
@@ -971,7 +975,7 @@ NULLIF (source_total, 0)
 
 ---
 
-# 28. Reconciliation status
+## 28. Reconciliation status
 
 A mature system can have:
 
@@ -997,7 +1001,7 @@ difference
 
 ---
 
-# 29. Reconciliation and ETL orchestration
+## 29. Reconciliation and ETL orchestration
 
 An orchestration flow can look like this:
 
@@ -1021,7 +1025,7 @@ Thus reconciliation can become an **quality gate**.
 
 ---
 
-# 30. Reconciliation in ODI
+## 30. Reconciliation in ODI
 
 In Oracle Data Integrator, these controls can be implemented by:
 
@@ -1059,7 +1063,7 @@ difference! = 0
 
 ---
 
-# 31. Real Example DWH
+## 31. Real Example DWH
 
 We assume the flow:
 
@@ -1137,7 +1141,7 @@ OK
 
 ---
 
-# 32. Reconciliation by Size
+## 32. Reconciliation by Size
 
 We can also check on:
 
@@ -1170,7 +1174,7 @@ It's much more useful than a simple global total.
 
 ---
 
-# 33. The problem of the aggregation that is compensated
+## 33. The problem of the aggregation that is compensated
 
 We assume:
 
@@ -1217,7 +1221,7 @@ Comparison columen
 
 ---
 
-# 34. Multi-level Reconciliation
+## 34. Multi-level Reconciliation
 
 A robust strategy:
 
@@ -1235,7 +1239,7 @@ Level 4
 Business key comparison
 
 Level 5
-Colour-level comparison
+Column-level comparison
 ```
 
 It is not effective to start directly with:
@@ -1246,7 +1250,7 @@ It is not effective to start directly with:
 
 ---
 
-# 35. Reconciliation vs. Data Quality
+## 35. Reconciliation vs. Data Quality
 
 The two concepts are close, but different.
 
@@ -1279,7 +1283,7 @@ Total source = Target + Rejected
 
 ---
 
-# 36. Reconciliation vs CDC
+## 36. Reconciliation vs CDC
 
 CDC says:
 
@@ -1309,7 +1313,7 @@ After ETL we can validate:
 
 ---
 
-# 37. Reconciliation vs Audit
+## 37. Reconciliation vs Audit
 
 The audit shall respond more to:
 
@@ -1329,7 +1333,7 @@ The two shall be completed.
 
 ---
 
-# 38. Pattern recommended for ETL
+## 38. Pattern recommended for ETL
 
 A very good pattern is:
 
@@ -1365,7 +1369,7 @@ FILTERED
 
 ---
 
-# 39. Anti-patents
+## 39. Anti-patents
 
 ### 1. Only COUNT (\ *)
 
@@ -1411,7 +1415,7 @@ A global total can hide errors that make up for themselves.
 
 ---
 
-# 40. Practical strategy of troubleshooting
+## 40. Practical strategy of troubleshooting
 
 If reconciliation fails:
 
@@ -1451,7 +1455,7 @@ MINUS
 or:
 
 ```
-FULLQ1QX JOIN
+FULL OUTER JOIN
 ```
 
 then:
@@ -1470,7 +1474,7 @@ Check rejected / filtered rows
 
 ---
 
-# 41. Complete Example
+## 41. Complete Example
 
 Source:
 
@@ -1528,123 +1532,11 @@ WHERE NVL (s.amount, -1)
 The following definitions apply:
 ```
 
-This is a very typical ETL debuting flow.
+This is a very typical ETL debugging flow.
 
 ---
 
-## Questions and answers
-
-### 1. What is reconciliation?
-
-Verification that the data transferred or processed between the systems are complete and consistent.
-
----
-
-### 2. Is it enough to compare COUNT (\ *)?
-
-No.
-
-Checks such as:
-
-```
-COUNT
-SUM
-MIN / MAX
-business keys
-Comparison columen
-hash
-```
-
----
-
-### 3. How do you find the missing rows?
-
-For example:
-
-```
-SELECT id
-FROM
-
-MINUS
-
-SELECT id
-FROM target;
-```
-
-or:
-
-```
-FULLQ1QX JOIN
-```
-
----
-
-### 4. How do you treat reject records?
-
-A common rule:
-
-```
-SOURCE
-=
-TARGET
-+
-REJECTED
-+
-FILTERED
-```
-
----
-
-### 5. How do you reconcile for large volumes?
-
-I'll start with:
-
-```
-Counts
-aggregates
-grouped control totals
-```
-
-and only if there are differences descend to business key level or row hash.
-
----
-
-### 6. What is reconciliation tolerance?
-
-An accepted difference between source and target, for example for rounding.
-
-```
-ABS (source - target)
-```
-
----
-
-### 7. How do you reconcile for an SCD2?
-
-Check including:
-
-```
-single record current
-Validity periods
-no overlaps
-expected history
-```
-
----
-
-## Questions and answers
-
-**Question:**
-
-You have a batch that charges 100 million transactions in an DWH. How do you validate that loading is correct?
-
-A good answer:
-
-> I'd initially avoid the row-by-row comparison because it's expensive. I'd start with control totals: row count, SUM (amount), MIN/MAX dates and possibly the number of distinct business keys. I'd do these checks on the business data, source system or maturity. If there is a difference, I lower the granularity until I identify the problem area, then I use business key comparison, MINUS or FULL OUTER JOIN to identify exactly the missing or different rows. I would also include rejected / filtered records in the reconciliation formula.
-
----
-
-# 44. Oracle Exercise 26ai
+## 44. Oracle Exercise 26ai
 
 We assume:
 
@@ -1741,7 +1633,7 @@ TARGET = 250
 
 ---
 
-# 45. What you need to remember for a role of Data Developer
+## 45. What you need to remember for a role of Data Developer
 
 for review, the most important ideas are:
 
@@ -1759,7 +1651,7 @@ ed DISTINCT COUNT
         │
 − MINUS / FULL OUTER JOIN
         │
-- Colour comparison
+- Column comparison
         │
 - * * * *
         │
@@ -1802,6 +1694,114 @@ This is one of the most useful approaches for real **troubleshooting in an DWH O
 
 ## Questions and answers
 
+### 1. What is reconciliation?
+
+Verification that the data transferred or processed between the systems are complete and consistent.
+
+---
+
+### 2. Is it enough to compare COUNT (\ *)?
+
+No.
+
+Checks such as:
+
+```
+COUNT
+SUM
+MIN / MAX
+business keys
+Comparison columen
+hash
+```
+
+---
+
+### 3. How do you find the missing rows?
+
+For example:
+
+```
+SELECT id
+FROM
+
+MINUS
+
+SELECT id
+FROM target;
+```
+
+or:
+
+```
+FULL OUTER JOIN
+```
+
+---
+
+### 4. How do you treat reject records?
+
+A common rule:
+
+```
+SOURCE
+=
+TARGET
++
+REJECTED
++
+FILTERED
+```
+
+---
+
+### 5. How do you reconcile for large volumes?
+
+I'll start with:
+
+```
+Counts
+aggregates
+grouped control totals
+```
+
+and only if there are differences descend to business key level or row hash.
+
+---
+
+### 6. What is reconciliation tolerance?
+
+An accepted difference between source and target, for example for rounding.
+
+```
+ABS (source - target)
+```
+
+---
+
+### 7. How do you reconcile for an SCD2?
+
+Check including:
+
+```
+single record current
+Validity periods
+no overlaps
+expected history
+```
+
+---
+
+**Question:**
+
+You have a batch that charges 100 million transactions in an DWH. How do you validate that loading is correct?
+
+A good answer:
+
+> I'd initially avoid the row-by-row comparison because it's expensive. I'd start with control totals: row count, SUM (amount), MIN/MAX dates and possibly the number of distinct business keys. I'd do these checks on the business data, source system or maturity. If there is a difference, I lower the granularity until I identify the problem area, then I use business key comparison, MINUS or FULL OUTER JOIN to identify exactly the missing or different rows. I would also include rejected / filtered records in the reconciliation formula.
+
+---
+
 ### How would you briefly explain Reconciliation to a colleague who knows SQL, but not this area?
 
 Reconciliation covers the province source and target agreement, record accounts, sums and control totals, key-set comparison with MINUS. In practice, first, I determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
@@ -1816,7 +1816,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

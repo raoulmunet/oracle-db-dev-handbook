@@ -10,7 +10,7 @@ sidebar_position: 12
 
 This chapter covers **Oracle indexes** in a concise but practical way for SQL tuning, OLTP, and DWH workloads.
 
-# C12. Oracle Indexes
+## C12. Oracle Indexes
 
 ## 1. What is an index
 
@@ -43,7 +43,8 @@ INDEX
 value → ROWID → row of the table
 ```
 
-`ROWID` indicates the physical position of the row.
+`ROWID` is a row locator that Oracle uses to find a row. It is not a universal
+physical address; for example, index-organized tables use logical rowids.
 
 The index can accelerate:
 
@@ -143,7 +144,9 @@ It's very selective.
 
 ## 3. Unique index
 
-A unique index does not allow two identical entries for the combination of indexed columns.
+A unique index does not allow duplicate non-NULL key values. Oracle unique
+constraints also allow NULLs; a single-column unique key can contain multiple
+NULL values.
 
 ```sql
 CREATE UNIQUE INDEX ux_customers_email
@@ -410,7 +413,7 @@ In an DWH this behavior is very common.
 
 ## 9. Selectivity
 
-Selectivity indicates how restrictive a sermon is.
+Selectivity indicates how restrictive a predicate is.
 
 Example:
 
@@ -446,7 +449,7 @@ B-tree can be less useful here.
 
 ## 10. Cardinality
 
-The cardinal in the execution plan is the estimated number of lines.
+The cardinality shown in an execution plan is the estimated number of rows.
 
 Example:
 
@@ -483,7 +486,7 @@ ON dim_customer(status);
 Very suitable for columns such as:
 
 ```text
-stasis
+status
 gender
 segment
 country
@@ -539,7 +542,7 @@ DIM_CUSTOMER
 -----------
 gender
 segment
-stasis
+status
 country
 risk_category
 ```
@@ -558,7 +561,7 @@ UPDATE
 DELETE
 ```
 
-and high competition.
+and high contention.
 
 Bitmap indexes can cause locking much wider than B-tree.
 
@@ -740,7 +743,7 @@ Important principle:
 
 ## 19. Descending index
 
-Oracle allows downward indexation:
+Oracle allows descending index keys:
 
 ```sql
 CREATE INDEX ix_transactions_date_desc
@@ -899,7 +902,7 @@ account_id
 transaction_date
 % 1
 channel_id
-stasis
+status
 ```
 
 The table is partitioned after the month:
@@ -1037,7 +1040,7 @@ for bigger crowns.
 
 The optimizer decides whether to use an index based on the estimated cost.
 
-He needs statistics like:
+The optimizer needs statistics such as:
 
 ```text
 num_rows
@@ -1106,7 +1109,7 @@ INDEX RANGE SCAN
 
 ## 29. Sargability
 
-A sermon is sargable when it allows efficient access through the index.
+A predicate is sargable when it allows efficient access through an index.
 
 Good:
 
@@ -1351,7 +1354,7 @@ Conceptual:
 
 ```text
 INDEX FAST FULL SCAN
-♪ ♪
+| |
 FULL TABLE SCAN index
 ```
 
@@ -1491,7 +1494,7 @@ ON dim_customer(
 );
 ```
 
-This is a classic indexation situation for ETL/DWH.
+This is a classic indexing situation for ETL/DWH.
 
 ---
 
@@ -1598,7 +1601,7 @@ and:
 WHERE TO_NUMBER(customer_code) = 100
 ```
 
-Observe predications and access.
+Observe predicates and access.
 
 ---
 
@@ -1618,8 +1621,6 @@ WHERE UPPER(last_name) = 'IONESCU'
 ```
 
 ---
-
-## Questions and answers
 
 ## 1. What is an index?
 
@@ -1700,13 +1701,13 @@ Start with:
 ```text
 1. What's the query trying to do?
 
-2. How many lines does he return?
+2. How many rows does the query return?
 
 3. What's the volume of the table?
 
-4. What's his prediction?
+4. What is the optimizer's estimate?
 
-5. Are the sermons sargable?
+5. Are the predicates sargable?
 
 6. Are there any implicit conversions?
 
@@ -1791,7 +1792,7 @@ workload OLTP/DWH
 
 ---
 
-# Summary in a single scheme
+## Summary in a single scheme
 
 ```text
 INDEXURI ORACLE
@@ -1801,7 +1802,7 @@ INDEXURI ORACLE
 B-TREE SPECIALE
         |                    |                  |
 --cardinality --------
-♪ Reduced ♪
+| Reduced |
 Unique Composite DWH FBI Reverse Domain
    |
 Lookup / Range
@@ -1839,13 +1840,11 @@ If you're asked:
 
 a senior response is:
 
-> I'm not creating an index just because a column appears in an `WHERE`. I'm analyzing the workload, selectivity, cardinality, data distribution, execution of the planet, cost of DML and, in DWH, partitioning. After that I'm checking through execution plan and statistics whether the index effectively reduces I/O and the execution time.
+> I'm not creating an index just because a column appears in an `WHERE`. I'm analyzing the workload, selectivity, cardinality, data distribution, execution plan, cost of DML and, in DWH, partitioning. After that I'm checking through execution plan and statistics whether the index effectively reduces I/O and the execution time.
 
 The next logical step after this module is to link **Index + Optimizer + Execution Plans** in one practical example and to follow exactly why the same query can pass from TABLE ACCESS FULL to INDEX RANGE SCAN, including E-Rows, A-Rows, ACCESS, FILTER and cost.
 
 ---
-
-## Questions and answers
 
 ### How would you briefly explain the Oracle Index to a colleague who knows SQL, but not this area?
 
@@ -1861,7 +1860,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

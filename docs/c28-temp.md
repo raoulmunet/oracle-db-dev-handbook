@@ -40,7 +40,7 @@ ORDER BY
 GROUP BY
 DISTINCT
 HASH JOIN
-SORTQ1QX JOIN
+SORT / JOIN
 analytic / window functions
 CREATE INDEX
 some parallel operations execution
@@ -51,12 +51,12 @@ TEMP contains transitional data. It must not be confused with:
 ```
 UNDO → read consistency / roll back
 REDO → recovery
-TEMP → temporary space for workshops
+TEMP → temporary space for workloads
 ```
 
 ---
 
-# 2. PGA versus TEMP
+## 2. PGA versus TEMP
 
 Operations such as SORT or HASH JOIN receive a memory area called ****, located in PGA.
 
@@ -97,7 +97,7 @@ This phenomenon is commonly called:
 
 ---
 
-# 3. The Three Ways of Execution of a Workshop
+## 3. The Three Ways of Execution of a Workshop
 
 Very important concept for review.
 
@@ -109,7 +109,7 @@ The whole operation fits into PGA.
 
 ```
 PGA
-♪ All the data ♪
+| All the data |
 ```
 
 No need for TEMP.
@@ -138,9 +138,9 @@ Performance is dropping.
 
 ### MULTI-PASS
 
-The work is far too small for the processed volume.
+The workarea is too small for the amount of data being processed.
 
-Oracle must write and recite data from TEMP several times.
+Oracle must write data to TEMP and read it back in multiple passes.
 
 ```
 PGA
@@ -171,7 +171,7 @@ performance
 
 ---
 
-# 4. Operations that frequently use TEMP
+## 4. Operations that frequently use TEMP
 
 ## 4.1 ORDER BY
 
@@ -188,9 +188,9 @@ For a few thousand rows it can be trivial.
 For hundreds of millions:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
         ↓
-SORTQ1QX BY
+SORT ORDER BY
         ↓
 Possible TEMP
 ```
@@ -198,12 +198,12 @@ Possible TEMP
 In execution the plan may appear:
 
 ```
-SORTQ1QX BY
+SORT ORDER BY
 ```
 
 ---
 
-# 5. GROUP BY
+## 5. GROUP BY
 
 Example DWH:
 
@@ -217,13 +217,13 @@ GROUP BY account_id;
 Oracle may use:
 
 ```
-HASHQ1QX BY
+HASH GROUP BY
 ```
 
 or sometimes:
 
 ```
-SORTQ1QX BY
+SORT ORDER BY
 ```
 
 For large volumes:
@@ -232,7 +232,7 @@ For large volumes:
 FACT_TRANSACTION
 500 million rows
        ↓
-HASHQ1QX BY
+HASH GROUP BY
        ↓
 Insufficient PGA
        ↓
@@ -245,12 +245,12 @@ The problem is whether we're processing hundreds of millions of rows unnecessari
 
 ---
 
-# 6. DISTINCT
+## 6. DISTINCT
 
 Example:
 
 ```
-SELECTQ1QX customer_id
+SELECT customer_id
 FROM fact_transaction;
 ```
 
@@ -286,7 +286,7 @@ Therefore:
 DISTINCT
 ```
 
-Must not be used automatically to repair duplicated results from the wrong joint.
+Must not be used automatically to repair duplicated results from the wrong join.
 
 Anti-pattern:
 
@@ -298,11 +298,11 @@ ON...
 JOIN...
 ```
 
-If DISTINCT is necessary only because the joint multiplies the lines, the joint needs to be repaired.
+If DISTINCT is necessary only because the join multiplies the lines, the join needs to be repaired.
 
 ---
 
-# 7. HASH JOIN and TEMP
+## 7. HASH JOIN and TEMP
 
 In DWH, HASH JOIN is extremely important.
 
@@ -322,11 +322,11 @@ Oracle can do:
 ```
 DIM_CUSTOMER
       ↓
-BUILDQ1QX TABLE
+BUILD TABLE
       ↓
 FACT_TRANSACTION
       ↓
-PROBEQ1QX TABLE
+PROBE TABLE
 ```
 
 If hash the tablet fits in PGA:
@@ -345,11 +345,11 @@ part hash data
 TEMP
 ```
 
-This is a classic case of **hash joint spill**.
+This is a classic case of **hash join spill**.
 
 ---
 
-# 8. Analytical Functions
+## 8. Analytical Functions
 
 Analytical functions are very common in DWH.
 
@@ -360,7 +360,7 @@ SELECT account_id,
 transaction_date,
 % 1% 2
 ROW_NUMBER () OVER
-PARTITIONQ1QX account_id
+PARTITION BY account_id
 ORDER BY transaction_date DESC
 ) AS rn
 FROM fact_transaction;
@@ -403,7 +403,7 @@ TEMP if PGA does not reach
 
 ---
 
-# 9. Classic Example DWH
+## 9. Classic Example DWH
 
 We have:
 
@@ -426,12 +426,12 @@ Possible plan:
 ```
 SELECT STATEMENT
     |
-HASHQ1QX BY
+HASH GROUP BY
     |
 TABLE ACCESS FULL FACT_TRANSACTION
 ```
 
-Flux:
+Flow:
 
 ```
 500M rows
@@ -470,14 +470,14 @@ If the table is partitioned on the date:
 ↓ partition pruning
 20M rows
     ↓
-HASHQ1QX BY
+HASH GROUP BY
 ```
 
 You have greatly reduced the workload and the need for TEMP.
 
 ---
 
-# 10. TEMP is often effect, not cause
+## 10. TEMP is often effect, not cause
 
 One of the most important ideas of this module.
 
@@ -525,12 +525,12 @@ Why are they processing so many lines?
 
 ---
 
-# 11. As you see TEMP in the execution plan
+## 11. As you see TEMP in the execution plan
 
 For real diagnosis:
 
 ```
-SELECT / * + gather_plan_statistics * /
+SELECT /*+ gather_plan_statistics */
 customer_id,
 SUM (amount)
 FROM fact_transaction
@@ -550,7 +550,7 @@ NULL,
 );
 ```
 
-On a real plane you can see columns like:
+in an actual execution plan you can see columns like:
 
 ```
 A-Rows
@@ -582,7 +582,7 @@ means that the operator needed TEMP.
 
 ---
 
-# 12. Read the bottom-up plan
+## 12. Read the bottom-up plan
 
 According to the rule we used in the plans-execution modules:
 
@@ -600,7 +600,7 @@ Id 1 HASH GROUP BY
 
 Interpretation:
 
-> Oracle read about 200 million lines and then aggregated them through HASH GROUP BY. The work did not fully fit into PGA and the operator used TEMP.
+> Oracle read about 200 million rows and then aggregated them through HASH GROUP BY. The work did not fully fit into PGA and the operator used TEMP.
 
 This is much more useful than:
 
@@ -608,7 +608,7 @@ This is much more useful than:
 
 ---
 
-# 13. V$SQL\ _ WORKING
+## 13. V$SQL_WORKING
 
 The Oracle provides information about the workshop.
 
@@ -623,7 +623,7 @@ estimated_onepass_size,
 last_memory_used,
 last_execution,
 last_tempseg_size
-FROM v $sql_workarea
+FROM v$sql_workarea
 WHERE sql_id = '&sql_id';
 ```
 
@@ -658,7 +658,7 @@ MULTI-PASS is usually an important signal to investigate.
 
 ---
 
-# 14. V$SQL\ _ WORKING\ _ ACTIVE
+## 14. V$SQL_WORKING_ACTIVE
 
 For ongoing operations:
 
@@ -670,7 +670,7 @@ actual_mem_used,
 max_mem_used,
 tempseg_size,
 number_passes
-FROM v $sql_workarea_active;
+FROM v$sql_workarea_active;
 ```
 
 You can see:
@@ -681,30 +681,30 @@ TEMP used
 number of passes
 ```
 
-It is especially useful for long DWH querys.
+It is especially useful for long DWH queries.
 
 ---
 
-# 15. Who consumes TEMP
+## 15. Who consumes TEMP
 
 One of the useful views is:
 
 ```
 SELECT *
-FROM v $tempseg_usage;
+FROM V$tempseg_usage;
 ```
 
 More practical example:
 
 ```
 SELECT s.sid,
-♪ serial ♪
+| serial |
 susername,
 u.sql_id,
 u.segtype,
 u.blocks
-FROM v $tempseg_usage
-JOIN v $session
+FROM V$tempseg_usage
+JOIN V$session
 ON s.saddr = u.session_addr;
 ```
 
@@ -721,7 +721,7 @@ i.e. what session and what SQL consumes TEMP.
 
 ---
 
-# 16. What can occur in SEGTYPE
+## 16. What can occur in SEGTYPE
 
 Depending on the operation, you can meet types associated with:
 
@@ -737,7 +737,7 @@ For tuning we are particularly interested in cases where a large SQL generates i
 
 ---
 
-# 17. PGA\ _ AGGREGATE\ _ TARGET
+## 17. PGA_AGGREGATE_TARGET
 
 Oracle manages PGA memory according to parameters such as:
 
@@ -752,7 +752,7 @@ pga_aggregate_target
 pga_aggregate_limit
 ```
 
-PGA\ _ AGGREGATE\ _ TARGET is a target for total PGA memory.
+PGA_AGGREGATE_TARGET is a target for total PGA memory.
 
 Very important:
 
@@ -774,7 +774,7 @@ Total available PGA
 
 ---
 
-# 18. Competition changes the situation
+## 18. Competition changes the situation
 
 A query can run well alone:
 
@@ -784,7 +784,7 @@ PGA sufficient
 → OPTIMAL
 ```
 
-But when 20 querys run simultaneously:
+But when 20 queries run simultaneously:
 
 ```
 Q1
@@ -804,14 +804,14 @@ That's why a job can be fast at night and slow during the day.
 
 ---
 
-# 19. Parallel Execution can amplify TEMP
+## 19. Parallel Execution can amplify TEMP
 
 In the previous module we discussed Parallel Execution.
 
 Example:
 
 ```
-SELECT / * + parallel (f 8) * /
+SELECT /*+ parallel (f 8) */
 customer_id,
 SUM (amount)
 FROM fact_transaction f
@@ -862,21 +862,18 @@ I/O
 
 ---
 
-# 20. Expensive SQL Operations
+## 20. Expensive SQL Operations
 
 In a query, frequent expensive operations are:
 
 Operation; Main Resource;
-♪ ♪ ♪ ♪ ♪
+| | | | |
 * Full Table Scan mare * I/O *
 The large SORT, PGA / TEMP
 * * *
 HASH GROUP BY
 * WINDOW SORT * PGA / TEMP
 The large DISTINCT, PGA / TEMP
-= = sync, corrected by elderman = = @ elder _ man
-= = sync, corrected by elderman = = @ elder _ man
-= = sync, corrected by elderman = =
 
 The real cost must be looked at multidimensional:
 
@@ -891,7 +888,7 @@ rows processed
 
 ---
 
-# 21. Cartesian joint generator massive by TEMP
+## 21. Cartesian join generator massive by TEMP
 
 An extreme example:
 
@@ -916,7 +913,7 @@ theoretically:
 
 combinations.
 
-Even a more subtle wrong joint can produce:
+Even a more subtle wrong join can produce:
 
 ```
 10M
@@ -936,7 +933,7 @@ The real problem is the operator below.
 
 ---
 
-# 22. E-Rows versus A-Rows
+## 22. E-Rows versus A-Rows
 
 Very important to TEMP.
 
@@ -952,7 +949,7 @@ Real:
 A-Rows = 50,000,000
 ```
 
-The optimiser expected a workout for ~ 100k rows.
+The optimizer estimated that the operation would process approximately 100,000 rows.
 
 It's actually getting 50M.
 
@@ -963,7 +960,7 @@ cardinality misestimate
         ↓
 memory / bad work
         ↓
-hash / large apron
+hash / large sort
         ↓
 TEMP
 ```
@@ -979,7 +976,7 @@ Join cardinality
 
 ---
 
-# 23. Complete diagnostic example
+## 23. Complete diagnostic example
 
 We have query:
 
@@ -998,7 +995,7 @@ It's slow.
 ### Step 1
 
 ```
-SELECT / * + gather_plan_statistics * /
+SELECT /*+ gather_plan_statistics */
 c.region,
 SUM (f.amount)
 FROM fact_transaction f
@@ -1035,7 +1032,7 @@ HASH JOIN
 A-rows = 400M
 TEMP = 20G
         ↓
-HASHQ1QX BY
+HASH GROUP BY
 A-Rows = 10
 TEMP = 12G
 ```
@@ -1107,7 +1104,7 @@ That's the right tuning.
 
 ---
 
-# 24. Do not just optimize TEMP
+## 24. Do not just optimize TEMP
 
 Anti-pattern:
 
@@ -1128,16 +1125,16 @@ execution plan
  ↓
 Which operator consumes TEMP?
  ↓
-How many rows does he get?
+How many rows does the operation process?
  ↓
-why does he get so much?
+why does the operation use so much TEMP?
  ↓
 Can we reduce the data earlier?
 ```
 
 ---
 
-# 25. Very Important Pattern: Reduce Rows as early as possible
+## 25. Very Important Pattern: Reduce Rows as early as possible
 
 In DWH:
 
@@ -1169,7 +1166,7 @@ group
 filter
 ```
 
-The optimiser tries to make predicated pushdown and transformations, but the structure of the query, statistics and expressions can influence the result.
+The optimizer tries to make predicate pushdown and transformations, but the structure of the query, statistics and expressions can influence the result.
 
 Rule:
 
@@ -1177,7 +1174,7 @@ Rule:
 
 ---
 
-# 26. OLTP versus DWH
+## 26. OLTP versus DWH
 
 ## OLTP
 
@@ -1232,7 +1229,7 @@ The question is:
 
 ---
 
-# 27. When large TEMP can be normal
+## 27. When large TEMP can be normal
 
 Example:
 
@@ -1255,7 +1252,7 @@ He's very suspicious.
 
 ---
 
-# 28. Frequent anti-patents
+## 28. Frequent anti-patents
 
 ### 1. DISTINCT placed automatically
 
@@ -1270,7 +1267,7 @@ to hide duplicates.
 ### 2. Useless ORDER BY
 
 ```
-INSERTQ1QX target_table
+INSERT INTO target_table
 SELECT...
 FROM source_table
 ORDER BY col;
@@ -1337,9 +1334,9 @@ I/O pressure
 
 ---
 
-# 29. Practical exercise Oracle 26ai
+## 29. Practical exercise Oracle 26ai
 
-In DEV\ _ LAB, you can create a simple test.
+In DEV_LAB, you can create a simple test.
 
 ```
 CREATE TABLE temp_test AS
@@ -1368,7 +1365,7 @@ END;
 ## Test 1
 
 ```
-SELECT / * + gather_plan_statistics * /
+SELECT /*+ gather_plan_statistics */
 *
 FROM temp_test
 ORDER BY amount;
@@ -1390,7 +1387,7 @@ NULL,
 Search:
 
 ```
-SORTQ1QX BY
+SORT ORDER BY
 ```
 
 and memory columns / TEMP available in output.
@@ -1400,7 +1397,7 @@ and memory columns / TEMP available in output.
 ## Test 2
 
 ```
-SELECT / * + gather_plan_statistics * /
+SELECT /*+ gather_plan_statistics */
 customer_id,
 SUM (amount)
 FROM temp_test
@@ -1410,13 +1407,13 @@ GROUP BY customer_id;
 Search:
 
 ```
-HASHQ1QX BY
+HASH GROUP BY
 ```
 
 or
 
 ```
-SORTQ1QX BY
+SORT ORDER BY
 ```
 
 ---
@@ -1424,12 +1421,12 @@ SORTQ1QX BY
 ## Test 3
 
 ```
-SELECT / * + gather_plan_statistics * /
+SELECT /*+ gather_plan_statistics */
 d,
 customer_id,
 % 1% 2
 ROW_NUMBER () OVER
-PARTITIONQ1QX customer_id
+PARTITION BY customer_id
 ORDER BY amount DESC
 ) rn
 FROM temp_test;
@@ -1443,7 +1440,7 @@ WINDOW SORT
 
 ---
 
-# 30. What to follow in the laboratory
+## 30. What to follow in the laboratory
 
 Compare:
 
@@ -1469,7 +1466,7 @@ Is there spill in TEMP?
 
 ---
 
-# 31. Real script DWH
+## 31. Real script DWH
 
 Job ETL nocturnal:
 
@@ -1515,7 +1512,7 @@ WINDOW SORT = 140 GB TEMP
 A-rows = 800M
 ```
 
-It is noted that before ROW\ _ NUMBER () a filter on the batch is missing.
+It is noted that before ROW_NUMBER () a filter on the batch is missing.
 
 The query processes:
 
@@ -1550,66 +1547,7 @@ The idea is very important:
 
 ---
 
-## Questions and answers
-
-### 1. Why is Oracle using TEMP?
-
-For temporary operations such as sorting, hash joins, aggregation and analytical functions when PGA is not sufficient.
-
----
-
-### 2. What is the difference between PGA and TEMP?
-
-PGA is a private memory of the process / session for workshops. TEMP is disk space used when data cannot be fully processed in the available memory.
-
----
-
-### 3. What does spill to TEMP mean?
-
-An operation such as apron or hash joint exceeds the memory available in PGA and writes some of the data in temporal tablespace.
-
----
-
-### 4. What is optimal, one-pass and multi-pass?
-
-```
-OPTIMAL → operation in memory
-ONE-PASS → use of TEMP
-MULTI-PASS → data must be written / read from TEMP in several passes
-```
-
----
-
-### 5. Does large TEMP automatically mean stupid SQL?
-
-No. For large DWH workshops, TEMP can be normal. The operator, cardinality and volume of processing must be analysed.
-
----
-
-### 6. What operations frequently consume TEMP?
-
-```
-SORT
-HASH JOIN
-HASHQ1QX BY
-SORTQ1QX BY
-DISTINCT
-WINDOW SORT
-CREATE INDEX
-Parallel Query
-```
-
----
-
-### 7. How do you investigate an SQL that consumes much TEMP?
-
-A good technical discussion response:
-
-> I start with the real plan using DBMS\ _ XPLAN.DISPLAY\ _ CURSOR or SQL Monitor. I identify the operator that consumes TEMP and I check A-Rows, cardinality, buffers and memory usage. Then I investigate why the operator processes so many lines: join cardinality, filters, partition pruning, statistics, data skew or parallelism. I do not treat the enlargement of TEMP as the first solution.
-
----
-
-# 33. Mental Model to Memorize
+## 33. Mental Model to Memorize
 
 Remember the chain:
 
@@ -1648,7 +1586,7 @@ How many A-Rows?
    ↓
 Why so many?
    ↓
-filter / joint / statistics
+filter / join / statistics
 partition pruning
 parallelism
 query design
@@ -1656,7 +1594,7 @@ query design
 
 ---
 
-# 34. Link with previous modules
+## 34. Link with previous modules
 
 This module directly links several concepts:
 
@@ -1667,7 +1605,7 @@ Cardinality
     ↓
 Optimizer
     ↓
-Implementation Plan
+execution plan
     ↓
 Join Algorithm
     ↓
@@ -1717,7 +1655,7 @@ For **level Oracle Data Developer / DWH Developer**, the most important ideas ar
 5. In particular, **A-Rows + operator + memory / TEMP usage** should be followed.
 6. Do you not start the TEMP-enhancing tuning; do you start with **why do I process so much data?**
 7. In DWH, **Full Scan + Hash Join + Hash Group By + TEMP** can be perfectly normal.
-8. **Partition pruning, early applied filters and correct** joints can dramatically reduce TEMP.
+8. **Partition pruning, early filtering, and correct** joins can dramatically reduce TEMP usage.
 9. Parallel Execution can accelerate the query, but it can significantly increase the consumption of **PGA and TEMP**.
 10. The key diagnostic patent is:
 
@@ -1739,13 +1677,70 @@ This is one of the subjects that ties very well **Execution Plans + PGA + Hash J
 
 ## Questions and answers
 
+### 1. Why is Oracle using TEMP?
+
+For temporary operations such as sorting, hash joins, aggregation and analytical functions when PGA is not sufficient.
+
+---
+
+### 2. What is the difference between PGA and TEMP?
+
+PGA is a private memory of the process / session for workloads. TEMP is disk space used when data cannot be fully processed in the available memory.
+
+---
+
+### 3. What does spill to TEMP mean?
+
+A sort or hash join that exceeds the memory available in the PGA writes some of its data to the temporary tablespace.
+
+---
+
+### 4. What is optimal, one-pass and multi-pass?
+
+```
+OPTIMAL → operation in memory
+ONE-PASS → use of TEMP
+MULTI-PASS → data must be written / read from TEMP in several passes
+```
+
+---
+
+### 5. Does large TEMP automatically mean stupid SQL?
+
+No. For large DWH workloads, TEMP can be normal. The operator, cardinality and volume of processing must be analysed.
+
+---
+
+### 6. What operations frequently consume TEMP?
+
+```
+SORT
+HASH JOIN
+HASH GROUP BY
+SORT ORDER BY
+DISTINCT
+WINDOW SORT
+CREATE INDEX
+Parallel Query
+```
+
+---
+
+### 7. How do you investigate an SQL that consumes much TEMP?
+
+A good technical discussion response:
+
+> I start with the real plan using DBMS_XPLAN.DISPLAY_CURSOR or SQL Monitor. I identify the operator that consumes TEMP and I check A-Rows, cardinality, buffers and memory usage. Then I investigate why the operator processes so many rows: join cardinality, filters, partition pruning, statistics, data skew or parallelism. I do not treat the enlargement of TEMP as the first solution.
+
+---
+
 ### How would you briefly explain TEMP and costly operations to a colleague who knows SQL, but not this area?
 
 Temp and costly operations cover sorts, hash joins and workareas, PGA vs TEMP spill, ORDER BY, GROUP BY, DISTINCT and analytical windows. In practice, I first determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
 
 ### What are the two most common practical problems related to TEMP and costly operations?
 
-Two recurring problems are misinterpretation of data or granularity and degradation of performance at real volume. For Temp and costly operations, explicitly follow sorts, hash joins and workplaces, PGA vs TEMP spill, ORDER BY, GROUP BY, DISINCT and analytical windows and compare the result with a control set.
+Two recurring problems are misinterpretation of data or granularity and degradation of performance at real volume. For Temp and costly operations, explicitly follow sorts, hash joins and work areas, PGA vs TEMP spill, ORDER BY, GROUP BY, DISTINCT and analytical windows and compare the result with a control set.
 
 ### How do you check that the result is correct and not just fast?
 
@@ -1753,7 +1748,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

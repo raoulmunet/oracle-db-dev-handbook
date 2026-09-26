@@ -41,17 +41,17 @@ DATA MART / REPORTING
 
 The most important dimensions are:
 
-♪ ♪ ♪
-♪ ♪ ♪ ♪ ♪
-Is **Completeness** missing mandatory values?
-Does **Validity** respect accepted format and domain values?
-Does **Accuracy** reflect reality?
-Is **Consistency** information consistent between systems?
-Is the data **Unique**, without unintended duplicates?
-Does **Integrity** preserve valid PK/FK relationships?
-Is **Timeliness** still recent?
-Does **Standardization** use a consistent representation?
-Is **Reconciliation** the number and totals consistent with the source?
+| Dimension | Check question |
+| --- | --- |
+| Completeness | Are mandatory values missing? |
+| Validity | Do values meet accepted formats and domain rules? |
+| Accuracy | Do values reflect reality? |
+| Consistency | Is information consistent across systems? |
+| Uniqueness | Are there unintended duplicates? |
+| Integrity | Are primary and foreign key relationships valid? |
+| Timeliness | Is the data sufficiently current? |
+| Standardization | Is data represented consistently? |
+| Reconciliation | Do counts and totals match the source? |
 
 Example:
 
@@ -204,7 +204,7 @@ For numeric values in modern Oracle:
 ```sql
 SELECT *
 FROM staging_transactions
-WHERE validate_conversion (amount_txt AS NUMBER) returns 0;
+WHERE $1 = 0;
 ```
 
 Example:
@@ -473,11 +473,11 @@ If the businessman says:
 
 > savings accounts may not have a negative balance,
 
-This is an DQ roule.
+This is a data quality (DQ) rule.
 
 ---
 
-## 10. Cross-Colour Rules
+## 10. Cross-Column Rules
 
 Sometimes the columns are individually valid, but the combination is impossible.
 
@@ -588,7 +588,7 @@ transaction_id,
 'Amount cannot be converted to NUMBER',
 amount_txt
 FROM stg_transaction
-WHERE VALIDATE_CONVERSION(amount_txt AS NUMBER) returns 0;
+WHERE $1 = 0;
 ```
 
 ---
@@ -638,7 +638,7 @@ We create the error table logging:
 ```sql
 BEGIN
 DBMS_ERRLOG.CREATE_ERROR_LOG (
-dml_table_name = = 'TARGET_CUSTOMER'
+dml_table_name => 'TARGET_CUSTOMER'
 );
 END;
 /
@@ -899,7 +899,7 @@ In banking and financial systems it is very important.
 We're not just checking:
 
 ```
-COUNT *
+COUNT(*)
 ```
 
 but also:
@@ -1029,112 +1029,6 @@ can be converted to NUMBER.
 
 ---
 
-## Questions and answers
-
-A very likely question:
-
-> **What would you do if one invalid record causes an ETL batch containing one million records to fail?**
-
-A good answer:
-
-> I would normally fail the complete batch because of a small number of data-quality errors. I would validate the records in staging, separate valid and invalid records, store rejected records together with the batch ID, business key, error code and error message, load the valid records, and perform reconciliation at the end.
-
-Mental scheme:
-
-```
-1,000,000 source rows
-          │
-          ▼
-validation
-       /      \
-      /        \
-3919.90.10
-VALID INVALID
-   │            │
-   ▼            ▼
-DWH ERROR
-               │
-               ▼
-FIX
-               │
-               ▼
-REPLAY
-```
-
----
-
-## Questions and answers
-
-### Problem
-
-The source sends:
-
-```
-transaction_id amount
-1001 125.30
-1002 ABC
-1003 45.20
-```
-
-Code ETL:
-
-```sql
-INSERT fact_transaction
-SELECT transaction_id,
-TO_NUMBER(amount)
-FROM staging_transaction;
-```
-
-The batcher falls with:
-
-```
-ORA-01722
-```
-
-### Solution
-
-First we identify:
-
-```sql
-SELECT *
-FROM staging_transaction
-WHERE VALIDATE_CONVERSION(amount AS NUMBER) returns 0;
-```
-
-then we separate:
-
-```sql
-INSERT INTO fact_transaction (
-transaction_id,
-% 1
-)
-SELECT
-transaction_id,
-TO_NUMBER(amount)
-FROM staging_transaction
-WHERE VALIDATE_CONVERSION(amount AS NUMBER) returns 1;
-```
-
-and errors:
-
-```sql
-INSERT INTO etl_error (
-source_key,
-error_code,
-error_value
-)
-SELECT
-transaction_id,
-'INVALID_AMOUNT',
-% 1
-FROM staging_transaction
-WHERE VALIDATE_CONVERSION(amount AS NUMBER) returns 0;
-```
-
-This is a much more robust approach than letting the entire batch fail.
-
----
-
 ## 27. Data Quality and Performance
 
 For very large volumes, we avoid running the same check ten times.
@@ -1201,7 +1095,7 @@ Example:
 ```sql
 ALTER TABLE custodian
 ADD chk_customer_status
-CHECK (IN status ('ACTIVE', 'INACTIVE', 'BLOCKED'));
+CHECK (status IN ('ACTIVE', 'INACTIVE', 'BLOCKED'));
 ```
 
 But in ETL we don't have to rely exclusively on constraints.
@@ -1267,33 +1161,6 @@ dashboard
 trend analysis
 reprocessing
 ```
-
----
-
-## Questions and answers
-
-You should be able to respond quickly to these:
-
-1. What is Data Quality?
-2. What are the main dimensions of DQ?
-3. What's the difference between validity and accuracy?
-4. How do you detect duplicates?
-5. How do you detect invalid numerical values?
-6. What is profiling date?
-7. What is the date of reconciliation?
-8. What's a backgammon?
-9. What is Quarantine?
-10. Did you stop a batch for one invalid record?
-11. What information would you save in an error table?
-12. What is DBMS _ ERRLOG?
-13. What is the difference between technical error and DQ error?
-14. What's a total control?
-15. How do you check the referential integrity before loading?
-16. What is the relationship between DQ and SCD?
-17. How do you treat duplicates?
-18. What does standardisation mean?
-19. What does hard error vs. warning mean?
-20. How do you measure Data Quality?
 
 ---
 
@@ -1440,13 +1307,140 @@ And **Data Quality** is basically the layer of protection between external data 
 
 ## Questions and answers
 
+A very likely question:
+
+> **What would you do if one invalid record causes an ETL batch containing one million records to fail?**
+
+A good answer:
+
+> I would normally fail the complete batch because of a small number of data-quality errors. I would validate the records in staging, separate valid and invalid records, store rejected records together with the batch ID, business key, error code and error message, load the valid records, and perform reconciliation at the end.
+
+Mental scheme:
+
+```
+1,000,000 source rows
+          │
+          ▼
+validation
+       /      \
+      /        \
+3919.90.10
+VALID INVALID
+   │            │
+   ▼            ▼
+DWH ERROR
+               │
+               ▼
+FIX
+               │
+               ▼
+REPLAY
+```
+
+---
+
+### Problem
+
+The source sends:
+
+```
+transaction_id amount
+1001 125.30
+1002 ABC
+1003 45.20
+```
+
+Code ETL:
+
+```sql
+INSERT fact_transaction
+SELECT transaction_id,
+TO_NUMBER(amount)
+FROM staging_transaction;
+```
+
+The batcher falls with:
+
+```
+ORA-01722
+```
+
+### Solution
+
+First we identify:
+
+```sql
+SELECT *
+FROM staging_transaction
+WHERE $1 = 0;
+```
+
+then we separate:
+
+```sql
+INSERT INTO fact_transaction (
+transaction_id,
+% 1
+)
+SELECT
+transaction_id,
+TO_NUMBER(amount)
+FROM staging_transaction
+WHERE VALIDATE_CONVERSION(amount AS NUMBER) returns 1;
+```
+
+and errors:
+
+```sql
+INSERT INTO etl_error (
+source_key,
+error_code,
+error_value
+)
+SELECT
+transaction_id,
+'INVALID_AMOUNT',
+% 1
+FROM staging_transaction
+WHERE $1 = 0;
+```
+
+This is a much more robust approach than letting the entire batch fail.
+
+---
+
+You should be able to respond quickly to these:
+
+1. What is Data Quality?
+2. What are the main dimensions of DQ?
+3. What's the difference between validity and accuracy?
+4. How do you detect duplicates?
+5. How do you detect invalid numerical values?
+6. What is profiling date?
+7. What is the date of reconciliation?
+8. What's a backgammon?
+9. What is Quarantine?
+10. Did you stop a batch for one invalid record?
+11. What information would you save in an error table?
+12. What is DBMS _ERRLOG?
+13. What is the difference between technical error and DQ error?
+14. What's a total control?
+15. How do you check the referential integrity before loading?
+16. What is the relationship between DQ and SCD?
+17. How do you treat duplicates?
+18. What does standardisation mean?
+19. What does hard error vs. warning mean?
+20. How do you measure Data Quality?
+
+---
+
 ### How would you briefly explain Data Quality to a colleague who knows SQL, but not this area?
 
-Data Quality covers completeness, validity, uniqueness, consistency and timeliness, profiling and roule definition, safe conversions with VALIDATE _ CONVERSION. In practice, I first determine what data enter and what result to achieve, then I check implementation, execution plan and effects on flow.
+Data Quality covers completeness, validity, uniqueness, consistency and timeliness, profiling and roule definition, safe conversions with VALIDATE _CONVERSION. In practice, I first determine what data enter and what result to achieve, then I check implementation, execution plan and effects on flow.
 
 ### What are the two most common practical issues related to Data Quality?
 
-Two recurring problems are the misinterpretation of data or granularity and degradation of performance at real volume. For Data Quality, I explicitly follow completeness, validity, uniqueness, consistency and timeliness, profiling and rule definition, safe conversions with VALIDATE _ CONVERSION and compare the result with a control set.
+Two recurring problems are the misinterpretation of data or granularity and degradation of performance at real volume. For Data Quality, I explicitly follow completeness, validity, uniqueness, consistency and timeliness, profiling and rule definition, safe conversions with VALIDATE _CONVERSION and compare the result with a control set.
 
 ### How do you check that the result is correct and not just fast?
 
@@ -1454,7 +1448,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

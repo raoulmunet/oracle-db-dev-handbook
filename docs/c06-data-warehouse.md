@@ -70,7 +70,7 @@ A simplified architecture:
 
 ```
                    ┌──────────────┐
-                   ♪ Core Banking ♪
+                   │ Core Banking │
                    └──────┬───────┘
                           │
                    ┌──────▼───────┐
@@ -215,7 +215,7 @@ Oracle Data Integrator (**ODI**) is largely based on the ELT philosophy.
 
 Dimensional modelling is one of the most important DWH ideas.
 
-Typical scheme:
+Typical schema:
 
 ```
 DIM_CUSTOMER
@@ -287,7 +287,7 @@ a row = a bank transaction
 or:
 
 ```
-one line = daily balance of an account
+one row = the daily balance of an account
 ```
 
 or:
@@ -375,7 +375,7 @@ c.segment;
 
 ## 6.8. Snowflake Schema
 
-In a snowflake scheme, dimensions are normalized.
+In a snowflake schema, dimensions are normalized.
 
 Example:
 
@@ -542,21 +542,25 @@ FROM stg_customer s
 JOIN dim_customer d
   ON d.customer_id = s.customer_id
  AND d.current_flag = 'Y'
-WHERE NVL(s.segment, '#') <> NVL(d.segment, '#');
+WHERE s.segment <> d.segment
+  OR (s.segment IS NULL AND d.segment IS NOT NULL)
+  OR (s.segment IS NOT NULL AND d.segment IS NULL);
 ```
 
 We're closing the old version:
 
 ```sql
 UPDATE dim_customer d
-SET valid_to     = SYSDATE - INTERVAL '1' SECOND,
+SET valid_to     = :effective_ts,
     current_flag = 'N'
 WHERE d.current_flag = 'Y'
   AND EXISTS (
       SELECT 1
       FROM stg_customer s
       WHERE s.customer_id = d.customer_id
-        AND NVL(s.segment, '#') <> NVL(d.segment, '#')
+           AND (s.segment <> d.segment
+             OR (s.segment IS NULL AND d.segment IS NOT NULL)
+             OR (s.segment IS NOT NULL AND d.segment IS NULL))
   );
 ```
 
@@ -575,7 +579,7 @@ SELECT
 customer_seq.NEXTVAL,
 s.customer_id,
 s.segment,
-SYSDATE,
+:effective_ts,
 DATE '9999-12-31',
 'Y'
 FROM stg_customer s;
@@ -880,7 +884,7 @@ Example Oracle 26ai:
 ```sql
 SELECT *
 FROM stg_transaction
-WHERE VALIDATE_CONVERSION (amount AS NUMBER) returns 0;
+WHERE VALIDATE_CONVERSION(amount AS NUMBER) = 0;
 ```
 
 Older Oracle versions:
@@ -1158,7 +1162,7 @@ But bitmap indexes are not suitable for OLTP systems with many competing updates
 
 ## 6.27. Star Transformation
 
-Oracle can optimize Star Querys scheme by:
+Oracle can optimize star queries using the star transformation:
 
 ```
 STAR TRANSFORMATION
@@ -1333,13 +1337,13 @@ It is extremely important in banking.
 
 ---
 
-## 6.32. Audit and Linage
+## 6.32. Audit and Lineage
 
 We should be able to answer:
 
 ```
 Where does that value come from?
-What batch did he load?
+Which batch loaded the data?
 What source did it produce?
 What transformation has been applied?
 ```
@@ -1445,7 +1449,7 @@ amount
 transaction_date
 ```
 
-Flux:
+Flow:
 
 ```
 SOURCE_TRANSACTION
@@ -1475,7 +1479,7 @@ Step 2: validation.
 ```sql
 SELECT *
 FROM stg_transaction
-WHERE VALIDATE_CONVERSION (amount AS NUMBER) returns 0;
+WHERE VALIDATE_CONVERSION(amount AS NUMBER) = 0;
 ```
 
 Step 3: customer lookup.
@@ -1486,7 +1490,8 @@ SELECT s.transaction_id,
 FROM stg_transaction s
 LEFT JOIN dim_customer d
   ON d.customer_id = s.customer_id
- AND d.current_flag = 'Y';
+ AND s.transaction_date >= d.valid_from
+ AND s.transaction_date < d.valid_to;
 ```
 
 Step 4: load the fact table.
@@ -1502,11 +1507,12 @@ SELECT
 s.transaction_id,
 NVL(d.customer_key, -1),
 TO_NUMBER(TO_CHAR(s.transaction_date, 'YYYYMMDD')),
-♪ amount ♪
-FROM stg_transaction
-LEFT JOIN dim_customer
-ON d.customer_id = s.customer_id
-AND d.current_flag = 'Y';
+s.amount
+FROM stg_transaction s
+LEFT JOIN dim_customer d
+  ON d.customer_id = s.customer_id
+ AND s.transaction_date >= d.valid_from
+ AND s.transaction_date < d.valid_to;
 ```
 
 ---
@@ -1516,7 +1522,7 @@ AND d.current_flag = 'Y';
 As Oracle Data Developer you will often encounter scenarios such as:
 
 ```
-ETL- lasted 6 hours instead of 40 minutes.
+ETL lasted 6 hours instead of 40 minutes.
 
 A batch has 1 million missing rows.
 
@@ -1536,7 +1542,7 @@ Incremental load processed the same data twice.
 
 A ODI job failed at step 17.
 
-A query makes FULL TABLE SCAN on a 2 billion-line fact.
+A query performs a full table scan of a fact table with 2 billion rows.
 ```
 
 A good way of investigating is:
@@ -1553,54 +1559,6 @@ A good way of investigating is:
 9. make reconciliation
 10. check the execution plan if the problem is performance
 ```
-
----
-
-## Questions and answers
-
-You must be able to answer questions quickly, such as:
-
-**What is the difference between OLTP and DWH?**
-
-OLTP optimizes operational transactions and DWH optimizes analysis and history.
-
-**What is grain?**
-
-The exact level of detail represented by a row of fact tables.
-
-**Fact vs. Dimension?**
-
-Fact = events and measures.
-
-Dimension = descriptive context.
-
-**Star vs Snowflake?**
-
-Star has denormalised dimensions and fewer joins; Snowflake normalises dimensions.
-
-**What is SCD Type 2?**
-
-Method of keeping history by creating a new version of a dimensional row.
-
-**Why do we use surrogate keys?**
-
-For independence from source keys and history support, in particular SCD2.
-
-**What is incremental load?**
-
-Processing only new or modified data.
-
-**What is reconciliation?**
-
-Comparison of source data with the uploaded result for verification of completeness and correctness.
-
-**What is a late-arriving dimension?**
-
-The fact row arrives before the related dimension row exists.
-
-**What is partition pruning?**
-
-The Oracle accesses only the partitions relevant to the query.
 
 ---
 
@@ -1660,7 +1618,81 @@ Of these, for review, **Grain + Fact / Dimension + SCD2 + Incremental Load + ETL
 
 ---
 
+## Mental scheme to remember
+
+```
+DATA WAREHOUSE
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+MODEL PERFORMANCE
+        │              │              │
+Fact / Dim Staging Partitioning
+Grain Mapping Index
+Star Schema Validation Parallelism
+SCD Incremental execution plan
+        │              │
+| Error Handling |
+; Reconciliation;
+        │
+        └──────────────┬──────────────┘
+                       │
+BUSINESS
+                       │
+Banking / Risk / Finance
+```
+
+For our course, the next logical step would be to separately deepen **dimensional modelling: Grain → Facts → Surrogate Keys → SCD Type 2**, then build in Oracle 26ai a small full banking DWH, for example DWH_ACCOUNT, with staging, DIM_CUSTOMER, DIM_ACCOUNT, DIM_DATE and FACT_TRANSACTION.
+
+---
+
 ## Questions and answers
+
+You must be able to answer questions quickly, such as:
+
+**What is the difference between OLTP and DWH?**
+
+OLTP optimizes operational transactions and DWH optimizes analysis and history.
+
+**What is grain?**
+
+The exact level of detail represented by a row of fact tables.
+
+**Fact vs. Dimension?**
+
+Fact = events and measures.
+
+Dimension = descriptive context.
+
+**Star vs Snowflake?**
+
+Star has denormalised dimensions and fewer joins; Snowflake normalises dimensions.
+
+**What is SCD Type 2?**
+
+Method of keeping history by creating a new version of a dimensional row.
+
+**Why do we use surrogate keys?**
+
+For independence from source keys and history support, in particular SCD2.
+
+**What is incremental load?**
+
+Processing only new or modified data.
+
+**What is reconciliation?**
+
+Comparison of source data with the uploaded result for verification of completeness and correctness.
+
+**What is a late-arriving dimension?**
+
+The fact row arrives before the related dimension row exists.
+
+**What is partition pruning?**
+
+The Oracle accesses only the partitions relevant to the query.
+
+---
 
 **Question:**
 
@@ -1668,7 +1700,7 @@ Of these, for review, **Grain + Fact / Dimension + SCD2 + Incremental Load + ETL
 
 A good answer would be:
 
-> I start by separating the problem between extraction, transformation and load. I check the volumes from the previous days and the duration of each step ETL. Then I check the execution of the plans of the slow SQL-s, partition pruning, Oracle statistics and possible FULL TABLE SCAN-s unintentionally.
+> I start by separating the problem between extraction, transformation and load. I check the volumes from the previous days and the duration of each step ETL. Then I check the execution of the plans of the slow SQL statements, partition pruning, Oracle statistics and possible unintended full table scans.
 >
 > I'm checking whether the incremental load filters the data correctly and whether the indexes and partitions are right. For the fact large tables I'm checking whether we can use partitioning on the data business, direct-path insert, parallel DML or partition exchange.
 >
@@ -1694,37 +1726,6 @@ business understanding
 
 ---
 
-## Mental scheme to remember
-
-```
-DATA WAREHOUSE
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
-MODEL PERFORMANCE
-        │              │              │
-Fact / Dim Staging Partitioning
-Grain Mapping Index
-Star Schema Validation Parallelism
-SCD Incremental Implementation Plan
-        │              │
-♪ Error Handling ♪
-; Reconciliation;
-= = sync, corrected by elderman = =
-        │
-        └──────────────┬──────────────┘
-                       │
-BUSINESS
-                       │
-Banking / Risk / Finance
-```
-
-For our course, the next logical step would be to separately deepen **dimensional modelling: Grain → Facts → Surrogate Keys → SCD Type 2**, then build in Oracle 26ai a small full banking DWH, for example DWH_ACCOUNT, with staging, DIM_CUSTOMER, DIM_ACCOUNT, DIM_DATE and FACT_TRANSACTION.
-
----
-
-## Questions and answers
-
 ### How would you briefly explain Data Warehouse to a colleague who knows SQL, but not this area?
 
 A Data Warehouse covers enterprise analytical architecture, facts, dimensions, grain, surrogate keys, staging, integration, and presentation layers. In practice, I first determine the source data and required business result, then verify the model, ETL logic, reconciliation, execution plan, and impact on the wider flow.
@@ -1739,7 +1740,7 @@ I compare row counts, amounts, and keys with the source or a reference result; I
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

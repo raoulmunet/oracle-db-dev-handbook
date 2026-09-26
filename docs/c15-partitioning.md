@@ -310,10 +310,12 @@ It is useful for:
 
 ## 15.9. RANGE vs. LIST vs. HASH
 
-♪ Good for you ♪
-♪ ♪ ♪ ♪ ♪
-* * * * *
-♪ Composites are the combination of advantages ♪
+| Partitioning method | Best suited for |
+| --- | --- |
+| RANGE | Values in ordered ranges, such as dates |
+| LIST | A defined set of discrete values |
+| HASH | Distributing rows across partitions |
+| Composite | Combines the advantages of multiple partitioning methods |
 
 For a fact table DWH, very common:
 
@@ -453,7 +455,7 @@ This is:
 
 ---
 
-## 15.13 How do we see him in the execution plan
+## 15.13 How to Identify Partition Pruning in an Execution Plan
 
 ```sql
 SELECT *
@@ -660,7 +662,7 @@ IDX_MAR
 Creation:
 
 ```sql
-CREATE idx_fact_customer
+m=>m_fact_customer
 ON fact_transaction (customer_id)
 LOCAL;
 ```
@@ -705,12 +707,12 @@ certain operations on partitions may require maintenance of the global index.
 
 ## 15.21 Local vs global index
 
-♪ ♪ ♪ ♪ ♪
-In line with the table independent of the table
-Very good for DWH good for transverse access
-Simple to administer maintenance more complicated
-The good for partition pruning can cover all partitions
-Favorite ETL sometimes required for global lookups
+| Aspect | Local index | Global index |
+| --- | --- | --- |
+| Alignment | Aligned with table partitions | Independent of table partitions |
+| Typical use | Common in DWH; supports partition pruning | Useful for access across partitions |
+| Maintenance | Simpler to maintain | More complex to maintain |
+| ETL | Often useful for partition-based ETL | Sometimes needed for global lookups |
 
 In a large DWH, local **indexes** are very common.
 
@@ -906,7 +908,7 @@ Conceptual:
 ```
 STAGING VALIDAT
       │
-♪ ♪ ♪
+| | |
       ↓
 FACT_TRANSACTION.P2026_09
 ```
@@ -1165,7 +1167,7 @@ You need to read the plan in context:
 
 ```
 How many partitions?
-How many lines?
+How many rows?
 What selectivity?
 What I/O?
 ```
@@ -1489,7 +1491,7 @@ Pstop
 Create:
 
 ```sql
-CREATE ix_fact_sales_customer
+m=>m_fact_sales_customer
 ON fact_sales_part (customer_id)
 LOCAL;
 ```
@@ -1500,7 +1502,7 @@ Check:
 SELECT
 index_name,
 partition_name,
-stasis
+status
 FROM user_ind_partitions
 WHERE index_name = 'IX_FACT_SALES_CUSTOMER';
 ```
@@ -1536,12 +1538,88 @@ WITH TABLE stg_fact_sales;
 Then check:
 
 ```sql
-SELECT COUNT *
+SELECT COUNT(*)
 FROM fact_sales_part
 PARTITION (p2026_09);
 ```
 
 This is a very good exercise for DWH.
+
+---
+
+## 15.52 Mental model
+
+When you see **Partitioning**, think:
+
+```
+PARTITIONING
+                      │
+        ┌─────────────┼─────────────┐
+        │             │             │
+Query ETL Maintenance
+        │             │             │
+        ▼             ▼             ▼
+Pruning Exchange Drop / Truncate
+        │
+        ▼
+Pstart / Pstop
+        │
+        ▼
+Access path inside partition
+        │
+   ┌────┴────┐
+   │         │
+Full Scan Index
+```
+
+And the types:
+
+```
+RANGE
+  │
+− DATE / PERIOD
+  │
+- INTERVAL
+
+LIST
+  │
+− REGION / SOURCE
+
+HASH
+  │
+- even distribution
+
+COMPOSITE
+  │
+● RANGE + HASH, etc.
+```
+
+---
+
+## 15.53 What must remain
+
+If you were to just remember the key to the technical review:
+
+1. **Partitioning = Physical Sharing, one logical table.**
+2. For fact tables, the most common is **RANGE/INTERVAL after date**.
+3. The main concept of performance is **partition pruning**.
+4. Check the plum through DBMS_XPLAN, especially **Pstart / Pstop**.
+5. PARTITION RANGE SINGLE means that a single partition is required.
+6. A FULL TABLE SCAN on a single large partition can be perfectly correct.
+7. **Local indexes** are extremely useful in DWH.
+8. **EXCHANGE PARTITION** is one of the most important ETL Oracle squares.
+9. Partitioning also helps with **retention, purging, parallelism and maintenance**, not just at SELECT.
+10. For very large DWH volumes, the combination:
+
+```
+Partitioning
++ local indexes
++ Statistics
++ parallel execution
++ partition-wise joins
+```
+
+is one of the basis of the Oracle performance architecture.
 
 ---
 
@@ -1660,97 +1738,17 @@ instead of millions of DELETE operations.
 
 ---
 
-## Questions and answers
-
 **Question:**
 
 > You have a fact sheet of 4 billion transactions and the monthly reports are slow.
 
 A good answer would be:
 
-> First, I check whether the table is partitioned by a column corresponding to the access square, for example, transaction_data. Then I check the execution of the plane and Pstart / Pstop to confirm partition pounding. If the one-month ratio accesses all partitions, I investigate predictions, conversions and functions applied to partition key. After pruning I analyze access to the pathi in the remaining partition, cardinality, statistics, indexes and if a full scan / parallel scan is more appropriate than an index. For ETL I would also analyze local indexes, incremental statistics and possibly partition exchange loading.
+> First, I check whether the table is partitioned by a column corresponding to the access square, for example, transaction_data. Then I check the execution plan and Pstart / Pstop to confirm partition pounding. If the one-month ratio accesses all partitions, I investigate predictions, conversions and functions applied to partition key. After pruning I analyze access to the pathi in the remaining partition, cardinality, statistics, indexes and if a full scan / parallel scan is more appropriate than an index. For ETL I would also analyze local indexes, incremental statistics and possibly partition exchange loading.
 
 This is a very good response for a role of **Oracle Data Developer / DWH**.
 
 ---
-
-## 15.52 Mental model
-
-When you see **Partitioning**, think:
-
-```
-PARTITIONING
-                      │
-        ┌─────────────┼─────────────┐
-        │             │             │
-Query ETL Maintenance
-        │             │             │
-        ▼             ▼             ▼
-Pruning Exchange Drop / Truncate
-        │
-        ▼
-Pstart / Pstop
-        │
-        ▼
-Access path inside partition
-        │
-   ┌────┴────┐
-   │         │
-Full Scan Index
-```
-
-And the types:
-
-```
-RANGE
-  │
-− DATE / PERIOD
-  │
-- INTERVAL
-
-LIST
-  │
-− REGION / SOURCE
-
-HASH
-  │
-- even distribution
-
-COMPOSITE
-  │
-● RANGE + HASH, etc.
-```
-
----
-
-## 15.53 What must remain
-
-If you were to just remember the key to the technical review:
-
-1. **Partitioning = Physical Sharing, one logical table.**
-2. For fact tables, the most common is **RANGE/INTERVAL after date**.
-3. The main concept of performance is **partition pruning**.
-4. Check the plum through DBMS_XPLAN, especially **Pstart / Pstop**.
-5. PARTITION RANGE SINGLE means that a single partition is required.
-6. A FULL TABLE SCAN on a single large partition can be perfectly correct.
-7. **Local indexes** are extremely useful in DWH.
-8. **EXCHANGE PARTITION** is one of the most important ETL Oracle squares.
-9. Partitioning also helps with **retention, purging, parallelism and maintenance**, not just at SELECT.
-10. For very large DWH volumes, the combination:
-
-```
-Partitioning
-+ local indexes
-+ Statistics
-+ parallel execution
-+ partition-wise joins
-```
-
-is one of the basis of the Oracle performance architecture.
-
----
-
-## Questions and answers
 
 ### How would you briefly explain Partitioning to a colleague who knows SQL, but not this area?
 
@@ -1766,7 +1764,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

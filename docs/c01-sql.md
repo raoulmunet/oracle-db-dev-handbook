@@ -76,7 +76,7 @@ FROM employees
 WHERE annual_salary > 100000;
 ```
 
-does not work in Oracle because the `annual_salary` alias does not yet exist at the time of evaluation of WHERE.
+Before Oracle Database 23ai, this does not work because the `annual_salary` select-list alias is not available in the `WHERE` clause. Oracle Database 23ai and later allow select-list aliases in `WHERE`; for code that must run on older releases, repeat the expression or put it in an inline view.
 
 You have to:
 
@@ -178,6 +178,9 @@ false
 It means:
 
 > unknown or absent value.
+
+In Oracle Database, a zero-length character string (`''`) is treated as `NULL`
+for `VARCHAR2` values.
 
 Wrong:
 
@@ -338,7 +341,7 @@ Wildcards:
 
 ```
 % → 0 or more characters
-_ → exactly one character
+_→ exactly one character
 ```
 
 Examples:
@@ -404,7 +407,7 @@ Use parentheses when the expression becomes complex.
 
 ---
 
-# 1.9. ORDER BY
+## 1.9. ORDER BY
 
 ```sql
 ORDER BY salary
@@ -519,6 +522,10 @@ TO_DATE('2026-09-23', 'YYYY-MM-DD')
 ```sql
 TO_NUMBER('123.45')
 ```
+
+The result can depend on the session's `NLS_NUMERIC_CHARACTERS` setting. For
+portable conversion, provide an explicit format model and NLS parameter when
+the input format is known.
 
 Avoid implicit conversions.
 
@@ -971,7 +978,7 @@ You don't have to remember the old rule:
 
 That's not true.
 
-Oracle Optimizer decides based on statistics, cardinality, and query structure.
+The Oracle optimizer makes decisions based on statistics, cardinality, and query structure.
 
 ---
 
@@ -1710,7 +1717,7 @@ WHERE customer_id = 123
 in applications, the following shall be used:
 
 ```sql
-WHERE customer_id =: customer_id
+WHERE customer_id = :customer_id
 ```
 
 Advantages:

@@ -1337,16 +1337,6 @@ leaving all integrity enforcement exclusively to the application
 
 ---
 
-## 31. Questions and answers
-
-### What characterizes an OLTP system?
-
-A strong compact answer is:
-
-> An OLTP system is optimized for a high volume of short, concurrent transactions, typically involving `INSERT`, `UPDATE`, `DELETE`, and highly selective `SELECT` statements. The data model is generally normalized and uses primary keys, foreign keys, and integrity constraints. Performance relies heavily on selective indexes, bind variables, and access to a small number of rows, often through Nested Loops. In Oracle, concurrency is managed using row-level locking, UNDO, and read consistency through MVCC, allowing readers and writers to block each other as little as possible. Transaction boundaries should follow the business operation, with `COMMIT` or `ROLLBACK` applied to the complete logical unit of work.
-
----
-
 ## 32. Memorization scheme
 
 If you want to retain OLTP as one mental model:
@@ -1394,7 +1384,15 @@ many rows + scans + Hash Joins + aggregations + parallelism
 
 ---
 
-## Additional questions and answers
+## Questions and answers
+
+### What characterizes an OLTP system?
+
+A strong compact answer is:
+
+> An OLTP system is optimized for a high volume of short, concurrent transactions, typically involving `INSERT`, `UPDATE`, `DELETE`, and highly selective `SELECT` statements. The data model is generally normalized and uses primary keys, foreign keys, and integrity constraints. Performance relies heavily on selective indexes, bind variables, and access to a small number of rows, often through Nested Loops. In Oracle, concurrency is managed using row-level locking, UNDO, and read consistency through MVCC, allowing readers and writers to block each other as little as possible. Transaction boundaries should follow the business operation, with `COMMIT` or `ROLLBACK` applied to the complete logical unit of work.
+
+---
 
 ### How would you briefly explain OLTP to a colleague who knows SQL but not this area?
 
@@ -1415,4 +1413,3 @@ I collect the functional requirement, data grain, schema and keys, expected volu
 ### Give an example of a DWH or banking flow where OLTP concepts affect the design.
 
 In a banking flow, OLTP design interacts directly with logging, auditing, reconciliation, data lineage, and impact analysis. A transfer must be atomic and auditable in the source system, while downstream ETL and DWH processes must preserve enough information to reconcile the resulting balances and transaction history.
-

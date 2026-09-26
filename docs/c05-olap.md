@@ -59,20 +59,13 @@ analysis / reporting / BI
 
 The distinction is fundamental.
 
-Features of OLTP and OLAP
-- - - - - - - - -
-For operational purposes and analysis
-= = sync, corrected by elderman = =
-Processed rows, few, many
-INSERT/UPDATE
-= = sync, corrected by elderman = = @ elder _ man
-Current data and historical data
-The model is normalized by dimension.
-Many and small transactions are small and large
-* * * * *
-* * * *
-Users and users
-Examples of "banking transfer system" are DWH / reporting
+| Aspect | OLTP | OLAP |
+| --- | --- | --- |
+| Primary purpose | Run day-to-day transactions | Analyze business data |
+| Typical workload | Many short reads and writes | Fewer, longer, read-intensive queries |
+| Data scope | Current operational records | Current and historical data |
+| Data model | Usually normalized | Often dimensional or otherwise analysis-oriented |
+| Examples | Payments, orders, account updates | DWH, reporting, and analytics |
 
 Example OLTP:
 
@@ -85,7 +78,7 @@ WHERE account_id = 12345;
 Oracle will probably try:
 
 ```
-INDEUNIQUE SCAN
+INDEX UNIQUE SCAN
 TABLE ACCESS BY INDEX ROWID
 ```
 
@@ -426,7 +419,7 @@ FROM sales
 GROUP BY
 year,
 month,
-region,
+region;
 ```
 
 Conceptual:
@@ -652,7 +645,7 @@ Each individual row remains in the result.
 
 ---
 
-## 18. Total Running
+## 18. Running total
 
 Very common OLAP example:
 
@@ -785,7 +778,7 @@ LEAD is accessing the next row.
 
 ```
 LEAD (amount) OVER (
-ORDER  transaction_date
+ORDER BY transaction_date
 )
 ```
 
@@ -1431,7 +1424,7 @@ The optimizer often tries to push predicates as close as possible to the data so
 
 ---
 
-## 43. Cardinal and selectivity
+## 43. Cardinality and selectivity
 
 These concepts are critical for the optimizer.
 
@@ -2012,56 +2005,6 @@ This is a much better way to analyze a DWH query.
 
 ---
 
-## Questions and answers
-
-### What is OLAP?
-
-A concise answer:
-
-> OLAP is the analytical processing of large data volumes, optimized for complex queries, aggregation, historical analysis and reporting, unlike OLTP, which is optimized for short and competing operational transactions.
-
----
-
-### What is the difference between OLTP and OLAP?
-
-You can answer:
-
-> OLTP is oriented towards individual operations and frequent changes in data, while OLAP is oriented towards reading and aggregation of large volumes of data, usually historical.
-
----
-
-### What is the grain of a fact table?
-
-> The Grain defines exactly what is a line of fact tables and must be established before measures and dimensions are defined.
-
----
-
-### Why are hash joins used in DWH?
-
-> Because they are effective when large volumes of data need to be combined, as opposed to nested loops, which are often more effective for very selective lookups.
-
----
-
-### Is Full Table Scan bad?
-
-Good answer:
-
-> No. In OLAP workloads, if a large part of the table needs to be processed, Full Table Scan or Partition Scan can be more efficient than access by index.
-
----
-
-### ROLLUP vs CUBE?
-
-> ROLLUP produces hierarchical aggregation, while CUBE generates aggregation for all specified dimensional combinations.
-
----
-
-### GROUP BY vs analytic functions?
-
-> GROUP BY reduces the number of rows by aggregation, while analytic functions calculate values over a set of rows keeping individual rows in result.
-
----
-
 ## 60. Mental Model for OLAP
 
 I would remember OLAP as follows:
@@ -2145,6 +2088,54 @@ In chapter **DWH**, the concepts here are made of fact, dimension, grain, star s
 ---
 
 ## Questions and answers
+
+### What is OLAP?
+
+A concise answer:
+
+> OLAP is the analytical processing of large data volumes, optimized for complex queries, aggregation, historical analysis and reporting, unlike OLTP, which is optimized for short and competing operational transactions.
+
+---
+
+### What is the difference between OLTP and OLAP?
+
+You can answer:
+
+> OLTP is oriented towards individual operations and frequent changes in data, while OLAP is oriented towards reading and aggregation of large volumes of data, usually historical.
+
+---
+
+### What is the grain of a fact table?
+
+> The grain defines exactly what one row in the fact table represents and must be established before measures and dimensions are defined.
+
+---
+
+### Why are hash joins used in DWH?
+
+> Because they are effective when large volumes of data need to be combined, as opposed to nested loops, which are often more effective for very selective lookups.
+
+---
+
+### Is Full Table Scan bad?
+
+Good answer:
+
+> No. In OLAP workloads, if a large part of the table needs to be processed, Full Table Scan or Partition Scan can be more efficient than access by index.
+
+---
+
+### ROLLUP vs CUBE?
+
+> ROLLUP produces hierarchical aggregation, while CUBE generates aggregation for all specified dimensional combinations.
+
+---
+
+### GROUP BY vs analytic functions?
+
+> GROUP BY reduces the number of rows by aggregation, while analytic functions calculate values over a set of rows keeping individual rows in result.
+
+---
 
 ### How would you briefly explain OLAP to a colleague who knows SQL but not this area?
 

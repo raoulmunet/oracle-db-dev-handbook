@@ -10,7 +10,7 @@ sidebar_position: 17
 
 ## 1. What is a Database Object?
 
-In Oracle, an **data object** is a structure created and stored in the database, normally belonging to an **scheme**.
+In Oracle, a **database object** is a structure created and stored in the database, normally belonging to a **schema**.
 
 Examples:
 
@@ -28,7 +28,7 @@ HR = schema / owner
 EMPLOYEES = object
 ```
 
-A scheme is basically the collection of objects owned by a user:
+A schema is the collection of objects owned by a user:
 
 ```
 SCHEMA HR
@@ -40,37 +40,27 @@ SCHEMA HR
 − SEQUENCE EMP_SEQ
 − PROCEDURE LOAD_EMPLOYEE
 − PACKAGE PKG_EMPLOYEE
-Tel.: + 32- (0) 2 548 84 00
 ```
 
-In Oracle, concepts **USER** and **SCHEMA** are very closely linked: the scheme has the same name as the user who owns it.
+In Oracle, the concepts of **user** and **schema** are closely linked: a user's schema normally has the same name as the user.
 
 ---
 
-# 2. Main Database Objects
+## 2. Main Database Objects
 
 For an Oracle Data Developer, the most important are:
 
 * * *
-♪ ♪ ♪ ♪ ♪
-= = sync, corrected by elderman = =
+| | | | |
 * * * * * * * *
-= = sync, corrected by elderman = = @ elder _ man
 The INDEX accelerates access to data
-= = sync, corrected by elderman = =
-= = sync, corrected by elderman = =
-= = sync, corrected by elderman = =
-= = sync, corrected by elderman = = @ elder _ man
-= = sync, corrected by elderman = = @ elder _ man
 The PACKAGE group procedures, functions and other elements
 The TRIGGER automatically executes the code at certain events
-= = sync, corrected by elderman = = @ elder _ man
 The DATABASE LINK allows access to another Oracle base
-= = sync, corrected by elderman = = @ elder _ man
 
 ---
 
-# 3. TABLE
+## 3. TABLE
 
 TABLE is the fundamental object of data storage.
 
@@ -106,7 +96,7 @@ WHERE table_name = 'CUSTOMERS';
 
 ---
 
-# 4.CONSTRAINTS
+## 4.CONSTRAINTS
 
 Constraints protect the integrity of **data.
 
@@ -128,7 +118,7 @@ department_id NUMBER
 CONSTRAINT pk_departments PRIMARY KEY,
 
 department_name VARCHAR2 (100)
-CONSTRAINTQ1QX UNIQUE
+CONSTRAINT uq_departments_name UNIQUE
 );
 ```
 
@@ -143,7 +133,7 @@ department_id NUMBER,
 
 salary NUMBER
 CONSTRAINT chk_employee_salary
-CHECK (salary = 0),
+CHECK (salary >= 0),
 
 CONSTRAINT fk_emp_department
 FOREIGN KEY (department_id)
@@ -151,7 +141,7 @@ REFERENCES departments (department_id)
 );
 ```
 
-In an DWH/ETL system, constraints can detect problems such as:
+In a DWH/ETL system, constraints can detect problems such as:
 
 ```
 duplicate business key
@@ -162,12 +152,12 @@ value outside the allowed range
 
 ---
 
-# 5.INDEX
+## 5.INDEX
 
 The index is a separate structure that allows Oracle to find the rows faster.
 
 ```
-CREATEQ1QX idx_emp_department
+CREATE INDEX idx_emp_department
 ON employment (department_id);
 ```
 
@@ -180,7 +170,7 @@ INDERANGE SCAN
 for:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 Important:
@@ -197,7 +187,7 @@ The data remains intact.
 
 ---
 
-# 6. VIEW
+## 6. VIEW
 
 An VIEW represents a saved SQL query.
 
@@ -233,12 +223,12 @@ It is commonly used for:
 
 - structure abstraction;
 - security;
-- simplification of querys;
+- simplification of queries;
 - the exposure of a stable logical model to applications.
 
 ---
 
-# 7. MATERIALIZED VIEW
+## 7. MATERIALIZED VIEW
 
 The materialized View physically stores the result of the query.
 
@@ -278,12 +268,12 @@ This is the subject treated in detail in **module 16**.
 
 ---
 
-# 8.SEQUENCE
+## 8.SEQUENCE
 
 Sequence generates numerical values.
 
 ```
-CREATEQ1QX seq_customer
+CREATE SEQUENCE seq_customer
 START WITH 1
 INCREMENT BY 1;
 ```
@@ -334,12 +324,12 @@ There may be gaps due to:
 
 - rollbacks;
 - caching;
-- competition;
+- concurrency;
 - The restarts.
 
 ---
 
-# 9. IDENTITY COLUMN
+## 9. IDENTITY COLUMN
 
 In modern versions of Oracle we can also use:
 
@@ -365,7 +355,7 @@ Conceptually, identity uses mechanisms similar to a sequence.
 
 ---
 
-# 10. SYNONYM
+## 10. SYNONYM
 
 A synonym is an alias for an object.
 
@@ -378,7 +368,7 @@ DWH.DIM_CUSTOMER
 We can create:
 
 ```
-CREATEQ1QX dim_customer
+CREATE TABLE dim_customer
 FOR dwh.dim_customer;
 ```
 
@@ -429,7 +419,7 @@ GRANT SELECT ON hr.employees TO user1;
 
 ---
 
-# 11. PROCEDURE
+## 11. PROCEDURE
 
 Procedure is a reusable PL/SQL object.
 
@@ -474,7 +464,7 @@ PKG_ETL.LOAD_FACT
 
 ---
 
-# 12.FUNCTION
+## 12.FUNCTION
 
 The function looks like procedure, but it returns a value.
 
@@ -507,7 +497,7 @@ Result:
 
 ---
 
-# 13. PACKAGE
+## 13. PACKAGE
 
 Package is one of the most important PL/SQL objects.
 
@@ -577,7 +567,7 @@ IS
 v_count NUMBER;
 BEGIN
 
-SELECT COUNT *
+SELECT COUNT(*)
 INTO v_count
 FROM customers
 WHERE customer_id = p_customer_id;
@@ -604,7 +594,7 @@ instead of a large number of independent proceedings.
 
 ---
 
-# 14. TRIGGER
+## 14. TRIGGER
 
 Trigger automatically runs the code when an event occurs.
 
@@ -613,7 +603,7 @@ For example:
 ```
 CREATE OR REPLACE TRIGGER trg_customer_audit
 AFTER INSERT ON custom
-FORQ1QX ROW
+FOR EACH ROW
 BEGIN
 
 INSERT INTO customer_audit (
@@ -664,7 +654,7 @@ In complex systems they should be used carefully as they can introduce implicitl
 
 ---
 
-# 15. DATABASE LINK
+## 15. DATABASE LINK
 
 Database Link allows access to another Oracle base.
 
@@ -697,21 +687,21 @@ distributed systems
 For example:
 
 ```
-INSERTQ1QX staging_customer
+INSERT INTO staging_customer
 SELECT *
-FROM crm.custoder @ crm_prod;
+FROM crm.customer @ crm_prod;
 ```
 
 ---
 
-# 16. DIRECTORY
+## 16. DIRECTORY
 
 DIRECTORY is an Oracle object that represents a filesystem director.
 
 Example:
 
 ```
-CREATEQ1QX data_dir
+CREATE DIRECTORY data_dir
 AS '/data/import';
 ```
 
@@ -719,7 +709,7 @@ Privileges
 
 ```
 GRANT READ, WRITE
-ONQ1QX data_dir
+ON DIRECTORY data_dir
 TO dev_lab;
 ```
 
@@ -733,7 +723,7 @@ External Tables
 
 ---
 
-# 17. EXTERNAL TABLE
+## 17. EXTERNAL TABLE
 
 External Table allows you to access a file as if it were a table.
 
@@ -764,7 +754,7 @@ It is very useful in ETL processes.
 
 ---
 
-# 18. TYPE
+## 18. TYPE
 
 Oracle allows the creation of its own types.
 
@@ -789,7 +779,7 @@ They are useful in PL/SQL and in certain objective-relational models.
 
 ---
 
-# 19. Scheme and Object Ownership
+## 19. Schema and Object Ownership
 
 If the user:
 
@@ -809,7 +799,7 @@ the object is:
 HR.EMPLOYEES
 ```
 
-Another user can only access the table if he receives privileges:
+Another user can access the table only after receiving the necessary privileges:
 
 ```
 GRANT SELECT
@@ -826,7 +816,7 @@ FROM hr employees;
 
 ---
 
-# 20. Object Naming
+## 20. Object Naming
 
 The Oracle is implicitly normalizing the name to the uppercase.
 
@@ -860,13 +850,13 @@ WHERE table_name = 'customer';
 
 ---
 
-# 21. Quoted Identifiers
+## 21. Quoted Identifiers
 
 It is possible:
 
 ```
 CREATE TABLE
-♪ CustomerId ♪ NUMBER
+| CustomerId | NUMBER
 );
 ```
 
@@ -892,14 +882,14 @@ LOAD_DATE
 
 ---
 
-# 22. USER\ _ OBJECTS
+## 22. USER_OBJECTS
 
 One of the most useful views of Data Dictionary:
 
 ```
 SELECT object_name,
 object_type,
-stasis
+status
 FROM user_objects
 ORDER BY object_type,
 object_name;
@@ -908,37 +898,37 @@ object_name;
 Example:
 
 ```
-OBJECT_NAMEQ1QX STATUS
--------------------  ----------------  ------
-CUSTOMERSQ1QX VALID
-PKG_CUSTOMERQ1QX VALID
-PKG_CUSTOMER PACKAGE BODY VALID
-SEQ_CUSTOMERQ1QX VALID
-CUSTOMER_VQ1QX VALID
+OBJECT_NAME       OBJECT_TYPE       STATUS
+------------       -----------       ------
+CUSTOMERS          TABLE             VALID
+PKG_CUSTOMER       PACKAGE           VALID
+PKG_CUSTOMER       PACKAGE BODY      VALID
+SEQ_CUSTOMER       SEQUENCE          VALID
+CUSTOMER_V         VIEW              VALID
 ```
 
 ---
 
-# 23. ALL\ _ OBJECTS vs USER\ _ OBJECTS vs DBA\ _ OBJECTS
+## 23. ALL_OBJECTS vs USER_OBJECTS vs DBA_OBJECTS
 
 Pattern very important Oracle:
 
 ```
-USER_ *
-ALL_ *
-DBA_ *
+USER_*
+ALL_*
+DBA_*
 ```
 
-### USER _ OBJECTS
+### USER _OBJECTS
 
-Subject matter of its own scheme:
+Objects in its own schema:
 
 ```
 SELECT *
 FROM user_objects;
 ```
 
-### ALL _ OBJECTS
+### ALL _OBJECTS
 
 Objects accessible to the user:
 
@@ -947,7 +937,7 @@ SELECT *
 FROM all_objects;
 ```
 
-### DBA _ OBJECTS
+### DBA _OBJECTS
 
 All objects in the database:
 
@@ -976,7 +966,7 @@ DBA_CONSTRAINTS
 
 ---
 
-# 24. VALID and INVALID Objects
+## 24. VALID and INVALID Objects
 
 Objects PL/SQL and views may have the status:
 
@@ -990,7 +980,7 @@ Check:
 ```
 SELECT object_name,
 object_type,
-stasis
+status
 FROM user_objects
 WHERE status = 'INVALID';
 ```
@@ -1005,7 +995,7 @@ It can occur if an addict object changes.
 
 ---
 
-# 25. Dependencies
+## 25. Dependencies
 
 Oracle automatically follows the relationships between objects.
 
@@ -1048,7 +1038,7 @@ PKG_REPORT
 
 ---
 
-# 26. The Recompitation of Objects
+## 26. The Recompitation of Objects
 
 Procedure:
 
@@ -1071,7 +1061,7 @@ ALTER PACKAGE pkg_customer COMPILE;
 Package Body:
 
 ```
-ALTERQ1QX pkg_customer
+ALTER PACKAGE pkg_customer
 COMPILE BODY;
 ```
 
@@ -1083,7 +1073,7 @@ ALTER VIEW customer_v COMPILE;
 
 ---
 
-# 27. Compilation errors
+## 27. Compilation errors
 
 After:
 
@@ -1108,11 +1098,11 @@ WHERE
 ORDER BY sequence;
 ```
 
-For a Data Developer, USER\ _ ERRORS is very useful.
+For a Data Developer, USER_ERRORS is very useful.
 
 ---
 
-# 28. CREATE OR REPLACE
+## 28. CREATE OR REPLACE
 
 For items such as:
 
@@ -1127,7 +1117,7 @@ TRIGGER
 we can use:
 
 ```
-CREATEQ1QX REPLACE
+CREATE OR REPLACE
 ```
 
 Example:
@@ -1153,7 +1143,7 @@ ALTER TABLE
 
 ---
 
-# 29. ALTER
+## 29. ALTER
 
 Modification of an existing object:
 
@@ -1166,15 +1156,15 @@ or:
 
 ```
 ALTER TABLE Customers
-ADDQ1QX chk_customer_status
+ADD CONSTRAINT chk_customer_status
 CHECK (
-IN status ('ACTIVE', 'INACTIVE')
+status IN ('ACTIVE', 'INACTIVE')
 );
 ```
 
 ---
 
-# 30. DROP
+## 30. DROP
 
 Delete an object:
 
@@ -1198,7 +1188,7 @@ DDL normally produces **by default commit**.
 
 ---
 
-# 31. TRUNCATE
+## 31. TRUNCATE
 
 ```
 TRUNCATE TABLE staging_customer;
@@ -1225,13 +1215,13 @@ In ETL it is very common:
 ```
 TRUNCATE TABLE stg_customer;
 
-INSERTQ1QX stg_customer
+INSERT INTO stg_customer
 SELECT...
 ```
 
 ---
 
-# 32. COMMENT
+## 32. COMMENT
 
 We can document data objects.
 
@@ -1258,7 +1248,7 @@ Very useful in a large DWH.
 
 ---
 
-# 33. Object Privileges
+## 33. Object Privileges
 
 Typical privileges:
 
@@ -1297,7 +1287,7 @@ FROM reporting_user;
 
 ---
 
-# 34. Object Privilege vs. System Privilege
+## 34. Object Privilege vs. System Privilege
 
 Very important in interviews.
 
@@ -1312,7 +1302,7 @@ TO user1;
 System privileges:
 
 ```
-GRANTQ1QX TABLE
+GRANT CREATE TABLE
 TO user1;
 ```
 
@@ -1325,12 +1315,12 @@ operation on a concrete object
 
 SYSTEM PRIVILEGE
     ↓
-DB/scheme level operation
+Database/schema-level operation
 ```
 
 ---
 
-# 35. Database Objects in an DWH
+## 35. Database Objects in an DWH
 
 An DWH Oracle may have:
 
@@ -1383,7 +1373,7 @@ This is a very realistic example of cooperation between database objects.
 
 ---
 
-# 36. Practically complete example
+## 36. Practically complete example
 
 We create the table:
 
@@ -1399,7 +1389,7 @@ active_flag CHAR (1)
 Sequence:
 
 ```
-CREATEQ1QX seq_product
+CREATE SEQUENCE seq_product
 START WITH 1
 INCREMENT BY 1;
 ```
@@ -1407,7 +1397,7 @@ INCREMENT BY 1;
 Index:
 
 ```
-CREATEQ1QX idx_product_code
+CREATE INDEX idx_product_code
 ON dim_product (product_code);
 ```
 
@@ -1466,9 +1456,9 @@ DIM_PRODUCT
 
 ---
 
-# 37. Oracle Exercises 26ai
+## 37. Oracle Exercises 26ai
 
-In the DEV\ _ LAB scheme, it creates a small model:
+In the DEV_LAB schema, it creates a small model:
 
 ```
 PRODUCT
@@ -1479,10 +1469,10 @@ SALES
 Then:
 
 1. Create PK and FK.
-2. Create sequence for PRODUCT\ _ ID.
-3. Create index on PRODUCT\ _ CODE.
-4. Create View ACTIVE\ _ PRODUCTS\ _ V.
-5. Create ADD\ _ Product Procedures.
+2. Create sequence for PRODUCT_ID.
+3. Create index on PRODUCT_CODE.
+4. Create View ACTIVE_PRODUCTS_V.
+5. Create ADD_Product Procedures.
 6. Create PKG pack.
 7. Create synonym for PRODUCT.
 8. Add comments to the table and columns.
@@ -1503,6 +1493,76 @@ USER_DEPENDENCIES
 
 ```
 USER_ERRORS
+```
+
+---
+
+## 39. The Real DWH Scenario
+
+You have the pipelineum:
+
+```
+SOURCE CRM
+      ↓
+STG_CUSTOMER
+      ↓
+DIM_CUSTOMER
+      ↓
+FACT_TRANSACTION
+      ↓
+MV_CUSTOMER_MONTHLY
+      ↓
+REPORT
+```
+
+Database objects involved could be:
+
+```
+DATABASE LINK
+      ↓
+STAGING TABLE
+      ↓
+PACKAGE PKG_LOAD_CUSTOMER
+      ↓
+DIMENSION TABLE
+      ↓
+INDEX
+      ↓
+FACT TABLE
+      ↓
+MATERIALIZED VIEW
+      ↓
+REPORTING VIEW
+```
+
+If DIM_CUSTOMER changes structure, it shall be checked:
+
+```
+views
+packages
+procedus
+materialized views
+triggers
+```
+
+for possible dependencies and INVALID objects.
+
+Useful controls:
+
+```
+SELECT *
+FROM user_dependencies
+WHERE referenced_name = 'DIM_CUSTOMER';
+```
+
+and:
+
+```
+SELECT object_name,
+object_type,
+status
+FROM user_objects
+WHERE status = 'INVALID';
 ```
 
 ---
@@ -1547,11 +1607,11 @@ They don't grant the Prieleges.
 
 No.
 
-Rollback, cache and competition can produce gaps.
+Rollbacks, caching, and concurrent activity can produce gaps.
 
 ---
 
-### 6. USER\ _ OBJECTS vs ALL\ _ OBJECTS?
+### 6. USER_OBJECTS vs ALL_OBJECTS?
 
 ```
 USER_OBJECTS
@@ -1585,7 +1645,7 @@ package
 ### 9. Object privilege versus system privilege?
 
 ```
-SELECTQ1QX HR.EMPLOYEES
+SELECT ON HR.EMPLOYEES
         ↓
 Object privileges
 
@@ -1609,78 +1669,6 @@ maintenance
 ```
 
 ---
-
-# 39. The Real DWH Scenario
-
-You have the pipelineum:
-
-```
-SOURCE CRM
-      ↓
-STG_CUSTOMER
-      ↓
-DIM_CUSTOMER
-      ↓
-FACT_TRANSACTION
-      ↓
-MV_CUSTOMER_MONTHLY
-      ↓
-REPORT
-```
-
-Database objects involved could be:
-
-```
-DATABASE LINK
-      ↓
-STAGING TABLE
-      ↓
-PACKAGE PKG_LOAD_CUSTOMER
-      ↓
-DIMENSION TABLE
-      ↓
-INDEX
-      ↓
-FACT TABLE
-      ↓
-MATERIALIZED VIEW
-      ↓
-REPORTING VIEW
-```
-
-If DIM\ _ CUSTOMER changes structure, it shall be checked:
-
-```
-views
-packages
-procedus
-materialized views
-triggers
-```
-
-for possible dependencies and INVALID objects.
-
-Useful controls:
-
-```
-SELECT *
-FROM user_dependencies
-WHERE referenced_name = 'DIM_CUSTOMER';
-```
-
-and:
-
-```
-SELECT object_name,
-object_type,
-stasis
-FROM user_objects
-WHERE status = 'INVALID';
-```
-
----
-
-## Questions and answers
 
 The important mental scheme is:
 
@@ -1748,8 +1736,6 @@ Therefore, for an **Oracle Data Developer**, it is not enough just to know how t
 
 ---
 
-## Questions and answers
-
 ### How would you briefly explain Database Objects to a colleague who knows SQL, but not this area?
 
 Database Objects covers tables, views and materialized views, sequences and identity columns, synonyms. In practice, I first determine what data comes in and what result needs to be obtained, then I check implementation, execution plan and effects on flow.
@@ -1764,7 +1750,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

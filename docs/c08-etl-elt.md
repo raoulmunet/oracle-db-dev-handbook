@@ -105,7 +105,7 @@ DWH_TRANSACTION
 ## 3. ETL vs. ELT
 
 * * * * * * *
-♪ ♪ ♪ ♪ ♪
+| | | | |
 Transformation before load Transformation after load
 ETL engine makes transformations - DB makes transformations - DB
 Useful when the source / destination has limited resources very good for Oracle / DWH
@@ -426,7 +426,7 @@ It is one of the fundamental documents of an DWH project.
 
 Example:
 
-♪ Source ♪ Transformation ♪ Target ♪
+| Source | Transformation | Target |
 - - - - - - - - -
 * * * * * * * *
 * * * *
@@ -479,7 +479,7 @@ REGEXP_LIKE (phone_number,...)
 
 Incorrect data may be sent in:
 
-# Reject table / Quarantine
+## Reject table / Quarantine
 
 ```
 ETL_REJECT
@@ -1132,7 +1132,7 @@ not the source business key.
 
 ---
 
-# What do we do if the lookup doesn't exist?
+## What do we do if the lookup doesn't exist?
 
 Example:
 
@@ -1146,7 +1146,7 @@ but:
 DIM_ACCOUNT
 ```
 
-He doesn't have the 999 account.
+No account with ID 999 exists in `DIM_ACCOUNT`.
 
 We have several possible policies:
 
@@ -1182,14 +1182,14 @@ transaction
 before they arrived:
 
 ```
-curator
+customer
 ```
 
 The fact exists, but the size still does.
 
 This is one:
 
-# Late-arriving dimension
+## Late-arriving dimension
 
 A solution:
 
@@ -1249,7 +1249,7 @@ Cluj
 2026-09-23 → 9999-12-31
 ```
 
-ETL- is the one who implements this logic.
+ETL is the one who implements this logic.
 
 ---
 
@@ -1272,7 +1272,7 @@ We don't want to charge the bill before the dimensions, because we need to find 
 
 It shall introduce:
 
-# Dependency management
+## Dependency management
 
 ```
 DIM_CUSTOMER
@@ -1286,7 +1286,7 @@ FACT_TRANSACTION
 
 ## 34. Schedulating
 
-ETL- is usually executed automatically:
+ETL is usually executed automatically:
 
 ```
 01: 00 Customer Extract
@@ -1372,7 +1372,7 @@ error handling
 
 ODI is best known for its philosophy:
 
-# E-LT
+## E-LT
 
 I mean, he's trying to let the database do the processing.
 
@@ -1482,7 +1482,7 @@ At very high volumes we can have:
 ```sql
 INSERT / * + APPEND PARALLEL (8) * /
 INTO fact_transaction
-SELECT / * + PARALLEL (8) * /
+SELECT /*+ PARALLEL (8) */
 ...
 FROM stg_transaction;
 ```
@@ -1660,7 +1660,7 @@ BATCH_ID
 INSERT_DATE
 ```
 
-It is part of **data linage**.
+It is part of **data lineage**.
 
 ---
 
@@ -1891,106 +1891,6 @@ These concepts appear extremely often together.
 
 ---
 
-## Questions and answers
-
-### 1. What is the difference ETL vs ELT?
-
-Short response:
-
-> ETL converts data before charging to target, while ELT first uploads them and transforms to target system. In Oracle DWH and ODI is common model ELT because transformations can directly use the power of Oracle SQL.
-
----
-
-### 2. Full load vs incremental load?
-
-> Full load processes all data on each run. Incremental load processes only new or modified data, e.g. using a timestamp, sequence, SCN or CDC mechanism.
-
----
-
-### 3. What is staging?
-
-> An intermediate area in which the extracted data is prepared before loading in DWH. Here we can do validations, cleaning, mapping, deduplication and business rules without directly affecting the final tables.
-
----
-
-### 4. What is idempotency?
-
-> The ability to rerun the same process without producing duplicates or a different result.
-
----
-
-### 5. What is restartability?
-
-> The ability of an ETL to continue or resume processing after an error without unnecessarily reprocessing the steps already completed.
-
----
-
-### 6. How would you implement an UPSERT in Oracle?
-
-> Mainly with MERGE using WHEN MATCHED THEN UPDATE and WHEN NOT MATCHED THEN INSERT.
-
----
-
-### 7. How do you treat invalid data?
-
-> I prefer to separate business / data-quality errors from technical errors. Invalid data can be sent in a reject / quarantine table with batch ID, source key and reason for error, so that the rest of the batch can continue if the project rule allows.
-
----
-
-### 8. How do you check that ETL- loaded correctly?
-
-> By reconciliation: Counts, amounts, key controls, duplicates, nullls and business rules between source and target, taking into account also the rejected rows.
-
----
-
-## Questions and answers
-
-You have:
-
-```
-20 million transactions / day
-```
-
-of core banking.
-
-It must be loaded into Oracle DWH.
-
-A good answer would be:
-
-```
-1. identify the incremental method / CDC;
-
-2. Loading delta in landing / staging;
-
-3. attributes batch_id;
-
-4. validate the data;
-
-5. Separate the rejectures;
-
-6. make lookup to dimensions;
-
-7. use SQL set-based and MERGE where necessary;
-
-8. Charging fact table;
-
-9. use partitioning after the date of the transaction;
-
-10. I record row counts and status;
-
-11. make reconciliation;
-
-12. I update the watermark only after success.
-```
-
-The last point is very important:
-
-> **Do not update the watermark before the bat is confirmed as successful.**
-
-Otherwise you can lose data on the next run.
-
----
-
 ## 53. Mental Model to Remember
 
 I recommend you consider any ETL problem as follows:
@@ -2078,6 +1978,102 @@ The next natural step in the curriculum is **Oracle Data Integrator (ODI)**, whe
 
 ## Questions and answers
 
+### 1. What is the difference ETL vs ELT?
+
+Short response:
+
+> ETL converts data before charging to target, while ELT first uploads them and transforms to target system. In Oracle DWH and ODI is common model ELT because transformations can directly use the power of Oracle SQL.
+
+---
+
+### 2. Full load vs incremental load?
+
+> Full load processes all data on each run. Incremental load processes only new or modified data, e.g. using a timestamp, sequence, SCN or CDC mechanism.
+
+---
+
+### 3. What is staging?
+
+> An intermediate area in which the extracted data is prepared before loading in DWH. Here we can do validations, cleaning, mapping, deduplication and business rules without directly affecting the final tables.
+
+---
+
+### 4. What is idempotency?
+
+> The ability to rerun the same process without producing duplicates or a different result.
+
+---
+
+### 5. What is restartability?
+
+> The ability of an ETL to continue or resume processing after an error without unnecessarily reprocessing the steps already completed.
+
+---
+
+### 6. How would you implement an UPSERT in Oracle?
+
+> Mainly with MERGE using WHEN MATCHED THEN UPDATE and WHEN NOT MATCHED THEN INSERT.
+
+---
+
+### 7. How do you treat invalid data?
+
+> I prefer to separate business / data-quality errors from technical errors. Invalid data can be sent in a reject / quarantine table with batch ID, source key and reason for error, so that the rest of the batch can continue if the project rule allows.
+
+---
+
+### 8. How do you check that ETL loaded correctly?
+
+> By reconciliation: Counts, amounts, key controls, duplicates, nullls and business rules between source and target, taking into account also the rejected rows.
+
+---
+
+You have:
+
+```
+20 million transactions / day
+```
+
+of core banking.
+
+It must be loaded into Oracle DWH.
+
+A good answer would be:
+
+```
+1. identify the incremental method / CDC;
+
+2. Loading delta in landing / staging;
+
+3. attributes batch_id;
+
+4. validate the data;
+
+5. Separate the rejectures;
+
+6. make lookup to dimensions;
+
+7. use SQL set-based and MERGE where necessary;
+
+8. Charging fact table;
+
+9. use partitioning after the date of the transaction;
+
+10. I record row counts and status;
+
+11. make reconciliation;
+
+12. I update the watermark only after success.
+```
+
+The last point is very important:
+
+> **Do not update the watermark before the bat is confirmed as successful.**
+
+Otherwise you can lose data on the next run.
+
+---
+
 ### How would you briefly explain the ETL / ELT to a colleague who knows SQL, but not this area?
 
 ETL / ELT covers extracttransform-load vs extract-load-transform, landing, staging and target layers, source-to-target mappings. In practice, first, I determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
@@ -2092,7 +2088,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

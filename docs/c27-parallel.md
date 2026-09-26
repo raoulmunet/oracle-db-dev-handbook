@@ -37,13 +37,13 @@ The aim is not necessarily to consume fewer resources, but to complete the opera
 
 ---
 
-# 1. Where Parallel Execution is used
+## 1. Where Parallel Execution is used
 
 The most common cases are:
 
 ```
 Large SELECT-uri
-FULLQ1QX SCAN
+TABLE ACCESS FULL
 JOIN-uri by large volume
 GROUP BY / aggregation
 ORDER BY
@@ -69,7 +69,7 @@ If TRANSACTIONS has hundreds of millions of rows, Oracle can split the table int
 
 ---
 
-# 2. Query Coordinator and Parallel Execution Servers
+## 2. Query Coordinator and Parallel Execution Servers
 
 A parallel interrogation has a main process called:
 
@@ -95,9 +95,8 @@ Query Coordinator
   |
   +----------------------------+
   |             |              |
-PX1Q1QX PX3
-scan scan scan scan
-part 1 part 2 part 3
+PX Server 1 | PX Server 2 | PX Server 3
+Scan partition 1 | Scan partition 2 | Scan partition 3
   |             |              |
   +-------------+--------------+
                 |
@@ -108,11 +107,11 @@ Query Coordinator
 Client
 ```
 
-The Query Coordinator does not necessarily process all the lines. He coordinates the operations and returns the final result.
+The Query Coordinator does not necessarily process every row. It coordinates the operations and returns the final result.
 
 ---
 
-# 3. Degree of Parallelism › DOP
+## 3. Degree of Parallelism › DOP
 
 The number of processes used is called:
 
@@ -124,8 +123,8 @@ DOP
 Example:
 
 ```
-SELECT / * + PARALLEL (t, 4) * /
-COUNT *
+SELECT /*+ PARALLEL (t, 4) */
+COUNT(*)
 FROM transactions t;
 ```
 
@@ -146,7 +145,7 @@ TRANSACTIONS
 25% → PX4
 ```
 
-But the actual number of Oracle processes may be higher than the apparent DOP- because certain operations use the **two sets of PX servers**.
+But the actual number of Oracle processes may be higher than the apparent DOP because certain operations use the **two sets of PX servers**.
 
 For example:
 
@@ -160,12 +159,12 @@ can involve two groups of parallel servers.
 
 ---
 
-# 4. Activation of Parallel Execution
+## 4. Activation of Parallel Execution
 
 It can be requested by hint:
 
 ```
-SELECT / * + PARALLEL (4) * /
+SELECT /*+ PARALLEL (4) */
 *
 FROM sales;
 ```
@@ -173,7 +172,7 @@ FROM sales;
 or:
 
 ```
-SELECT / * + PARALLEL (s, 8) * /
+SELECT /*+ PARALLEL (s, 8) */
 *
 FROM sales s;
 ```
@@ -204,12 +203,12 @@ In practice, for the SQL application, it is often preferable for the decision of
 
 ---
 
-# 5. PARALLEL Hint
+## 5. PARALLEL Hint
 
 Example:
 
 ```
-SELECT / * + PARALLEL (s, 4) * /
+SELECT /*+ PARALLEL (s, 4) */
 SUM (amount)
 FROM sales s;
 ```
@@ -217,7 +216,7 @@ FROM sales s;
 Or:
 
 ```
-SELECT / * + PARALLEL (8) * /
+SELECT /*+ PARALLEL (8) */
 *
 FROM sales;
 ```
@@ -225,7 +224,7 @@ FROM sales;
 The opposite is:
 
 ```
-SELECT / * + NO_PARALLEL * /
+SELECT /*+ NO_PARALLEL */
 *
 FROM sales;
 ```
@@ -240,7 +239,7 @@ FROM sales s;
 
 ---
 
-# 6. Practical Example
+## 6. Practical Example
 
 We assume:
 
@@ -253,7 +252,7 @@ MOD (level, 1000) AS product_id,
 SYSDATE - MOD (level, 3650) AS sale_date,
 MOD (level, 5000) AS amount
 FROM dual
-CONNECT BY level = 10000000;
+CONNECT BY level <= 10000000;
 ```
 
 Serial interrogation:
@@ -269,7 +268,7 @@ GROUP BY customer_id;
 Parallel version:
 
 ```
-SELECT / * + PARALLEL (s, 4) * /
+SELECT /*+ PARALLEL (s, 4) */
 customer_id,
 SUM (amount)
 FROM dwh_sales
@@ -299,7 +298,7 @@ final aggregation
 
 ---
 
-# 7. Parallel Full Table Scan
+## 7. Parallel Full Table Scan
 
 Parallelism is extremely useful for large scans.
 
@@ -308,15 +307,15 @@ Possible plan:
 ```
 SELECT STATEMENT
 PX COORDINATOR
-PSEND QC
-PBLOCK ITERATOR
+PX SEND QC
+PX BLOCK ITERATOR
 TABLE ACCESS FULL SALES
 ```
 
 Very important:
 
 ```
-PBLOCK ITERATOR
+PX BLOCK ITERATOR
 ```
 
 shows that the blocks of the table are distributed between PX servers.
@@ -334,9 +333,9 @@ Table blocks
 
 ---
 
-# 8. PX SEND and PX RECEIVE
+## 8. PX SEND and PX RECEIVE
 
-In parallel planes, they occur frequently:
+In parallel execution plans, they occur frequently:
 
 ```
 PX SEND
@@ -349,7 +348,7 @@ Example:
 
 ```
 PX RECEIVE
-PSEND HASH
+PX SEND HASH
 TABLE ACCESS FULL SALES
 ```
 
@@ -366,13 +365,13 @@ may cause:
 ```
 Customer 10 → PX1
 Customer 11 → PX3
-curator 12 → PX2
+customer 12 → PX2
 Customer 13 → PX1
 ```
 
 ---
 
-# 9. Distribution of data
+## 9. Distribution of data
 
 Parallel Execution depends very much on how Oracle distributes the ranks between the processes.
 
@@ -389,7 +388,7 @@ QC
 One of the most important is:
 
 ```
-PSEND HASH
+PX SEND HASH
 ```
 
 common in:
@@ -402,12 +401,12 @@ DISTINCT
 
 ---
 
-# 10. Parallel Hash Join
+## 10. Parallel Hash Join
 
 For large tables:
 
 ```
-SELECT / * + PARALLEL (4) * /
+SELECT /*+ PARALLEL (4) */
 *
 FROM sales s
 JOIN customers c
@@ -419,7 +418,7 @@ Oracle can do:
 ```
 SALES
    |
-PSEND HASH
+PX SEND HASH
    |
    +---------+
              |
@@ -444,7 +443,7 @@ determine the server that processes the key.
 
 ---
 
-# 11. Broadcast
+## 11. Broadcast
 
 If one of the tables is small, Oracle can avoid redistributing both tables.
 
@@ -463,7 +462,7 @@ Oracle can send the entire small table to each PX server:
 ```
 DIM_COUNTRY
      |
-PSEND BROADCAST
+PX SEND BROADCAST
    / | | \
 PX1 PX2 PX3 PX4
 ```
@@ -473,12 +472,12 @@ Every trial takes place locally with its share of the big board.
 The plan may contain:
 
 ```
-PSEND BROADCAST
+PX SEND BROADCAST
 ```
 
 ---
 
-# 12. Data Skew
+## 12. Data Skew
 
 One of the important issues of Parallel Execution is:
 
@@ -532,12 +531,12 @@ Data distribution is critical.
 
 ---
 
-# 13. Parallel GROUP BY
+## 13. Parallel GROUP BY
 
 Example:
 
 ```
-SELECT / * + PARALLEL (8) * /
+SELECT /*+ PARALLEL (8) */
 customer_id,
 SUM (amount)
 FROM sales
@@ -550,12 +549,12 @@ First:
 
 ```
 PX1:
-curator 1 → 100
-curator 2 → 200
+customer 1 → 100
+customer 2 → 200
 
 PX2:
-curator 1 → 50
-curator 3 → 300
+customer 1 → 50
+customer 3 → 300
 ```
 
 Then redistribute after:
@@ -567,16 +566,16 @@ customer_id
 and aggregate:
 
 ```
-curator 1
+customer 1
 100 + 50 = 150
 ```
 
 The plan may contain:
 
 ```
-HASHQ1QX BY
-PSEND HASH
-HASHQ1QX BY
+HASH GROUP BY
+PX SEND HASH
+HASH GROUP BY
 ```
 
 This model:
@@ -591,7 +590,7 @@ It's very common.
 
 ---
 
-# 14. Parallel DML
+## 14. Parallel DML
 
 The parallelism can also be used for DML.
 
@@ -606,7 +605,7 @@ then:
 ```
 INSERT / * + APPEND PARALLEL (t, 4) * /
 INTO target_table
-SELECT / * + PARALLEL (s, 4) * /
+SELECT /*+ PARALLEL (s, 4) */
 *
 FROM source_table s;
 ```
@@ -628,20 +627,20 @@ Parallel DML should be used with caution because of:
 locks
 UNDO
 REDO
-competition
+contention
 resources
 ```
 
 ---
 
-# 15. Direct Path Inser
+## 15. Direct Path Inser
 
 In DWH is often found the combination:
 
 ```
 INSERT / * + APPEND PARALLEL (8) * /
 INTO fact_sales
-SELECT / * + PARALLEL (8) * /
+SELECT /*+ PARALLEL (8) */
 *
 FROM staging_sales;
 ```
@@ -682,12 +681,12 @@ ETL can be much faster.
 
 ---
 
-# 16. Parallel CTAS
+## 16. Parallel CTAS
 
 Very common in DWH:
 
 ```
-CREATEQ1QX sales_summary
+CREATE TABLE sales_summary
 PARALLEL 8
 AS
 SELECT
@@ -708,12 +707,12 @@ and can benefit from parallelism in both reading and writing.
 
 ---
 
-# 17. Parallel Index Creation
+## 17. Parallel Index Creation
 
 The creation of a large index can be paralleled:
 
 ```
-CREATEQ1QX ix_sales_customer
+CREATE INDEX ix_sales_customer
 ON sales (customer_id)
 PARALLEL 8;
 ```
@@ -728,7 +727,7 @@ Otherwise the attribute of parallelism may remain associated with the index.
 
 ---
 
-# 18. Parallel Partition Operations
+## 18. Parallel Partition Operations
 
 Partitioning and Parallel Execution work very well together.
 
@@ -746,7 +745,7 @@ P2026
 An interrogation:
 
 ```
-SELECT / * + PARALLEL (4) * /
+SELECT /*+ PARALLEL (4) */
 SUM (amount)
 FROM fact_sales
 WHERE sale_date = DATE '2026-01-01'
@@ -781,7 +780,7 @@ This is a very strong combination in DWH.
 
 ---
 
-# 19. How do you recognize Parallel Execution in DBMS\ _ XPLAN
+## 19. How do you recognize Parallel Execution in DBMS_XPLAN
 
 A parallel plan frequently looks like this:
 
@@ -807,14 +806,14 @@ Key terms:
 PX COORDINATOR
 PX SEND
 PX RECEIVE
-PBLOCK ITERATOR
+PX BLOCK ITERATOR
 TQ
 PQ District
 ```
 
 ---
 
-# 20. What TQ is
+## 20. What TQ is
 
 TQ means approximately:
 
@@ -846,7 +845,7 @@ It is essential to read a parallel plan.
 
 ---
 
-# 21. P-a-a P, P-a-a S and S-a-p
+## 21. P-a-a P, P-a-a S and S-a-p
 
 In column IN-OUT you can see:
 
@@ -880,7 +879,7 @@ parallel consumer
 For example:
 
 ```
-PSEND HASH
+PX SEND HASH
 ```
 
 In the end it often appears:
@@ -893,7 +892,7 @@ because PX servers send the result to Query Coordinator.
 
 ---
 
-# 22. PCWP and PCWC
+## 22. PCWP and PCWC
 
 Values such as:
 
@@ -925,7 +924,7 @@ DOP
 
 ---
 
-# 23. Reading a parallel plan from the bottom up
+## 23. Reading a parallel plan from the bottom up
 
 Let's take:
 
@@ -972,7 +971,7 @@ This is one of the most important squares.
 
 ---
 
-# 24. Why Parallel Execution can be slower
+## 24. Why Parallel Execution can be slower
 
 More parallelism does not automatically mean better performance.
 
@@ -1017,7 +1016,7 @@ more DOP → does not help
 
 ---
 
-# 25. CPU and I/O
+## 25. CPU and I/O
 
 Parallelism only helps if there are resources available.
 
@@ -1030,7 +1029,7 @@ If a server has:
 and runs simultaneously:
 
 ```
-10 querys
+10 queries
 PARALLEL 16
 ```
 
@@ -1052,7 +1051,7 @@ no longer increase the throughput.
 
 ---
 
-# 26. Parallelism in OLTP vs DWH
+## 26. Parallelism in OLTP vs DWH
 
 In OLTP:
 
@@ -1061,7 +1060,7 @@ SELECT custodian
 WHERE customer_id =:
 ```
 
-maybe return one line.
+may return one row.
 
 Parallelism isn't helping.
 
@@ -1091,12 +1090,12 @@ DWH / ETL
 
 ---
 
-# 27. When NU you want parallelism
+## 27. When NU you want parallelism
 
 Avoid it for:
 
 ```
-very small querys
+very small queries
 looks on index
 Intense OLTP
 already CPU-bound systems
@@ -1107,7 +1106,7 @@ operations that process few rows
 For example:
 
 ```
-SELECT / * + PARALLEL (16) * /
+SELECT /*+ PARALLEL (16) */
 *
 FROM customers
 WHERE customer_id = 123;
@@ -1125,7 +1124,7 @@ and creating the PX infrastructure can cost more than interrogation.
 
 ---
 
-# 28. Monitoring Parallel Execution
+## 28. Monitoring Parallel Execution
 
 For SQL executed, you can use:
 
@@ -1140,36 +1139,36 @@ NULL,
 );
 ```
 
-PX statistics are also useful for parallel querys.
+PX statistics are also useful for parallel queries.
 
 For example:
 
 ```
 SELECT *
-FROM v $px_session;
+FROM V$px_session;
 ```
 
 or:
 
 ```
 SELECT *
-FROM v $px_process;
+FROM V$px_process;
 ```
 
 and:
 
 ```
 SELECT *
-FROM v $px_sesstat;
+FROM V$px_sesstat;
 ```
 
 These views require proper privileges.
 
 ---
 
-# 29. SQL Monitor
+## 29. SQL Monitor
 
-For costly and parallel SQL-uri, SQL Monitor is extremely useful.
+For costly and parallel SQL statements, SQL Monitor is extremely useful.
 
 You can see things like:
 
@@ -1201,7 +1200,7 @@ data skew
 
 ---
 
-# 30. Actual DWH Example
+## 30. Actual DWH Example
 
 You have:
 
@@ -1222,16 +1221,16 @@ ALTER SESSION ENABLE PARALLEL DML;
 
 INSERT / * + APPEND PARALLEL (f, 8) * /
 INTO fact_transaction f
-SELECT / * + PARALLEL (s, 8) * /
+SELECT /*+ PARALLEL (s, 8) */
 s.transaction_id,
 s.account_id,
 s.transaction_date,
-♪ amount ♪
+| amount |
 FROM staging_transaction
 WHERE s.batch_id =: batch_id;
 ```
 
-Flux:
+Flow:
 
 ```
 STAGING
@@ -1251,7 +1250,7 @@ It's a classic pattern of ETL Oracle.
 
 ---
 
-# 31. Parallel Execution + Partitioning + ETL
+## 31. Parallel Execution + Partitioning + ETL
 
 In a well-designed DWH you can combine:
 
@@ -1285,12 +1284,12 @@ This allows you to load very large volumes with little impact on the rest of DWH
 
 ---
 
-# 32. Common mistake: PARALLEL everywhere
+## 32. Common mistake: PARALLEL everywhere
 
 An anti-pattern:
 
 ```
-SELECT / * + PARALLEL (32) * /
+SELECT /*+ PARALLEL (32) */
 ```
 
 automatically put on any SQL.
@@ -1301,7 +1300,7 @@ May cause:
 CPU saturation
 PX server shortage
 I/O content
-Poor competition
+Poor contention
 worse overall performance
 ```
 
@@ -1309,15 +1308,15 @@ Parallelism is a shared resource.
 
 The right question is not:
 
-> What is the maximum DOP-?
+> What is the maximum DOP?
 
 but:
 
-> What is the effective DOP- for the total workshop?
+> What is the effective DOP for the total workshop?
 
 ---
 
-# 33. Very important concept: throughput vs latency
+## 33. Very important concept: throughput vs latency
 
 Parallel Execution can reduce:
 
@@ -1333,7 +1332,7 @@ But it can reduce:
 overall system throughput
 ```
 
-if so many querys simultaneously use PX servers.
+if so many queries simultaneously use PX servers.
 
 Example:
 
@@ -1346,7 +1345,7 @@ It can be very fast.
 But:
 
 ```
-50 querys × DOP 32
+50 queries × DOP 32
 ```
 
 I can overload the system.
@@ -1355,7 +1354,7 @@ This is one of the reasons why parallelism needs to be controlled at workload le
 
 ---
 
-# 34. Parallel Execution › mental model
+## 34. Parallel Execution › mental model
 
 Note this scheme:
 
@@ -1366,19 +1365,19 @@ PX SEND / RECEIVE
                        |
            +-----------+-----------+
            |           |           |
-PX1Q1QX PX3
+PX Server 1 | PX Server 2 | PX Server 3
            |           |           |
            +-----------+-----------+
                        |
 tables / partitions
 ```
 
-For joints:
+For joins:
 
 ```
 TABLE A
    |
-PSEND HASH
+PX SEND HASH
    |
    +----------------+
                     |
@@ -1386,50 +1385,14 @@ HASH JOIN
                     |
    +----------------+
    |
-PSEND HASH
+PX SEND HASH
    |
 TABLE B
 ```
 
 ---
 
-## Questions and answers
-
-**What is Parallel Execution?**
-
-The Oracle mechanism by which an SQL operation is divided between several PX processes for simultaneous execution.
-
-**What is Query Coordinator?
-
-The process that coordinates parallel execution servers and returns the result to the client.
-
-**What is DOP?
-
-Degree of Parallelism is the level of parallelism used for an operation.
-
-**What does PX SEND HASH mean?**
-
-The rows are redistributed between PX servers using a hash function, usually after the key to a join or GROUP BY.
-
-**What is PX BLOCK ITERATOR?
-
-Mechanism through which the blocks of a table are distributed between the PX processes for parallel scanning.
-
-**Why can parallelism be slower?**
-
-Due to the PX overhead, data redistribution, CPU/I/O contention, communication overhead and data skew.
-
-**Where is Parallel Execution most useful?**
-
-DWH, ETL, large scans, aggregation, massive joints, CTAS, creating indexes and partition operations.
-
-**Is it suitable for OLTP?**
-
-Usually not for short and selective operations; overhead may be greater than the benefit.
-
----
-
-# 36. What you need to know very well for a Data Developer
+## 36. What you need to know very well for a Data Developer
 
 For an Oracle Data Developer / DWH role, prioritize the following concepts:
 
@@ -1489,13 +1452,13 @@ And a classic plan like:
 
 ```
 PX COORDINATOR
-PSEND QC
-HASHQ1QX BY
+PX SEND QC
+HASH GROUP BY
 PX RECEIVE
-PSEND HASH
-HASHQ1QX BY
-PBLOCK ITERATOR
-TABLEQ1QX FULL
+PX SEND HASH
+HASH GROUP BY
+PX BLOCK ITERATOR
+TABLE ACCESS FULL
 ```
 
 read, bottom to top:
@@ -1524,13 +1487,47 @@ Very performant ETL
 
 And the most important rule is:
 
-> **Parallel Execution does not make SQL- more efficient; it allows it to consume more resources simultaneously to finish faster.**
+> **Parallel Execution does not make SQL more efficient; it allows it to consume more resources simultaneously to finish faster.**
 
-Therefore, before you increase DOP-, you must check **data volume, plane execution, CPU, I/O, data distribution and competition with other** workshops.
+Before increasing the degree of parallelism (DOP), check the data volume, execution plan, CPU and I/O capacity, data distribution, and concurrent workload.
 
 ---
 
 ## Questions and answers
+
+**What is Parallel Execution?**
+
+The Oracle mechanism by which an SQL operation is divided between several PX processes for simultaneous execution.
+
+**What is Query Coordinator?
+
+The process that coordinates parallel execution servers and returns the result to the client.
+
+**What is DOP?
+
+Degree of Parallelism is the level of parallelism used for an operation.
+
+**What does PX SEND HASH mean?**
+
+The rows are redistributed between PX servers using a hash function, usually after the key to a join or GROUP BY.
+
+**What is PX BLOCK ITERATOR?
+
+Mechanism through which the blocks of a table are distributed between the PX processes for parallel scanning.
+
+**Why can parallelism be slower?**
+
+Due to the PX overhead, data redistribution, CPU/I/O contention, communication overhead and data skew.
+
+**Where is Parallel Execution most useful?**
+
+DWH and ETL workloads, large scans, aggregations, large joins, CTAS, index creation, and partition operations.
+
+**Is it suitable for OLTP?**
+
+Usually not for short and selective operations; overhead may be greater than the benefit.
+
+---
 
 ### How would you briefly explain Parallel Execution to a colleague who knows SQL, but not this area?
 
@@ -1546,7 +1543,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

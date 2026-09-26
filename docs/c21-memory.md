@@ -17,7 +17,7 @@ The Oracle Memory Architecture explains the **where data are temporarily stored,
 The Oracle memory is divided conceptually into two main areas:
 
 ```
-Oracle Instant
+Oracle Instance
 │
 ● SGA * System Global Area
 Tel: + 32- (0) 2 548 00
@@ -38,20 +38,20 @@ Redo Log Buffer
 
 The fundamental difference is:
 
-> **SGA is shared between the processes / sessions of the Oracle court. PGA belongs to an Oracle process and is not shared in the same way.**
+> **SGA is shared between the processes / sessions of the Oracle instance. PGA belongs to an Oracle process and is not shared in the same way.**
 
 ---
 
-# 2. SGA - System Global Area
+## 2. SGA - System Global Area
 
-SGA is the main memory of the Oracle court.
+SGA is the main memory of the Oracle instance.
 
-It shall be allocated when the court starts:
+It shall be allocated when the instance starts:
 
 ```
 STARTUP
    ↓
-Oracle Instant
+Oracle Instance
    ↓
 SGA + background processes
 ```
@@ -70,7 +70,7 @@ SGA contains mainly data that need to be accessed quickly and shared.
 
 ---
 
-# 3. Database Buffer Cache
+## 3. Database Buffer Cache
 
 Database Buffer Cache is one of the most important components.
 
@@ -139,7 +139,7 @@ are important.
 
 ---
 
-# 4. How the Oracle modifies the data in Buffer Cache
+## 4. How the Oracle modifies the data in Buffer Cache
 
 Suppose:
 
@@ -170,11 +170,11 @@ DBWR
 Database Write
 ```
 
-Write the block in the datafils.
+Write the block in the datafiles.
 
 ---
 
-# 5. Shared Pool
+## 5. Shared Pool
 
 Shared Pool contains reusable information between sessions.
 
@@ -190,7 +190,7 @@ Shared Pool
 
 ---
 
-# 6. Library Cache
+## 6. Library Cache
 
 Library Cache keeps:
 
@@ -217,7 +217,7 @@ Semantic check
    ↓
 Optimizer
    ↓
-Implementation Plan
+execution plan
    ↓
 Library Cache
 ```
@@ -234,7 +234,7 @@ Soft Parse
 
 ---
 
-# 7. Hard Parse
+## 7. Hard Parse
 
 A **hard parse** requires more work:
 
@@ -256,9 +256,9 @@ It's relatively expensive.
 
 ---
 
-# 8. Soft Parse
+## 8. Soft Parse
 
-If Oracle already finds SQL-ul and plan in Library Cache:
+If Oracle already finds SQL statement and plan in Library Cache:
 
 ```
 SQL
@@ -308,12 +308,12 @@ The Bind variables increase the chance that Oracle can reuse the cursor.
 
 ---
 
-# 9. Data Dictionary Cache
+## 9. Data Dictionary Cache
 
 Oracle must frequently know:
 
 - is there a table?
-- What columns does he have?
+- Which columns does the structure contain?
 - What datatypes?
 - Who's the owner?
 - what privileges does the user have?;
@@ -339,14 +339,14 @@ The Oracle must verify:
 ```
 Does HR.EMPLOYEES exist?
  ↓
-What columns does he have?
+Which columns does the structure contain?
  ↓
 Does the user have SELECT?
 ```
 
 ---
 
-# 10. Redo Log Buffer
+## 10. Redo Log Buffer
 
 Redo Log Buffer contains information about changes made in the database.
 
@@ -383,7 +383,7 @@ Redo is essential to recovery.
 
 ---
 
-# 11. What happens at COMMIT
+## 11. What happens at COMMIT
 
 For:
 
@@ -417,11 +417,11 @@ The persistence of the transaction is guaranteed by the redo mechanism.
 
 ---
 
-# 12. PGA
+## 12. PGA
 
 PGA is the private memory associated with an Oracle process.
 
-Contains information necessary for the execution of SQL-.
+Contains information necessary for the execution of SQL.
 
 Examples:
 
@@ -445,7 +445,7 @@ PGA is very important for:
 
 ---
 
-# 13. Sort Area
+## 13. Sort Area
 
 Consider:
 
@@ -464,7 +464,7 @@ rows
  ↓
 PGA
  ↓
-apron
+sort
  ↓
 Result
 ```
@@ -485,7 +485,7 @@ performance decreases.
 
 ---
 
-# 14. Hash Area
+## 14. Hash Area
 
 A Hash Join uses PGA.
 
@@ -521,7 +521,7 @@ If the structure does not fit into PGA, Oracle can use TEMP.
 
 ---
 
-# 15. PGA and Temporal Tablespace
+## 15. PGA and Temporal Tablespace
 
 This relationship is very important.
 
@@ -546,7 +546,7 @@ TEMP tablespace
 In execution plan you can meet operations such as:
 
 ```
-SORTQ1QX BY
+SORT ORDER BY
 
 HASH JOIN
 
@@ -557,18 +557,15 @@ which can consume a lot of PGA/TEMP.
 
 ---
 
-# 16. SGA vs PGA
+## 16. SGA vs PGA
 
 An important summary for review:
 
-* * * * * * *
-♪ ♪ ♪ ♪ ♪
-♪ ♪ Private of the process ♪
-= = sync, corrected by elderman = =
-# Buffer Cache # Sort Area #
-♪ Shared Pool ♪ Hash Area ♪
-= = sync, corrected by elderman = = @ elder _ man
-♪ Cache global ♪ Working memory ♪
+| Property | SGA | PGA |
+| --- | --- | --- |
+| Scope | Shared by the instance | Private to a process |
+| Examples | Buffer Cache, Shared Pool | Sort and hash work areas |
+| Lifetime | Instance lifetime | Process/session lifetime |
 
 Mnemonic:
 
@@ -581,7 +578,7 @@ It's not a perfectly technical definition, but it's very useful conceptually.
 
 ---
 
-# 17. Automatic Memory Management
+## 17. Automatic Memory Management
 
 Oracle can automatically manage memory.
 
@@ -616,7 +613,7 @@ Oracle can adjust the dimensions of components according to workload.
 
 ---
 
-# 18. PGA\ _ AGGREGATE\ _ TARGET
+## 18. PGA_AGGREGATE_TARGET
 
 Example:
 
@@ -624,7 +621,7 @@ Example:
 SHOW PARAMETER pga_aggregate_target;
 ```
 
-PGA\ _ AGGREGATE\ _ TARGET is a target for the aggregated PGA memory of the court.
+PGA_AGGREGATE_TARGET is a target for the aggregated PGA memory of the instance.
 
 Doesn't mean:
 
@@ -635,14 +632,14 @@ Each session receives 2 GB
 but approximately:
 
 ```
-Total PGA consumed by court proceedings
+Total PGA consumed by instance proceedings
 ```
 
 is managed around that target.
 
 ---
 
-# 19. SGA\ _ TARGET
+## 19. SGA_TARGET
 
 Example:
 
@@ -665,7 +662,7 @@ Oracle can redistribute memory between some of these components.
 
 ---
 
-# 20. Large Pool
+## 20. Large Pool
 
 Large Pool is used for certain large operations that is not ideal to consume Shared Pool.
 
@@ -686,7 +683,7 @@ large memory allocations
 
 ---
 
-# 21. Java Pool
+## 21. Java Pool
 
 If Oracle executes Java in the database, there are:
 
@@ -698,7 +695,7 @@ For most Development Data is not a critical area.
 
 ---
 
-# 22. Fixed SGA
+## 22. Fixed SGA
 
 There's another small area called:
 
@@ -706,13 +703,13 @@ There's another small area called:
 Fixed SGA
 ```
 
-containing internal information of the court, such as control structures and references to other areas of SGA.
+containing internal information of the instance, such as control structures and references to other areas of SGA.
 
 It is usually particularly relevant at DBA/internals level.
 
 ---
 
-# 23. Relationship between memory and execution plan
+## 23. Relationship between memory and execution plan
 
 Suppose:
 
@@ -720,16 +717,16 @@ Suppose:
 SELECT customer_id,
 SUM (amount)
 FROM sales
-GROUPQ1QX customer_id
+GROUP BY customer_id
 ORDER BY SUM (amount) DESC;
 ```
 
 The execution plan may include:
 
 ```
-SORTQ1QX BY
+SORT ORDER BY
   |
-HASHQ1QX BY
+HASH GROUP BY
   |
 TABLE ACCESS FULL SALES
 ```
@@ -741,7 +738,7 @@ TABLE ACCESS
      ↓
 Buffer Cache
      ↓
-HASHQ1QX BY
+HASH GROUP BY
      ↓
 PGA
      ↓
@@ -754,7 +751,7 @@ Therefore, an execution plan must also be viewed in the light of memory.
 
 ---
 
-# 24. Example DWH
+## 24. Example DWH
 
 Consider:
 
@@ -771,7 +768,7 @@ GROUP BY c.region;
 Possibly:
 
 ```
-HASHQ1QX BY
+HASH GROUP BY
     |
 HASH JOIN
   /      \
@@ -796,12 +793,12 @@ If FACT contains hundreds of millions of rows, PGA and TEMP become very importan
 
 ---
 
-# 25. Example ETL
+## 25. Example ETL
 
 An ETL could execute:
 
 ```
-INSERTQ1QX fact_sales
+INSERT INTO fact_sales
 SELECT...
 FROM staging_sales
 JOIN dim_customer c
@@ -831,13 +828,13 @@ and if PGA is not sufficient:
 TEMP
 ```
 
-That's why a ETL job can be slow even if SQL- seems logical.
+That's why a ETL job can be slow even if SQL seems logical.
 
 ---
 
-# 26. Memory Workshop
+## 26. Memory Workshop
 
-Oracle often calls the memory used for operations such as apron / hash:
+Oracle often calls the memory used for operations such as sort / hash:
 
 ```
 working
@@ -871,7 +868,7 @@ It can be very slow.
 
 ---
 
-# 27. Why does it matter for performance
+## 27. Why does it matter for performance
 
 A slow SQL can be caused by:
 
@@ -901,55 +898,55 @@ So the tuning isn't just indexes.
 
 ---
 
-# 28. Useful Querys
+## 28. Useful queries
 
 Depending on privileges, DBA can analyze memory through views such as:
 
 ```
 SELECT *
-FROM v $sga;
+FROM V$sga;
 ```
 
 or:
 
 ```
 SELECT *
-FROM v $safinfo;
+FROM V$SGAINFO;
 ```
 
 For PGA:
 
 ```
 SELECT *
-FROM v $pgastat;
+FROM V$pgastat;
 ```
 
 For workshop:
 
 ```
 SELECT *
-FROM v $sql_workarea;
+FROM V$sql_workarea;
 ```
 
 and:
 
 ```
 SELECT *
-FROM v $sql_workarea_active;
+FROM V$sql_workarea_active;
 ```
 
 For cache buffer:
 
 ```
 SELECT *
-FROM v $buffer_pool_statistics;
+FROM V$buffer_pool_statistics;
 ```
 
 These views usually require additional privileges.
 
 ---
 
-# 29. Example of diagnosis
+## 29. Example of diagnosis
 
 Suppose a query:
 
@@ -964,7 +961,7 @@ It runs very slowly.
 Execution plan:
 
 ```
-SORTQ1QX BY
+SORT ORDER BY
   |
 TABLE ACCESS FULL HUGE_TABLE
 ```
@@ -995,7 +992,7 @@ I/O
 
 ---
 
-# 30. Memory Architecture + Transactions
+## 30. Memory Architecture + Transactions
 
 Typical transaction:
 
@@ -1037,7 +1034,7 @@ This is one of the most important mental images in Oracle.
 
 ---
 
-# 31. Memory Architecture + Parse
+## 31. Memory Architecture + Parse
 
 For:
 
@@ -1071,7 +1068,7 @@ execution plan
 
 ---
 
-# 32. Memory Architecture + SELECT
+## 32. Memory Architecture + SELECT
 
 For a simple SELECT:
 
@@ -1088,7 +1085,7 @@ SQL
  ↓
 Shared Pool
  ↓
-Implementation Plan
+execution plan
  ↓
 Buffer Cache
  ↓
@@ -1101,7 +1098,7 @@ Data found?
 
 ---
 
-# 33. Memory Architecture + DML
+## 33. Memory Architecture + DML
 
 For:
 
@@ -1118,7 +1115,7 @@ SQL
  ↓
 Shared Pool
  ↓
-Implementation Plan
+execution plan
  ↓
 Buffer Cache
  ↓
@@ -1133,7 +1130,7 @@ Redo Log Buffer
 
 ---
 
-# 34. Full Image
+## 34. Full Image
 
 A very useful mental model is:
 
@@ -1149,8 +1146,8 @@ SGA PGA
 Buffer Shared Redo Sort Hash Runtime
 Cache Pool Buffer Area Area Memory
  │       │           │
-♪ Library ♪
-♪ Cache ♪
+| Library |
+| Cache |
  │       │           │
 Disk SQL Plans LGWR
  │                   │
@@ -1163,7 +1160,7 @@ If you understand this diagram, you have the right basis for the Oracle Memory A
 
 ---
 
-# 35. What a Data Developer needs to know
+## 35. What a Data Developer needs to know
 
 For an Oracle Data Developer / DWH Developer role, I would consider it mandatory to explain:
 
@@ -1184,75 +1181,7 @@ For an Oracle Data Developer / DWH Developer role, I would consider it mandatory
 
 ---
 
-## Questions and answers
-
-**What difference exists between SGA and PGA?**
-
-SGA is the shared memory of the Oracle court, while PGA is mainly the private memory of the Oracle trials and is also used for operations such as apron and hash.
-
----
-
-**Where are the cache-here are the blocks read from datafiles?**
-
-In:
-
-```
-Database Buffer Cache
-```
-
-of SGA.
-
----
-
-**Where to store execution plans?**
-
-In:
-
-```
-Library Cache
-```
-
-of Shared Pool.
-
----
-
-**What is hard parse?
-
-The Oracle shall analyse the SQL- and generate or select a plan execution involving parsing, checking and optimizer.
-
----
-
-**Why are you important?**
-
-Among other things, they allow re-use of trainees and reduce the number of hard parses.
-
----
-
-**Where does a Hash Join run?**
-
-Working structures are mainly in PGA; if memory is insufficient, Oracle can use TEMP.
-
----
-
-**What is LGWR doing?**
-
-Write the redo information from Redo Log Buffer in online redo logs.
-
----
-
-**What is DBWR doing?**
-
-Write dirty buffers from Database Buffer Cache to datafiles.
-
----
-
-**At COMMIT Oracle immediately writes the blocks in datafiles?**
-
-Not necessarily. The main mechanism for confirming the sustainability of the transaction involves writing redo required through LGWR.
-
----
-
-# 37. Exercises for Oracle 26ai
+## 37. Exercises for Oracle 26ai
 
 ### Exercise 1 - Memory parameters
 
@@ -1280,7 +1209,7 @@ With appropriate privileges:
 
 ```
 SELECT *
-FROM v $safinfo;
+FROM V$SGAINFO;
 ```
 
 Identify:
@@ -1298,7 +1227,7 @@ Redo Buffers
 ```
 SELECT
 value
-FROM v $pgastat;
+FROM V$pgastat;
 ```
 
 Follow metrics related to:
@@ -1311,7 +1240,7 @@ cache hit percenage
 
 ---
 
-### The 4th exercise generates an apron
+### The 4th exercise generates an sort
 
 ```
 SELECT *
@@ -1323,7 +1252,7 @@ amount;
 Analyze the plan's execution and look for:
 
 ```
-SORTQ1QX BY
+SORT ORDER BY
 ```
 
 ---
@@ -1356,12 +1285,12 @@ and seek:
 
 ```
 HASH JOIN
-HASHQ1QX BY
+HASH GROUP BY
 ```
 
 ---
 
-# 38. Real Scenario DWH
+## 38. Real Scenario DWH
 
 You have an ETL:
 
@@ -1375,7 +1304,7 @@ DIM_ACCOUNT
 FACT_TRANSACTION
 ```
 
-SQL- executes:
+SQL executes:
 
 ```
 2 HASH JOIN
@@ -1388,7 +1317,7 @@ You notice the job takes 40 minutes.
 The investigation should include:
 
 ```
-Implementation Plan
+execution plan
       ↓
 Cardinality
       ↓
@@ -1413,7 +1342,7 @@ The problem can be linked not only to SQL/indexes, but also to the size of the w
 
 ---
 
-# 39. Link to previous modules
+## 39. Link to previous modules
 
 Memory Architecture links almost all concepts studied so far:
 
@@ -1422,7 +1351,7 @@ SQL
  ↓
 Optimizer
  ↓
-Implementation Plan
+execution plan
  ↓
 Indexes / Join Algorithms
  ↓
@@ -1465,7 +1394,7 @@ PGA + TEMP
 
 ---
 
-# 40. Summary to be memorized
+## 40. Summary to be memorized
 
 for review, remember the image:
 
@@ -1508,11 +1437,77 @@ TEMP
 
 **technical discussion phrase worth remembering:**
 
-> Oracle uses SGA for shared court memory, especially block caching, SQL and redo and PGA as a memory work for processes and operations such as apron and hash. SQL performance depends not only on the execution plan and indexes, but also on how effective Oracle can perform memory operations before being forced to do I/O or use TEMP.
+> Oracle uses SGA for shared memory, especially block caching, SQL and redo and PGA as a memory work for processes and operations such as sort and hash. SQL performance depends not only on the execution plan and indexes, but also on how effective Oracle can perform memory operations before being forced to do I/O or use TEMP.
 
 ---
 
 ## Questions and answers
+
+**What difference exists between SGA and PGA?**
+
+SGA is the shared memory of the Oracle instance, while PGA is mainly the private memory of the Oracle server processes and is also used for operations such as sort and hash.
+
+---
+
+**Where are the cache-here are the blocks read from datafiles?**
+
+In:
+
+```
+Database Buffer Cache
+```
+
+of SGA.
+
+---
+
+**Where to store execution plans?**
+
+In:
+
+```
+Library Cache
+```
+
+of Shared Pool.
+
+---
+
+**What is hard parse?
+
+The Oracle shall analyse the SQL and generate or select a plan execution involving parsing, checking and optimizer.
+
+---
+
+**Why are you important?**
+
+Among other things, they allow re-use of trainees and reduce the number of hard parses.
+
+---
+
+**Where does a Hash Join run?**
+
+Working structures are mainly in PGA; if memory is insufficient, Oracle can use TEMP.
+
+---
+
+**What is LGWR doing?**
+
+Write the redo information from Redo Log Buffer in online redo logs.
+
+---
+
+**What is DBWR doing?**
+
+Write dirty buffers from Database Buffer Cache to datafiles.
+
+---
+
+**At COMMIT Oracle immediately writes the blocks in datafiles?**
+
+Not necessarily. The main mechanism for confirming the sustainability of the transaction involves writing redo required through LGWR.
+
+---
 
 ### How would you briefly explain Memory Architecture to a colleague who knows SQL, but not this area?
 
@@ -1528,7 +1523,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

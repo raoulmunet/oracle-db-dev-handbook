@@ -12,7 +12,7 @@ For an **Oracle Data Developer / PL/SQL Developer / DWH Developer**, it is not e
 
 The central idea:
 
-> **Oracle Optimizer tries to find the execution plan with the lowest estimated cost, using data statistics and cardinality estimates.**
+> **The Oracle optimizer tries to find the execution plan with the lowest estimated cost, using data statistics and cardinality estimates.**
 
 You do not optimize SQL by intuition or by assuming that an index always means faster execution. You optimize from **the real** execution plan.
 
@@ -89,7 +89,7 @@ It makes **estimates**.
 
 That's why a very important problem in tuning is:
 
-> **Optimizer correctly estimated how many lines will go through each operation?**
+> **Optimizer correctly estimated how many rows will pass through each operation?**
 
 ---
 
@@ -381,7 +381,7 @@ Oracle finds a **range of entries** in the index.
 For starters, we can use:
 
 ```
-EXPLAIN FOR
+EXPLAIN PLAN FOR
 
 SELECT *
 FROM transactions
@@ -404,7 +404,7 @@ But for real tuning is more useful the plan of the query that actually ran.
 You can execute:
 
 ```sql
-SELECT / * + GATHER_PLAN_STATISTICS * /
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
 FROM transactions
 WHERE account_id = 1001;
@@ -434,7 +434,7 @@ where:
 
 ```
 E-rows = Estimated Rows
-A-Rows = Current Rows
+A-Rows = Actual Rows
 ```
 
 ---
@@ -584,8 +584,8 @@ A prediction is SARGable when Oracle can effectively use an access structure, fo
 Good example:
 
 ```
-WHERE transaction_date = DATE '2026-01-01'
-AND transaction_date - DATE '2027-01-01'
+WHERE transaction_date >= DATE '2026-01-01'
+        AND transaction_date < DATE '2027-01-01'
 ```
 
 ---
@@ -607,8 +607,8 @@ The function applied to the column may prevent the effective use of an ordinary 
 Better:
 
 ```
-WHERE transaction_date = DATE '2026-01-01'
-AND transaction_date - DATE '2027-01-01'
+WHERE transaction_date >= DATE '2026-01-01'
+        AND transaction_date < DATE '2027-01-01'
 ```
 
 This rule is also very important for **partition pruning**.
@@ -620,7 +620,7 @@ This rule is also very important for **partition pruning**.
 We have:
 
 ```sql
-CREATE ix_customer_name
+m=>m_customer_name
 ON custodian (customer_name);
 ```
 
@@ -641,7 +641,7 @@ it is not necessarily usable efficiently.
 You can create a function-based index:
 
 ```sql
-CREATE ix_customer_upper_name
+m=>m_customer_upper_name
 ON custodian (UPPER (customer_name));
 ```
 
@@ -754,7 +754,7 @@ It can occur especially when:
 - the job is not strictly equal;
 - The other conditions make it go join competitive.
 
-In many OLTP/DWH workshops you will encounter more often:
+In many OLTP/DWH workloads you will encounter more often:
 
 ```
 Nested Loops
@@ -841,7 +841,7 @@ If the optimizer involves uniform distribution, it may misestimate:
 WHERE status = 'ERROR'
 ```
 
-A histogram can help him know that:
+A histogram can help the optimizer recognize that:
 
 ```
 ERROR is rare
@@ -964,15 +964,16 @@ TABLE ACCESS FULL
 Index:
 
 ```sql
-CREATE ix_trx_acc_date
+m=>m_trx_acc_date
 ON transactions (account_id, transaction_date);
 ```
 
 It's very good for:
 
 ```
-WHERE account_id =: account
-AND transaction_date; date_from
+WHERE account_id = :account
+        AND transaction_date >= :date_from
+        AND transaction_date < :date_to
 ```
 
 The order of the columns is important.
@@ -1019,8 +1020,8 @@ Query:
 ```sql
 SELECT SUM(amount)
 FROM fact_transaction
-WHERE transaction_date = DATE '2026-01-01'
-AND transaction_date; DATE '2027-01-01';
+WHERE transaction_date >= DATE '2026-01-01'
+        AND transaction_date < DATE '2027-01-01';
 ```
 
 The Oracle can only access:
@@ -1073,12 +1074,12 @@ The optimizer is trying to convert the query to reduce the processed volumes as 
 
 ## 29. Query Transformations
 
-The optimizer doesn't necessarily execute the SQL- exactly in the form you wrote it.
+The optimizer doesn't necessarily execute the SQL exactly in the form you wrote it.
 
 It can make transformations like:
 
 ```
-predicated pushing
+predicate pushing
 view walking
 subquery unnesting
 Common elimination
@@ -1144,7 +1145,7 @@ This can be an extraordinary optimization in BI/DWH.
 For large DWH queries:
 
 ```sql
-SELECT / * + PARALLEL (f 4) * /
+SELECT /*+ PARALLEL (f 4) */
 SUM(amount)
 FROM fact_transaction f;
 ```
@@ -1160,7 +1161,7 @@ May increase:
 - CPU;
 - I/O;
 - general consumption of resources;
-- competition with other queries.
+- contention with other queries.
 
 ---
 
@@ -1235,7 +1236,7 @@ but it's repeated:
 100,000 times
 ```
 
-This shows why you don't have to look at a single isolated line.
+This shows why you should not examine a single row in isolation.
 
 ---
 
@@ -1250,8 +1251,8 @@ SUM(f.amount)
 FROM fact_transaction f
 JOIN dim_customer c
 ON c.customer_key = f.customer_key
-WHERE f.transaction_date = DATE '2026-09-01'
-AND f.transaction_date - DATE '2026-10-01'
+WHERE f.transaction_date >= DATE '2026-09-01'
+        AND f.transaction_date < DATE '2026-10-01'
 GROUP BY c.segment;
 ```
 
@@ -1312,7 +1313,7 @@ Preached?
 correlation between columns?
 function?
 Data type?
-Band Variable?
+Bind variable?
 partition pruning?
 ```
 
@@ -1358,7 +1359,7 @@ FROM dual;
 You can see:
 
 ```sql
-SELECT / * + INDEX (t ix_trx_account) * /
+SELECT /*+ INDEX (t ix_trx_account) */
 *
 FROM transactions t
 WHERE account_id = 1001;
@@ -1421,7 +1422,7 @@ A good workflow:
         ↓
 10. Checking statistics
         ↓
-11. I'm checking the joint method
+11. Check the join method
         ↓
 12. Checking partition pounding
         ↓
@@ -1450,7 +1451,7 @@ None of them are universally true.
 
 Optimizer tuning is about:
 
-> **volume + selectivity + cardinality + access + joint + real cost of operations.**
+> **volume + selectivity + cardinality + access path + join method + actual operation cost.**
 
 ---
 
@@ -1485,7 +1486,7 @@ END;
 Test:
 
 ```sql
-SELECT / * + GATHER_PLAN_STATISTICS * /
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
 FROM opt_test
 WHERE customer_id = 47382;
@@ -1513,11 +1514,11 @@ TABLE ACCESS FULL
 Create index:
 
 ```sql
-CREATE ix_opt_customer
+m=>m_opt_customer
 ON opt_test (customer_id);
 ```
 
-Reset SQL-.
+Reset SQL.
 
 Compare:
 
@@ -1535,7 +1536,7 @@ Buffers
 Compare:
 
 ```sql
-SELECT / * + GATHER_PLAN_STATISTICS * /
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
 FROM opt_test
 WHERE customer_id = 123;
@@ -1544,7 +1545,7 @@ WHERE customer_id = 123;
 with:
 
 ```sql
-SELECT / * + GATHER_PLAN_STATISTICS * /
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
 FROM opt_test
 WHERE status_id = 3;
@@ -1573,7 +1574,7 @@ Answer:
 Create:
 
 ```sql
-CREATE ix_opt_date
+m=>m_opt_date
 ON opt_test (trx_date);
 ```
 
@@ -1586,8 +1587,8 @@ WHERE TRUNC (trx_date) = DATE '2026-01-10'
 with:
 
 ```
-WHERE trx_date = DATE '2026-01-10'
-AND trx_date - DATE '2026-01-11'
+WHERE trx_date >= DATE '2026-01-10'
+        AND trx_date < DATE '2026-01-11'
 ```
 
 Study:
@@ -1606,7 +1607,7 @@ Buffers
 Execute:
 
 ```sql
-SELECT / * + GATHER_PLAN_STATISTICS * /
+SELECT /*+ GATHER_PLAN_STATISTICS */
 *
 FROM opt_test
 WHERE status_id = 1;
@@ -1641,7 +1642,7 @@ FACT_TRANSACTION
 run:
 
 ```sql
-SELECT / * + GATHER_PLAN_STATISTICS * /
+SELECT /*+ GATHER_PLAN_STATISTICS */
 d.year_num,
 a.account_type,
 SUM(f.amount) total_amount
@@ -1674,54 +1675,6 @@ Don't start with the question:
 Start from:
 
 > How much information must be processed and what is the cheapest way to process it?
-
----
-
-## Questions and answers
-
-**What is CBO?
-Cost Based Optimizer compares various possible plans using statistics and cost estimates.
-
-**What is cardinal?**
-Estimated number of rows produced by an operation.
-
-**What is selectivity?
-The proportion of rows that satisfy a prediction.
-
-**TABLE ACCESS FULL is bad?**
-No. It can be optimal when a large part of the table is read, especially in DWH.
-
-**INDEX RANGE SCAN vs INDEX UNIQUE SCAN?**
-Unique Scan finds maximum one entry for a single key; Range Scan can return several entries.
-
-**Nested Loops vs hash Join?**
-Nested Loops is effective for small exterior sets and indexed access; Hash Join is frequently better for large volumes and equal joins.
-
-**What do you first check in a slow query?**
-The real plan, the volumes, E-Rows vs A-Rows, Starts, Buffers and preachers.
-
-**What does E-Rows 10 / A-Rows 1.000,000 indicate?**
-A major miscarriage of cardinality that can lead the optimizer to an inappropriate plan.
-
-**What is partition pruning?**
-Elimination of partitions that cannot contain the required rows.
-
-**Why can Oracle ignore an index?**
-Because they estimate that access through the index costs more than scanning the table.
-
----
-
-## Questions and answers
-
-Interviewer:
-
-> We have a query DWH that has become much slower. How do you investigate it?
-
-A very good answer:
-
-> I'm starting with the actual execution plan, I'm not directly assuming that an index is missing. I'm using DBMS_XPLAN.DISPLAY_CURSOR with execution statistics and comparing E-Rows with A-Rows. I'm looking for the first operation where the estimation differs significantly from reality, I check Starts and Buffers, then the predications, types of join and access path. If the estimates are wrong I check the statistics and data distribution; only then do I decide whether the SQL-, statistics, indexation or physical design need to be modified.
-
-It shows that you think like a developer who makes **diagnostic**, not like someone who mechanically adds indexes.
 
 ---
 
@@ -1765,7 +1718,7 @@ TUNING
 
 ---
 
-# What should remain after module 10
+## What should remain after module 10
 
 For **Oracle Data Developer / DWH Developer**, the most important ideas are:
 
@@ -1788,13 +1741,57 @@ The next topic worth studying in depth is **reading DBMS_XPLAN from the bottom u
 
 ## Questions and answers
 
+**What is CBO?
+Cost Based Optimizer compares various possible plans using statistics and cost estimates.
+
+**What is cardinality?**
+Estimated number of rows produced by an operation.
+
+**What is selectivity?
+The proportion of rows that satisfy a prediction.
+
+**TABLE ACCESS FULL is bad?**
+No. It can be optimal when a large part of the table is read, especially in DWH.
+
+**INDEX RANGE SCAN vs INDEX UNIQUE SCAN?**
+Unique Scan finds maximum one entry for a single key; Range Scan can return several entries.
+
+**Nested Loops vs hash Join?**
+Nested Loops is effective for small exterior sets and indexed access; Hash Join is frequently better for large volumes and equal joins.
+
+**What do you first check in a slow query?**
+The real plan, the volumes, E-Rows vs A-Rows, Starts, Buffers and preachers.
+
+**What does E-Rows 10 / A-Rows 1.000,000 indicate?**
+A major miscarriage of cardinality that can lead the optimizer to an inappropriate plan.
+
+**What is partition pruning?**
+Elimination of partitions that cannot contain the required rows.
+
+**Why can Oracle ignore an index?**
+Because they estimate that access through the index costs more than scanning the table.
+
+---
+
+Interviewer:
+
+> We have a query DWH that has become much slower. How do you investigate it?
+
+A very good answer:
+
+> I'm starting with the actual execution plan, I'm not directly assuming that an index is missing. I'm using DBMS_XPLAN.DISPLAY_CURSOR with execution statistics and comparing E-Rows with A-Rows. I'm looking for the first operation where the estimation differs significantly from reality, I check Starts and Buffers, then the predicates, join methods, and access paths. If the estimates are wrong I check the statistics and data distribution; only then do I decide whether the SQL, statistics, indexing or physical design need modification.
+
+It shows that you think like a developer who makes **diagnostic**, not like someone who mechanically adds indexes.
+
+---
+
 ### How would you briefly explain the Oracle Optimizer to a colleague who knows SQL, but not this area?
 
-Oracle Optimizer covers co-based optimization, statistics, cardinality and selectivity, access steps and join order. In practice, I first determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
+The Oracle optimizer uses cost-based optimization, statistics, cardinality and selectivity estimates, access paths, and join order. In practice, first identify the data to process and the required result, then review the SQL implementation, execution plan, and expected performance.
 
 ### What are the two most common practical problems related to the Oracle Optimizer?
 
-Two recurring problems are the misinterpretation of data or granularity and degradation of performance at real volume. For Oracle Optimizer, explicitly follow the cost-based optimization, statistics, cardinality and selectivity, access paths and join order and compare the result with a control set.
+Two recurring problems are incorrect assumptions about the data or its grain, and performance degradation at production volumes. For Oracle optimization, review the cost-based plan, statistics, cardinality and selectivity estimates, access paths, and join order, then compare the results with a control set.
 
 ### How do you check that the result is correct and not just fast?
 
@@ -1802,7 +1799,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

@@ -15,11 +15,10 @@ Starting with Oracle Database 21c, Multitenant architecture is the only architec
 In our laboratory Oracle 26ai, the structure is essentially:
 
 ```
-Oracle Instant: FREE
+Oracle Instance: FREE
         |
         v
 +-----------------------------+
-= = sync, corrected by elderman = = @ elder _ man
 |                             |
 |  +-----------------------+  |
 CDB$ROOT
@@ -56,7 +55,7 @@ Database C - *
 With Multitenant:
 
 ```
-Oracle Instant
+Oracle Instance
                        |
                        v
 CDB: PROD
@@ -64,7 +63,7 @@ CDB: PROD
         +--------------+--------------+
         |              |              |
         v              v              v
-PDB_SALESQ1QX PDB_DWH
+PDB_SALES | PDB_DWH
 ```
 
 PDB-s share the CDB- infrastructure, but for the application they behave largely as separate bases.
@@ -73,7 +72,7 @@ Oracle describes PDB-ul as a portable collection of schematics, schematics and n
 
 ---
 
-# 30.2. CDB
+## 30.2. CDB
 
 **CDB** is the physical Oracle base containing containers.
 
@@ -83,7 +82,7 @@ An CDB shall:
 CDB
 − CDB$ROOT
 − PDB$SEED
-− Zero or more PDB-uri created by the user
+− Zero or more PDBs created by the user
 ```
 
 In practice you will have:
@@ -97,11 +96,11 @@ CDB
 - DWH_PDB
 ```
 
-At operating system level, CDB-ul is the database. Control files and online redo logs are at CDB level and are shared by PDB-uri. However, each container has its own relevant datafiles / tablespaces.
+At operating system level, CDB-ul is the database. Control files and online redo logs are at CDB level and are shared by PDBs. However, each container has its own relevant datafiles / tablespaces.
 
 ---
 
-# 30.3. CDB$ROOT
+## 30.3. CDB$ROOT
 
 CDB$ROOT is the main container.
 
@@ -124,8 +123,8 @@ The Root contains mainly:
 - Oracle metadata;
 - Common Oracle objects;
 - common users,
-- information about PDB-uri;
-- CDB- Joint Infrastructure.
+- information about PDBs;
+- CDB-wide common infrastructure.
 
 In general, **does not create the application tables in CDB$ROOT**.
 
@@ -137,16 +136,16 @@ ALTER SESSION SET CONTAINER = CDB$ROOT;
 CREATE TABLE customers (...);
 ```
 
-For the application you will work in an PDB.
+For the application you will work in a PDB.
 
 ---
 
-# 30.4. PDB = Plugable Database
+## 30.4. PDB = Plugable Database
 
 PDB- is the container in which it is usually located:
 
 - the users of the application;
-- schemes;
+- schemas;
 - the tables;
 - indexes;
 - views,
@@ -184,16 +183,16 @@ Run in PDB-ul FREEPDB1, not in CDB$ROOT, if HR has been installed there.
 
 ---
 
-# 30.5. PDB$SEED
+## 30.5. PDB$SEED
 
-PDB$SEED is an PDB specially used as templates for creating other PDB-uri.
+PDB$SEED is a PDB specially used as templates for creating other PDBs.
 
 Conceptual:
 
 ```
 PDB$SEED
     |
-♪ Clane ♪
+| Clone |
     v
 NEW_PDB
 ```
@@ -202,8 +201,8 @@ For example:
 
 ```
 CREATE PLUGGABLE DATABASE DEV_PDB
-ADMIN USER pdf
-IDENTIFIED BY Passorder 123;
+ADMIN USER dev_admin
+IDENTIFIED BY "ReplaceWithA_Strong_Password";
 ```
 
 Oracle can use the safe to initialize the new PDB.
@@ -212,7 +211,7 @@ PDB$SEED is supplied by Oracle and is not intended to be used as an application 
 
 ---
 
-# 30.6. Container
+## 30.6. Container
 
 The generic term is **container**.
 
@@ -234,13 +233,13 @@ You can see:
 SELECT con_id,
 name,
 open_mode
-FROM v $containers;
+FROM v$containers;
 ```
 
 Example:
 
 ```
-CON_IDQ1QX OPEN_MODE
+CON_ID | OPEN_MODE
 ------ ---------- ----------
 1 CDB$ROOT READ WRITE
 2 PDB$SEED READ ONLY
@@ -261,7 +260,7 @@ CDB$ROOT
 
 ---
 
-# 30.7. How do you check which container you're in?
+## 30.7. How do you check which container you're in?
 
 The simplest command:
 
@@ -293,7 +292,7 @@ or:
 
 ```
 SELECT
-FROM v $database;
+FROM v$database;
 ```
 
 Attention to the difference.
@@ -302,7 +301,7 @@ If you run:
 
 ```
 SELECT
-FROM v $database;
+FROM v$database;
 ```
 
 you can receive:
@@ -334,7 +333,7 @@ Container current = FREEPDB1
 
 ---
 
-# 30.8. CDB\ _ NAME vs PDB\ _ NAME
+## 30.8. CDB_NAME vs PDB_NAME
 
 This is a very important point.
 
@@ -355,17 +354,17 @@ FREE
 
 There are two different Oracle courts.
 
-You have a court:
+You have a instance:
 
 ```
-Instant FREE
+Instance FREE
 ```
 
 which serves its CDB-ul and PDB-s.
 
 ---
 
-# 30.9. Change of container
+## 30.9. Change of container
 
 As a user with the necessary rights:
 
@@ -393,7 +392,7 @@ ALTER SESSION SET CONTAINER = CDB$ROOT;
 
 ---
 
-# 30.10. Listing PDB-uri
+## 30.10. Listing PDBs
 
 Of root:
 
@@ -415,7 +414,7 @@ SQL version:
 ```
 SELECT
 open_mode
-FROM v $pdf;
+FROM v$pdf;
 ```
 
 Or:
@@ -424,12 +423,12 @@ Or:
 SELECT con_id,
 name,
 open_mode
-FROM v $containers;
+FROM v$containers;
 ```
 
 ---
 
-# 30.11. States of an PDB
+## 30.11. States of a PDB
 
 An PDB may be, among other things:
 
@@ -444,20 +443,20 @@ For example:
 ```
 SELECT
 open_mode
-FROM v $pdf;
+FROM v$pdf;
 ```
 
 can turn:
 
 ```
-FREEPDB1Q1QX WRITE
+FREEPDB1 | READ WRITE
 ```
 
 For a normal application this is the mode you want.
 
 ---
 
-# 30.12. Opening an PDB
+## 30.12. Opening a PDB
 
 Of root:
 
@@ -488,7 +487,7 @@ PDB-s are administered through ALTER PLUGGABLE DATABASE.
 
 ---
 
-# 30.13. Why SAVE STATE is very important
+## 30.13. Why SAVE STATE is very important
 
 Suppose you open:
 
@@ -531,13 +530,13 @@ FROM dba_pdb_saved_states;
 
 ---
 
-# 30.14. Creating an PDB
+## 30.14. Creating a PDB
 
 A conceptual example:
 
 ```
 CREATE PLUGGABLE DATABASE dev_pdb
-ADMINQ1QX dev_admin
+ADMIN USER dev_admin
 IDENTIFIED BY
 ```
 
@@ -557,7 +556,7 @@ ALTER PLUGGABLE DATABASE dev_pdb SAVE STATE;
 
 ---
 
-# 30.15. A Great Advantage: PDB-uri Cloning
+## 30.15. A Great Advantage: PDBs Cloning
 
 An PDB can be cloned.
 
@@ -566,7 +565,7 @@ For example:
 ```
 DEV_PDB
    |
-♪ Clane ♪
+| Clone |
    v
 TEST_PDB
 ```
@@ -593,7 +592,7 @@ Oracle supports the creation of PDB-s through seed, cloning, plugging, relocatio
 
 ---
 
-# 30.16. Plug / Unplug
+## 30.16. Plug / Unplug
 
 That's where the name comes from:
 
@@ -634,24 +633,24 @@ base portability
 
 ---
 
-# 30.17. Instant vs CDB vs PDB
+## 30.17. Instance vs CDB vs PDB
 
 This is one of the most important technical discussion concepts.
 
 Do not confuse:
 
 ```
-Instant
+Instance
 Database
 CDB
 PDB
-Scheme
+Schema
 ```
 
 Conceptual structure:
 
 ```
-Oracle Instant
+Oracle Instance
     |
     v
 CDB
@@ -662,14 +661,14 @@ CDB
     |
 + -- PDB1
           |
-+ -- HR scheme
++ -- HR schema
           |
-+ -- OE scheme
++ -- OE schema
 ```
 
-### Instant
+### Instance
 
-Position = mainly:
+An Oracle instance consists mainly of:
 
 ```
 memory
@@ -692,15 +691,15 @@ PMON
 
 ### CDB
 
-CDB = multitenant base.
+CDB = container database that supports the multitenant architecture.
 
 ### PDB
 
-PDB = logic base plugin.
+A PDB is a portable database within a CDB.
 
-### Scheme
+### Schema
 
-The scheme belongs to a user and contains its objects:
+The schema belongs to a user and contains its objects:
 
 ```
 tables
@@ -719,7 +718,7 @@ HR
 
 is not PDB.
 
-It's the HR scheme from an PDB:
+It's the HR schema from a PDB:
 
 ```
 FREE
@@ -729,7 +728,7 @@ FREE
 
 ---
 
-# 30.18 Service Name and PDB
+## 30.18 Service Name and PDB
 
 Applications shall not normally be connected to:
 
@@ -776,7 +775,7 @@ Password: ****
 
 ---
 
-# 30.19. Why should not be confused SID with Service
+## 30.19. Why should not be confused SID with Service
 
 In a Multitenant environment:
 
@@ -791,7 +790,7 @@ FREEPDB1
 So a typical configuration is:
 
 ```
-Instant:
+Instance:
 FREE
 
 PDB:
@@ -805,16 +804,16 @@ This difference explains many problems connecting the Oracle.
 
 ---
 
-# 30.20. Local users
+## 30.20. Local users
 
-A user created in an PDB is usually local **user.
+A user created in a PDB is usually local **user.
 
 For example:
 
 ```
 ALTER SESSION SET CONTAINER = FREEPDB1;
 
-CREATEQ1QX app_user
+CREATE USER app_user
 IDENTIFIED BY password;
 ```
 
@@ -845,11 +844,11 @@ without him in:
 PDB_DWH
 ```
 
-Furthermore, two PDB-uri can have local users with the same name without conflict.
+Furthermore, two PDBs can have local users with the same name without conflict.
 
 ---
 
-# 30.21. Common users
+## 30.21. Common users
 
 There are also common users throughout CDB.
 
@@ -871,7 +870,7 @@ C # #
 Example:
 
 ```
-CREATEQ1QX C##MONITOR
+CREATE USER C##MONITOR
 IDENTIFIED BY password
 CONTAINER = ALL;
 ```
@@ -894,20 +893,20 @@ not common users.
 
 ---
 
-# 30.22. Dictionary date in Multitenant architecture
+## 30.22. Dictionary date in Multitenant architecture
 
 You have three very useful categories of views:
 
 ```
-USER_ *
-ALL_ *
-DBA_ *
+USER_*
+ALL_*
+DBA_*
 ```
 
 but the Multitenant also appears:
 
 ```
-CDB_ *
+CDB_*
 ```
 
 Examples:
@@ -936,11 +935,11 @@ FROM cdb_tables
 WHERE owner = 'HR';
 ```
 
-CON\ _ ID tells you which container the object belongs to.
+CON_ID tells you which container the object belongs to.
 
 ---
 
-# 30.23. Why CON\ _ ID is important
+## 30.23. Why CON_ID is important
 
 In many dynamic performance views you will see:
 
@@ -952,12 +951,12 @@ Example:
 
 ```
 SELECT con_id,
-username,
-stasis
-FROM v $session;
+       username,
+       status
+FROM v$session;
 ```
 
-In an CDB with many PDB-uri:
+In an CDB with many PDBs:
 
 ```
 CON_ID USERNAME
@@ -973,18 +972,17 @@ So you can determine what PDB comes from.
 You can do the join with:
 
 ```
-v $containers
+v$containers
 ```
 
 for example:
 
 ```
-SELECT
-s.status,
-c.name AS container_name
-FROM v $session
-JOIN v $containers c
-ON c.con_id = s.con_id
+SELECT s.status,
+             c.name AS container_name
+FROM v$session s
+JOIN v$containers c
+    ON c.con_id = s.con_id
 WHERE s.username IS NOT NULL;
 ```
 
@@ -992,14 +990,14 @@ This is a very good diagnostic interrogation.
 
 ---
 
-# 30.24. CDB views vs DBA views
+## 30.24. CDB views vs DBA views
 
 A simplified rule:
 
 ```
-DBA_ * → current container perspective
+DBA_* → current container perspective
 
-CDB_ * → perspective of several containers
+CDB_* → perspective of several containers
 ```
 
 For example:
@@ -1023,7 +1021,7 @@ For Data Developer it is enough to remember this idea.
 
 ---
 
-# 30.25. Isolation of PDB-uri
+## 30.25. Isolation of PDBs
 
 Suppose:
 
@@ -1045,7 +1043,7 @@ HR → HR_PDB
 DWH → DWH_PDB
 ```
 
-These PDB-uri have separate objects and data.
+These PDBs have separate objects and data.
 
 You can have:
 
@@ -1063,9 +1061,9 @@ without being the same table.
 
 ---
 
-# 30.26. But infrastructure is common
+## 30.26. But infrastructure is common
 
-Isolation does not mean that each PDB has its own court.
+Isolation does not mean that each PDB has its own instance.
 
 Typically:
 
@@ -1075,10 +1073,10 @@ INSTANCE
 CDB PROD
        +------------+------------+
        |            |            |
-CRM_PDBQ1QX DWH_PDB
+CRM_PDB | DWH_PDB
 ```
 
-PDB-uri can share resources such as:
+PDBs can share resources such as:
 
 ```
 SGA
@@ -1091,7 +1089,7 @@ This is one of the reasons why Multitenant reduces overhead from many completely
 
 ---
 
-# 30.27. Resource Management
+## 30.27. Resource Management
 
 Because PDB-s share resources, Oracle can control their consumption.
 
@@ -1109,7 +1107,7 @@ It rather enters the DBA area, but you need to know why it exists:
 
 ---
 
-# 30.28. Application Containers
+## 30.28. Application Containers
 
 There is an additional, more advanced level:
 
@@ -1135,13 +1133,13 @@ SALES_APP
 + -- CUSTOMER_C_PDB
 ```
 
-PDB-uri can share metadata and some common objects of the application.
+PDBs can share metadata and some common objects of the application.
 
 For an ordinary Data Developer it's enough to know the concept.
 
 ---
 
-# 30.29. Example SaaS
+## 30.29. Example SaaS
 
 Suppose a company offers an ERP SaaS.
 
@@ -1163,7 +1161,7 @@ The application code may be common and the data of each client may remain separa
 
 ---
 
-# 30.30. Multitenant Benefits
+## 30.30. Multitenant Benefits
 
 The main advantages are:
 
@@ -1188,7 +1186,7 @@ DB_TEST
 DB_UAT
 DB_REPORTING
 
-each with its own court
+each with its own instance
 
 you can have:
 
@@ -1202,7 +1200,7 @@ CDB_COMPANY
 
 ---
 
-# 30.31. An extremely common trap
+## 30.31. An extremely common trap
 
 You connected SQL Developer like:
 
@@ -1252,7 +1250,7 @@ SHOW CON_NAME;
 
 ---
 
-# 30.32. Another very common problem
+## 30.32. Another very common problem
 
 You created:
 
@@ -1275,7 +1273,7 @@ ORA-01017
 invalid username / password
 ```
 
-or you don't find the scheme.
+or you don't find the schema.
 
 The problem may be that you got in:
 
@@ -1297,13 +1295,13 @@ FREEPDB1
 
 ---
 
-# 30.33. Example of complete diagnosis
+## 30.33. Example of complete diagnosis
 
 When you have an Oracle Multitenant problem:
 
 ```
 SELECT
-FROM v $database;
+FROM v$database;
 ```
 
 then:
@@ -1330,7 +1328,7 @@ You have this:
 ```
 CDB
 current container
-PDB-uri
+PDBs
 current service
 ```
 
@@ -1338,13 +1336,13 @@ and you can understand exactly where you are.
 
 ---
 
-# 30.34. Diagnosis for our laboratory
+## 30.34. Diagnosis for our laboratory
 
 For Oracle 26ai Free:
 
 ```
 SELECT
-FROM v $database;
+FROM v$database;
 ```
 
 should indicate CDB-:
@@ -1392,7 +1390,7 @@ FROM dba_users
 ORDER BY username;
 ```
 
-may show schemes such as:
+may show schemas such as:
 
 ```
 HR
@@ -1405,7 +1403,7 @@ if they were created in that PDB.
 
 ---
 
-# 30.35. Privileges and Current Container
+## 30.35. Privileges and Current Container
 
 A privilege may exist:
 
@@ -1419,7 +1417,7 @@ or:
 common
 ```
 
-For example, if in an PDB you execute:
+For example, if in a PDB you execute:
 
 ```
 GRANT SELECT ON employees TO analyst;
@@ -1451,7 +1449,7 @@ The next question is:
 
 ---
 
-# 30.36. PDB in an DWH scenario
+## 30.36. PDB in an DWH scenario
 
 A realistic example:
 
@@ -1467,7 +1465,7 @@ CDB_BANK
 + -- REPORTING_PDB
 ```
 
-In DWH\ _ PDB:
+In DWH_PDB:
 
 ```
 STG
@@ -1477,7 +1475,7 @@ ETL
 REPORTING
 ```
 
-They can be different schemes.
+They can be different schemas.
 
 Example:
 
@@ -1502,11 +1500,11 @@ This clarifies a fundamental difference:
 PDB
 ```
 
-A PDB may contain many schemes.
+A PDB may contain many schemas.
 
 ---
 
-# 30.37. CDB/PDB and ETL
+## 30.37. CDB/PDB and ETL
 
 In real projects you can have:
 
@@ -1536,14 +1534,14 @@ For ETL you need to know exactly:
 host
 port
 service
-scheme
+schema
 ```
 
 It's not enough to know just the Oracle server.
 
 ---
 
-# 30.38. What a Data Developer needs to know about Multitenant
+## 30.38. What a Data Developer needs to know about Multitenant
 
 You don't have to be DBA expert, but you have to master it very well:
 
@@ -1565,7 +1563,7 @@ service
 local user
 common user
 
-DBA_ * vs CDB_ *
+DBA_* vs CDB_*
 
 PDB OPEN / CLOSE
 SAVE STATE
@@ -1574,206 +1572,20 @@ SAVE STATE
 And especially the relationship:
 
 ```
-Instant
+Instance
    ↓
 CDB
    ↓
 PDB
    ↓
-Scheme
+Schema
    ↓
 Objects
 ```
 
 ---
 
-## Questions and answers
-
-What is a **?**
-
-A Database Container is the base of the multitenant Oracle containing CDB$ROOT, PDB$SEED and one or more PDB-uri.
-
----
-
-**2. What is an PDB?**
-
-A Pluggable Database is a portable logic base within an CDB, which contains the application schematics and data and appears as a separate base for applications.
-
----
-
-**3. What is the difference between CDB and PDB?**
-
-```
-CDB → multitenant base infrastructure
-PDB → logic basis in which applications run
-```
-
----
-
-**4. What is CDB$ROOT?**
-
-Main container containing metadata and infrastructure common to the entire CDB.
-
----
-
-**5. What is PDB$SEED?
-
-The Oracle site used to quickly create PDB-s.
-
----
-
-**6. How do you check what PDB you are in?**
-
-```
-SHOW CON_NAME;
-```
-
-or:
-
-```
-SELECT SYS_CONTEXT ('USERENV', 'CON_NAME')
-FROM dual;
-```
-
----
-
-**7. How do you see PDB-?**
-
-```
-SHOW PDBS;
-```
-
-or:
-
-```
-SELECT
-open_mode
-FROM v $pdf;
-```
-
----
-
-**8. How do you change the container?**
-
-```
-ALTER SESSION SET CONTAINER = FREEPDB1;
-```
-
----
-
-**9. Is HR a PDB scheme?**
-
-No.
-
-```
-PDB
-- HR schema
-```
-
----
-
-**10. Each PDB has its own Oracle court?**
-
-No. More PDB-uri from an CDB are served by the infrastructure of the CDB court.
-
----
-
-**11. What is CON\ _ ID?**
-
-Container ID from Multitenant architecture.
-
----
-
-**12. What is the difference between local user and common user?**
-
-Local user:
-
-```
-exists in a certain PDB
-```
-
-Common user:
-
-```
-may exist in several containers of CDB-
-```
-
----
-
-**13. Why does CDB\ _ * views? *\ *
-
-To be able to see information from several containers, together with CON\ _ ID.
-
----
-
-**14. Why is SAVE STATE useful?**
-
-For Oracle to retain the opening status of PDB- and restore it after the restart of CDB-.
-
----
-
-**15. What service should be used by an application?**
-
-Usually the PDB- service, not the CDB robot.
-
----
-
-## Questions and answers
-
-**Problem:**
-
-> The app no longer sees the HR user tables, although they exist.
-
-My investigation would start with:
-
-```
-SHOW CON_NAME;
-```
-
-If the result is:
-
-```
-CDB$ROOT
-```
-
-but the HR scheme is in:
-
-```
-FREEPDB1
-```
-
-then the application is connected to the wrong container.
-
-I'm checking:
-
-```
-SELECT SYS_CONTEXT ('USERENV', 'SERVICE_NAME')
-FROM dual;
-```
-
-and connection configuration.
-
-Right:
-
-```
-Host = date-host
-Port = 1521
-Service = FREEPDB1
-```
-
-No:
-
-```
-Service = FREE
-```
-
-if it directs the connection to the root.
-
-**The important idea of the technical discussion:** before I assume that the tables or privileges are missing, I always check the **container and the current** service.
-
----
-
-# 30.41. Scenario DWH
+## 30.41. Scenario DWH
 
 We have:
 
@@ -1833,14 +1645,14 @@ This is a very realistic example of why a Data Developer needs to understand Mul
 
 ---
 
-# 30.42. Mental Model to Memorize
+## 30.42. Mental Model to Memorize
 
 Note the following diagram:
 
 ```
 ORACLE SERVER
                        |
-Oracle Instant
+Oracle Instance
                        |
                        v
                  +-----------+
@@ -1850,12 +1662,12 @@ CDB
         +--------------+--------------+
         |              |              |
         v              v              v
-CDB$ROOTQ1QX FREEPDB1
+CDB$ROOT | FREEPDB1
                                       |
                      +----------------+----------------+
                      |                |                |
                      v                v                v
-HRQ1QX OE
+HR | OE
                      |
                 +----+----+
                 |         |
@@ -1879,13 +1691,13 @@ OBJECT
 No:
 
 ```
-Instant → Scheme
+Instance → Schema
 ```
 
 and neither:
 
 ```
-PDB = Scheme
+PDB = Schema
 ```
 
 ---
@@ -1896,14 +1708,14 @@ PDB = Scheme
 - What container are they in?
 SHOW CON_NAME;
 
-- What PDB-uri is there?
+- What PDBs is there?
 SHOW PDBS;
 
 -- List of containers
 SELECT con_id,
 name,
 open_mode
-FROM v $containers;
+FROM v$containers;
 
 -- Change PDB
 ALTER SESSION SET CONTAINER = FREEPDB1;
@@ -1937,10 +1749,192 @@ FROM dual;
 
 -- CDB-
 SELECT
-FROM v $database;
+FROM v$database;
 ```
 
 ## Questions and answers
+
+What is a **?**
+
+A Database Container is the base of the multitenant Oracle containing CDB$ROOT, PDB$SEED and one or more PDBs.
+
+---
+
+**2. What is a PDB?**
+
+A Pluggable Database is a portable logic base within an CDB, which contains the application schematics and data and appears as a separate base for applications.
+
+---
+
+**3. What is the difference between CDB and PDB?**
+
+```
+CDB → multitenant base infrastructure
+PDB → logic basis in which applications run
+```
+
+---
+
+**4. What is CDB$ROOT?**
+
+Main container containing metadata and infrastructure common to the entire CDB.
+
+---
+
+**5. What is PDB$SEED?
+
+The Oracle site used to quickly create PDB-s.
+
+---
+
+**6. How do you check what PDB you are in?**
+
+```
+SHOW CON_NAME;
+```
+
+or:
+
+```
+SELECT SYS_CONTEXT ('USERENV', 'CON_NAME')
+FROM dual;
+```
+
+---
+
+**7. How do you see PDB-?**
+
+```
+SHOW PDBS;
+```
+
+or:
+
+```
+SELECT
+open_mode
+FROM v$pdf;
+```
+
+---
+
+**8. How do you change the container?**
+
+```
+ALTER SESSION SET CONTAINER = FREEPDB1;
+```
+
+---
+
+**9. Is HR a PDB schema?**
+
+No.
+
+```
+PDB
+- HR schema
+```
+
+---
+
+**10. Each PDB has its own Oracle instance?**
+
+No. More PDBs from an CDB are served by the infrastructure of the CDB instance.
+
+---
+
+**11. What is CON_ID?**
+
+Container ID from Multitenant architecture.
+
+---
+
+**12. What is the difference between local user and common user?**
+
+Local user:
+
+```
+exists in a certain PDB
+```
+
+Common user:
+
+```
+may exist in several containers of CDB-
+```
+
+---
+
+**13. Why does CDB_* views? *\ *
+
+To be able to see information from several containers, together with CON_ID.
+
+---
+
+**14. Why is SAVE STATE useful?**
+
+For Oracle to retain the opening status of PDB- and restore it after the restart of CDB-.
+
+---
+
+**15. What service should be used by an application?**
+
+Usually the PDB- service, not the CDB robot.
+
+---
+
+**Problem:**
+
+> The app no longer sees the HR user tables, although they exist.
+
+My investigation would start with:
+
+```
+SHOW CON_NAME;
+```
+
+If the result is:
+
+```
+CDB$ROOT
+```
+
+but the HR schema is in:
+
+```
+FREEPDB1
+```
+
+then the application is connected to the wrong container.
+
+I'm checking:
+
+```
+SELECT SYS_CONTEXT ('USERENV', 'SERVICE_NAME')
+FROM dual;
+```
+
+and connection configuration.
+
+Right:
+
+```
+Host = date-host
+Port = 1521
+Service = FREEPDB1
+```
+
+No:
+
+```
+Service = FREE
+```
+
+if it directs the connection to the root.
+
+**The important idea of the technical discussion:** before I assume that the tables or privileges are missing, I always check the **container and the current** service.
+
+---
 
 If you have to remember only six things from the whole module:
 
@@ -1951,9 +1945,9 @@ If you have to remember only six things from the whole module:
 
 3. CDB$ROOT = common infrastructure.
 
-4. PDB$SEED = templates for PDB-uri.
+4. PDB$SEED = templates for PDBs.
 
-5. Instant → CDB → PDB → Schedule → Objects.
+5. Instance → CDB → PDB → Schedule → Objects.
 
 6. If there is a strange problem with users, objects or privileges:
 immediately check SHOW CON_NAME and SERVICE_NAME.
@@ -1962,7 +1956,7 @@ immediately check SHOW CON_NAME and SERVICE_NAME.
 For our laboratory Oracle 26ai, the image that deserves to have it permanently in mind is:
 
 ```
-Instant / CDB
+Instance / CDB
 FREE
   |
 + -- CDB$ROOT
@@ -1977,11 +1971,9 @@ FREE
 + -- DWH_ACCOUNT
 ```
 
-This distinction explains including many of the problems I've already encountered with **listener, FREEPDB1 serviculum, DataGrip, installation of schemes and privileges on V $...**.
+This distinction explains including many of the problems I've already encountered with **listener, FREEPDB1 serviculum, DataGrip, installation of schemas and privileges on V$...**.
 
 ---
-
-## Questions and answers
 
 ### How would you briefly explain the CDB / PDB and Oracle Multitenant to a colleague who knows SQL, but not this area?
 
@@ -1997,7 +1989,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

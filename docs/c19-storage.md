@@ -51,7 +51,7 @@ Row
 
 ---
 
-# 19.2. Logical Storage vs Physical Storage
+## 19.2. Logical Storage vs Physical Storage
 
 The Oracle deliberately separates:
 
@@ -77,7 +77,7 @@ In this way we are particularly interested in the relationship:
 ```
 Tablespace
      ↓
-Datafils (s)
+Datafiles (s)
 ```
 
 A tablespace is a logical **construction.
@@ -86,7 +86,7 @@ A datafile is a **physical** file.
 
 ---
 
-# 19.3. Tablespace
+## 19.3. Tablespace
 
 An **tablespace** is a logical container for the objects of the database.
 
@@ -119,7 +119,7 @@ They have an **segment**, and the segment uses space from the tablespace.
 
 ---
 
-# 19.4. Datafils
+## 19.4. Datafiles
 
 The datafile is the physical file in which Oracle actually stores the blocks of the database.
 
@@ -143,7 +143,7 @@ The Oracle manages within them the blocks and the extras.
 
 ---
 
-# 19.5. Segment
+## 19.5. Segment
 
 An **segment** represents the space allocated to an object.
 
@@ -182,7 +182,7 @@ BLOCKS
 An index:
 
 ```
-CREATEQ1QX ix_sales_date
+CREATE INDEX ix_sales_date
 ON sales (sale_date);
 ```
 
@@ -202,7 +202,7 @@ So the table and index are different objects, and they occupy separate space.
 
 ---
 
-# 19.6. Table Segment
+## 19.6. Table Segment
 
 The difference is important:
 
@@ -228,7 +228,7 @@ INDEX SEGMENT
 
 ---
 
-# 19.7. Exciting
+## 19.7. Exciting
 
 A segment doesn't get blocks one by one.
 
@@ -264,7 +264,7 @@ Table may continue to increase
 
 ---
 
-# 19.8. Oracle Block
+## 19.8. Oracle Block
 
 **Oracle Database Block** is the fundamental unit of logical I/O for the base Oracle.
 
@@ -282,14 +282,14 @@ A block contains several rows:
 Block Oracle
 
 +----------------------------------+
-♪ Block leader ♪
+| Block leader |
 +----------------------------------+
 # Row directory #
 +----------------------------------+
-♪ Row A ♪
-♪ Row B ♪
-♪ Row C ♪
-♪ Row D ♪
+| Row A |
+| Row B |
+| Row C |
+| Row D |
 |                                  |
 Free space
 +----------------------------------+
@@ -303,7 +303,7 @@ This explains a lot of performance tuning concepts.
 
 ---
 
-# 19.9. Why do blocks matter for SQL
+## 19.9. Why do blocks matter for SQL
 
 We assume:
 
@@ -315,7 +315,7 @@ FROM sales;
 The Oracle may execute:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 and will read the blocks of the segment.
@@ -351,7 +351,7 @@ This explains the mechanism already discussed at **Index** and **Execution Plans
 
 ---
 
-# 19.10. ROWID and the Oracle storageul
+## 19.10. ROWID and the Oracle storageul
 
 ROWID indicates the physical position of a row.
 
@@ -397,7 +397,7 @@ Row
 
 ---
 
-# 19.11. The Complete Relationship of Tablespace → Row
+## 19.11. The Complete Relationship of Tablespace → Row
 
 Important scheme:
 
@@ -448,7 +448,7 @@ The segment receives space from the tablespace, and those blocks are physically 
 
 ---
 
-# 19.12. How a Table Grows
+## 19.12. How a Table Grows
 
 We assume:
 
@@ -482,7 +482,7 @@ Oracle manages mostly these operations automatically.
 
 ---
 
-# 19.13. High Water Mark; HWM
+## 19.13. High Water Mark; HWM
 
 A very important concept for FULL TABLE SCAN is **High Water Mark**.
 
@@ -508,7 +508,7 @@ A full scan reads the blocks to HWM.
 
 ---
 
-# 19.14. DELETE and High Water Mark
+## 19.14. DELETE and High Water Mark
 
 We assume a very large table:
 
@@ -549,7 +549,7 @@ The space in the blocks may become reusable, but the segment may remain large.
 
 ---
 
-# 19.15. DELETE vs TRUNCATE from storage perspective
+## 19.15. DELETE vs TRUNCATE from storage perspective
 
 Now there's a big difference.
 
@@ -584,7 +584,7 @@ It's a very common pattern.
 
 ---
 
-# 19.16. Free space in block
+## 19.16. Free space in block
 
 A block doesn't have to be 100% full permanently.
 
@@ -600,9 +600,9 @@ Conceptual:
 
 ```
 +--------------------------+
-♪ ♪ ♪ ♪ ♪
-♪ ♪ ♪ ♪ ♪
-♪ ♪ ♪ ♪ ♪
+| | | | |
+| | | | |
+| | | | |
 |                          |
 * FREE SPACE *
 +--------------------------+
@@ -612,7 +612,7 @@ Free space management is usually automatic.
 
 ---
 
-# 19.17. ASSM
+## 19.17. ASSM
 
 In the bases of the modern Oracle is common:
 
@@ -634,7 +634,7 @@ As Data Developer, it is enough to understand conceptually:
 
 ---
 
-# 19.18. PCTFREE - conceptual
+## 19.18. PCTFREE - conceptual
 
 PCTFREE reserves part of the block for future growth of rows.
 
@@ -661,7 +661,7 @@ It is particularly relevant if the rows grow through UPDATE.
 
 ---
 
-# 19.19. Row Migration
+## 19.19. Row Migration
 
 We assume that a row is initially small:
 
@@ -678,7 +678,7 @@ SET description = very large text
 WHERE id = 10;
 ```
 
-If the line is no longer in the original block, Oracle can move the line.
+If the row no longer fits in its original block, Oracle can move it.
 
 This is called conceptual:
 
@@ -702,9 +702,9 @@ multiple block access
 
 ---
 
-# 19.20. Row Chaining
+## 19.20. Row Chaining
 
-**Row changing** appears when the line is so big that it doesn't fit into a single block.
+Row migration occurs when a row no longer fits in its original data block.
 
 ```
 ROW
@@ -719,7 +719,7 @@ Simplified difference:
 ```
 ROW MIGRATION
 The row falls into a block,
-But he had to be moved.
+The row had to be moved.
 
 ROW CHAINING
 The row does not fit into a single block.
@@ -727,7 +727,7 @@ The row does not fit into a single block.
 
 ---
 
-# 19.21. The index has its own storage
+## 19.21. The index has its own storage
 
 An B-tree index is also stored in Oracle blocks.
 
@@ -770,7 +770,7 @@ TABLE BLOCK
 
 ---
 
-# 19.22. Full Scan Table and Storage
+## 19.22. Full Scan Table and Storage
 
 For:
 
@@ -782,7 +782,7 @@ FROM sales;
 The Oracle may consider it effective:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 Instead of chasing millions of ROWID-uri through the index.
@@ -805,7 +805,7 @@ Especially in DWH, it can be exactly the right access.
 
 ---
 
-# 19.23. Storage and Buffer Cache
+## 19.23. Storage and Buffer Cache
 
 Data is not permanently read directly from the disk.
 
@@ -845,7 +845,7 @@ are important in the SQL analysis.
 
 ---
 
-# 19.24. Logical I/O vs Physical I/O
+## 19.24. Logical I/O vs Physical I/O
 
 ### Logical I/O
 
@@ -879,7 +879,7 @@ In tuning, reducing the number of blocks accessed can be very important.
 
 ---
 
-# 19.25. TEMP Tablespace
+## 19.25. TEMP Tablespace
 
 Not all SQL operations can be performed exclusively in memory.
 
@@ -915,7 +915,7 @@ This operation is often called conceptual **spill to disk**.
 
 ---
 
-# 19.26. PGA and TEMP
+## 19.26. PGA and TEMP
 
 Example DWH:
 
@@ -926,7 +926,7 @@ FROM fact_sales
 GROUP BY customer_id;
 ```
 
-If FACT\ _ SALES has hundreds of millions of rows:
+If FACT_SALES has hundreds of millions of rows:
 
 ```
 HASH / SORT
@@ -952,7 +952,7 @@ TEMP I/O
 
 ---
 
-# 19.27. UNDO Tablespace
+## 19.27. UNDO Tablespace
 
 UNDO shall keep information necessary for:
 
@@ -983,11 +983,11 @@ UNDO
 previous version
 ```
 
-This mechanism is fundamental to the competition of Oracle discussed in module **Transactions**.
+This mechanism is fundamental to the concurrency in Oracle discussed in module **Transactions**.
 
 ---
 
-# 19.28. REDO is not UNDO
+## 19.28. REDO is not UNDO
 
 The difference is essential:
 
@@ -1013,7 +1013,7 @@ change data block
 
 ---
 
-# 19.29. Redo Log Files
+## 19.29. Redo Log Files
 
 Redo is written in redo log files.
 
@@ -1039,7 +1039,7 @@ As a developer, you must in particular understand that:
 
 ---
 
-# 19.30. Storage and COMMIT
+## 19.30. Storage and COMMIT
 
 COMMIT does not mean simply:
 
@@ -1061,7 +1061,7 @@ This difference is very important.
 
 ---
 
-# 19.31. DBWR and LGWR
+## 19.31. DBWR and LGWR
 
 Two conceptually important Oracle processes:
 
@@ -1093,7 +1093,7 @@ At COMMIT, the persistence of the redo is essential.
 
 ---
 
-# 19.32. Storage and Partitioning
+## 19.32. Storage and Partitioning
 
 A partitioned table has several storage segments.
 
@@ -1120,7 +1120,7 @@ FACT_SALES
  │             ↓
 (PHP 4 = 4.1.0)
  │             ↓
-♪ Blocks ♪
+| Blocks |
  │
 ● P2026 → segment
                ↓
@@ -1142,7 +1142,7 @@ almost independent of the others.
 
 ---
 
-# 19.33. Partition pruning from the storage perspective
+## 19.33. Partition pruning from the storage perspective
 
 Query:
 
@@ -1178,7 +1178,7 @@ The principle is very important:
 
 ---
 
-# 19.34. Storage and Direct Path Insert
+## 19.34. Storage and Direct Path Insert
 
 In ETL/DWH we can meet:
 
@@ -1203,22 +1203,21 @@ not for every small INSERT OLTP.
 
 ---
 
-# 19.35. Storage OLTP vs DWH
+## 19.35. Storage OLTP vs DWH
 
 Features of OLTP and DWH
 - - - - - - - - -
 Many small DML operations - bulk load + large scans -
 Access is limited by many lines
-= = sync, corrected by elderman = = @ elder _ man
 Full scan often unwanted; frequently normal;
-♪ Partitioning sometimes very important ♪
+| Partitioning sometimes very important |
 The TEMP can be very large
-♪ Parallelism is limited ♪
+| Parallelism is limited |
 * * * * * *
 
 ---
 
-# 19.36. Example DWH complete
+## 19.36. Example DWH complete
 
 We have:
 
@@ -1264,7 +1263,7 @@ Blocks
  ↓
 Buffer Cache / direct reads
  ↓
-HASHQ1QX BY
+HASH GROUP BY
  ↓
 PGA
  ↓
@@ -1279,7 +1278,7 @@ This example links:
 Storage
 Partitioning
 Optimizer
-Implementation Plan
+execution plan
 PGA
 TEMP
 I/O
@@ -1288,7 +1287,7 @@ DWH
 
 ---
 
-# 19.37. As you see tablespaces
+## 19.37. As you see tablespaces
 
 ```
 SELECT tablespace_name,
@@ -1307,7 +1306,7 @@ DBA_TEMP_FILES
 
 ---
 
-# 19.38. As you see the segment of an object
+## 19.38. As you see the segment of an object
 
 With sufficient privileges:
 
@@ -1323,7 +1322,7 @@ ORDER BY bytes DESC;
 Very useful for the developer:
 
 ```
-SEGMENT_NAMEQ1QX MB
+SEGMENT_NAME | MB
 ------------------  -------------  ----
 FACT_SALES TABLE 5200
 IX_SALES_DATE INDEX 850
@@ -1332,7 +1331,7 @@ CUSTOMERS TABLE 120
 
 ---
 
-# 19.39. Extins
+## 19.39. Extins
 
 You can investigate:
 
@@ -1359,7 +1358,7 @@ ecstasy 3
 
 ---
 
-# 19.40. Size of a segment
+## 19.40. Size of a segment
 
 For example:
 
@@ -1379,12 +1378,12 @@ You may have few lines, but a large segment if previously there were many data.
 
 ---
 
-# 19.41. Storage and COUNT (\ *)
+## 19.41. Storage and COUNT (\ *)
 
 Suppose:
 
 ```
-SELECT COUNT *
+SELECT COUNT(*)
 FROM fact_sales;
 ```
 
@@ -1409,14 +1408,14 @@ How many blocks do we need to read?
 than by the simple idea:
 
 ```
-How many lines does the table have?
+How many rows does the table contain?
 ```
 
 This is an extremely useful mental rule.
 
 ---
 
-# 19.42. Storage and Clustering Factor
+## 19.42. Storage and Clustering Factor
 
 Clustering The factor of an index reflects roughly how well the index order corresponds to the physical order of rows in table blocks.
 
@@ -1458,7 +1457,7 @@ Optimizer
 
 ---
 
-# 19.43. The conceptual fragmentation
+## 19.43. The conceptual fragmentation
 
 The term "fragmentation" is sometimes used too generically.
 
@@ -1479,7 +1478,7 @@ Practical rule:
 
 ---
 
-# 19.44. SHRINK / MOVE
+## 19.44. SHRINK / MOVE
 
 Operations such as:
 
@@ -1520,7 +1519,7 @@ and have to be planned.
 
 ---
 
-# 19.45. Bigfile vs Smallfile Tablespaces
+## 19.45. Bigfile vs Smallfile Tablespaces
 
 Conceptual exists:
 
@@ -1536,7 +1535,7 @@ BIGFILE TABLESPACE
 
 ### Smallfile
 
-Maybe he has more datafiles.
+The tablespace may have additional datafiles.
 
 ### Bigfile
 
@@ -1546,7 +1545,7 @@ For Data Developer, the difference is mainly administrative; the SQL logic of th
 
 ---
 
-# 19.46. Permanent vs Temporary vs Undo
+## 19.46. Permanent vs Temporary vs Undo
 
 The three important categories:
 
@@ -1583,7 +1582,7 @@ LOBs
 
 ---
 
-# 19.47. What a Data Developer needs to know and what more to do with DBA
+## 19.47. What a Data Developer needs to know and what more to do with DBA
 
 ### Data Developer must understand well
 
@@ -1619,7 +1618,7 @@ However, it is useful to know what it represents.
 
 ---
 
-# 19.48. ASM; very conceptual
+## 19.48. ASM; very conceptual
 
 In enterprise systems, Oracle can use:
 
@@ -1645,7 +1644,7 @@ For the role of Data Developer:
 
 ---
 
-# 19.49. A Complete Mental Model
+## 19.49. A Complete Mental Model
 
 For a query:
 
@@ -1709,7 +1708,7 @@ These two flows explain much of the difference between **OLTP** and **DWH**.
 
 ---
 
-# 19.50. Common conceptual mistakes
+## 19.50. Common conceptual mistakes
 
 ### 1. "The Table is the Data."
 
@@ -1761,7 +1760,7 @@ In DWH is often the right choice.
 
 ### 5. The Index does not occupy much storage.
 
-He can handle a lot, especially on big facts.
+This can handle large volumes, especially in fact tables.
 
 ---
 
@@ -1773,114 +1772,9 @@ Persistence redo is the key.
 
 ---
 
-## Questions and answers
+## 19.52. Oracle Exercise 26ai
 
-### Question 1
-
-**What is the difference between tablespace and datafils?**
-
-Answer:
-
-> The tablet is a logical storage structure, and the datafileul is the physical file in which the blocks associated with the tablet are stored.
-
----
-
-### Question 2
-
-**What is the relationship between segment, ecstasy and block?**
-
-```
-Segment
-  ↓
-Extins
-  ↓
-Blocks
-```
-
-A segment receives space in the form of ecstasy, and each ecstasy contains Oracle blocks.
-
----
-
-### Question 3
-
-**What is the smallest logical storage unit Oracle?**
-
-In this hierarchy:
-
-> Oracle Database Block.
-
----
-
-### Question 4
-
-**What is ROWID?
-
-> Identifier allowing Oracle to physically locate a row, including the block in which it is located.
-
----
-
-### Question 5
-
-**What is High Water Mark?
-
-> The limit to which a segment has used blocks and which is relevant, inter alia, for full table scans.
-
----
-
-### Question 6
-
-**Why DELETE and TRUNCATE behave differently from the storage perspective?**
-
-DELETE removes the rows, while TRUNCATE operates more directly on the segment and can reset / remove the allocated space more efficiently.
-
----
-
-### Question 7
-
-**What is row migration?
-
-> Moving a row into another block because following an update no longer fits into the original block.
-
----
-
-### Question 8
-
-**What is the difference between TEMP and UNDO?**
-
-```
-TEMP → work for apron / hash, etc.
-UNDO → previous versions for rollback and read consistency.
-```
-
----
-
-### Question 9
-
-**What is the difference between logical read and physical read?
-
-```
-logical read
-→ access to the block through the cache buffer
-
-physical read
-→ The block must be brought from storage
-```
-
----
-
-### Question 10
-
-**What happens to COMMIT?**
-
-A good technical discussion response:
-
-> The Oracle must ensure the persistence of the redo information required for the transaction. The modified data blocks must not necessarily all be written in the datafiles at that exact time.
-
----
-
-# 19.52. Oracle Exercise 26ai
-
-In your DEV\ _ LAB scheme, it creates:
+In your DEV_LAB schema, it creates:
 
 ```
 CREATE TABLE storage_test (
@@ -1892,7 +1786,7 @@ description VARCHAR2 (1000)
 Enter data:
 
 ```
-INSERTQ1QX storage_test
+INSERT INTO storage_test
 SELECT level,
 RPAD ('X', 500, 'X')
 FROM dual
@@ -1952,7 +1846,7 @@ segment storage
 
 ---
 
-# 19.53. Real script DWH
+## 19.53. Real script DWH
 
 You have:
 
@@ -1983,7 +1877,7 @@ Notice something important:
 The problem can no longer be seen as:
 
 ```
-The SQL- is slow
+The SQL is slow
 ```
 
 but as:
@@ -2010,7 +1904,7 @@ This is the correct model for Troubleshooting Oracle at Data Developer level.
 
 ---
 
-# 19.54. Link to previous modules
+## 19.54. Link to previous modules
 
 Oracle Storage is the place where many concepts studied separately unite:
 
@@ -2025,7 +1919,7 @@ How many blocks and how do I access them?
 
 Statistics
    ↓
-How much does the optimiser estimate to read?
+How much does the optimizer estimate to read?
 
 Join Algorithms
    ↓
@@ -2054,7 +1948,7 @@ large volumes + full scans + parallel I/O
 
 ---
 
-# 19.55. The Most Important Mental Rule
+## 19.55. The Most Important Mental Rule
 
 When you analyze the performance of an SQL, think about it:
 
@@ -2082,11 +1976,11 @@ but to read:
 10 million blocks
 ```
 
-to find her.
+to find the row.
 
 ---
 
-# 19.56. What should remain
+## 19.56. What should remain
 
 for review and for the activity of **Oracle Data Developer / DWH Developer**, you must be able to reproduce from memory:
 
@@ -2164,6 +2058,109 @@ This is the conceptual level of **Oracle Storage** that I would consider mandato
 
 ## Questions and answers
 
+### Question 1
+
+**What is the difference between tablespace and datafiles?**
+
+Answer:
+
+> The tablet is a logical storage structure, and the datafileul is the physical file in which the blocks associated with the tablet are stored.
+
+---
+
+### Question 2
+
+**What is the relationship between segment, ecstasy and block?**
+
+```
+Segment
+  ↓
+Extins
+  ↓
+Blocks
+```
+
+A segment receives space in the form of ecstasy, and each ecstasy contains Oracle blocks.
+
+---
+
+### Question 3
+
+**What is the smallest logical storage unit Oracle?**
+
+In this hierarchy:
+
+> Oracle Database Block.
+
+---
+
+### Question 4
+
+**What is ROWID?
+
+> Identifier allowing Oracle to physically locate a row, including the block in which it is located.
+
+---
+
+### Question 5
+
+**What is High Water Mark?
+
+> The limit to which a segment has used blocks and which is relevant, inter alia, for full table scans.
+
+---
+
+### Question 6
+
+**Why DELETE and TRUNCATE behave differently from the storage perspective?**
+
+DELETE removes the rows, while TRUNCATE operates more directly on the segment and can reset / remove the allocated space more efficiently.
+
+---
+
+### Question 7
+
+**What is row migration?
+
+> Moving a row into another block because following an update no longer fits into the original block.
+
+---
+
+### Question 8
+
+**What is the difference between TEMP and UNDO?**
+
+```
+TEMP → work areas for sorts, hash operations, and similar tasks.
+UNDO → previous versions for rollback and read consistency.
+```
+
+---
+
+### Question 9
+
+**What is the difference between logical read and physical read?
+
+```
+logical read
+→ access to the block through the cache buffer
+
+physical read
+→ The block must be brought from storage
+```
+
+---
+
+### Question 10
+
+**What happens to COMMIT?**
+
+A good technical discussion response:
+
+> The Oracle must ensure the persistence of the redo information required for the transaction. The modified data blocks must not necessarily all be written in the datafiles at that exact time.
+
+---
+
 ### How would you briefly explain Oracle Storage to a colleague who knows SQL, but not this area?
 
 Oracle Storage is a conceptual level that covers data blocks, extins and segments, tablespaces and datafiles, logical vs physical storage. In practice, I first determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
@@ -2178,7 +2175,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

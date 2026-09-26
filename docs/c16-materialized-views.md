@@ -21,7 +21,7 @@ In Oracle, materialized Views can be used both explicitly by application and aut
 
 ---
 
-# 1. What is a materialized view?
+## 1. What is a materialized view?
 
 A normal VIEW:
 
@@ -63,7 +63,6 @@ Conceptual:
 SALES
 10,000,000 rows
       │
-= = sync, corrected by elderman = = @ elder _ man
       ▼
 MV_SALES
 50,000 rows
@@ -80,17 +79,18 @@ can be much faster.
 
 ---
 
-# 2. VIEW vs MATERIALIZED VIEW
+## 2. VIEW vs MATERIALIZED VIEW
 
-Features of VIEW
-- - - - - - - - -
-♪ Stores the query ♪ ♪ Yeah ♪
-♪ Stores results ♪ ♪ No ♪
-It requires significant space. It doesn't.
-♪ Always current data ♪ ♪ Yeah ♪ Not necessarily ♪
-♪ It takes refresh ♪ ♪ No ♪
-It can accelerate clumps. It can accelerate aggregation.
-* Use DWH *
+Features of views and materialized views:
+
+| Feature | View | Materialized view |
+| --- | --- | --- |
+| Stores the query definition | Yes | Yes |
+| Stores query results | No | Yes |
+| Uses additional storage for results | No | Yes |
+| Reflects base-table changes immediately | Yes | Not necessarily; it depends on refresh |
+| Requires refresh | No | Yes |
+| Can accelerate joins and aggregations | No, by itself | Yes, when query rewrite or direct use applies |
 
 Essential difference:
 
@@ -104,7 +104,7 @@ query → already calculated result
 
 ---
 
-# 3. Example DWH
+## 3. Example DWH
 
 We assume:
 
@@ -162,7 +162,7 @@ Now the result of the aggregation is already stored.
 
 ---
 
-# 4. Basic Syntax
+## 4. Basic Syntax
 
 A more complete example:
 
@@ -171,13 +171,13 @@ CREATE MATERIALIZED VIEW mv_sales_monthly
 BUILD IMMEDIATE
 REFRESH FAST
 ON DEMAND
-ENABLEQ1QX REWRITE
+ENABLE QUERY REWRITE
 AS
 SELECT
 product_id,
 TRUNC (sale_date, 'MM') month
-(*) cnt,
-SUM (amount) return
+COUNT(*) AS cnt,
+SUM(amount) AS total_amount
 FROM fact_sales
 GROUP BY
 product_id,
@@ -195,7 +195,7 @@ QUERY REWRITE
 
 ---
 
-# 5.BUILD IMMEDIATE vs BUILD DEFERRED
+## 5.BUILD IMMEDIATE vs BUILD DEFERRED
 
 ## BUILD IMMEDIATE
 
@@ -203,7 +203,7 @@ QUERY REWRITE
 BUILD IMMEDIATE
 ```
 
-Oracle builds MV-ul immediately.
+Oracle builds MVul immediately.
 
 ```
 CREATE MV
@@ -244,7 +244,7 @@ EXEC DBMS_MVIEW.REFRESH ('MV_SALES', 'C');
 
 ---
 
-# 6. Main Types of REFRESH
+## 6. Main Types of REFRESH
 
 The Oracle primarily supports:
 
@@ -300,7 +300,7 @@ very expensive
 
 ---
 
-# 8. FAST REFRESH
+## 8. FAST REFRESH
 
 FAST REFRESH updates only changes.
 
@@ -338,7 +338,7 @@ In the log-based incremental refresh, Oracle uses **Materialized View Logs** to 
 
 ---
 
-# 9. Materialized View Log
+## 9. Materialized View Log
 
 For many types of FAST REFRESH, a log must be created on the source table.
 
@@ -371,7 +371,7 @@ The log retains the information necessary for the incremental refresh.
 
 ---
 
-# 10. Why INCLUDING NEW VALUES?
+## 10. Why INCLUDING NEW VALUES?
 
 For aggregates, Oracle may need both old and new information.
 
@@ -393,14 +393,14 @@ The Oracle shall be able to determine the impact of the change.
 That's why we meet:
 
 ```
-INCLUDINGQ1QX VALUES
+INCLUDING NEW VALUES
 ```
 
 in MV logs for certain materialized views aggregate.
 
 ---
 
-# 11. REFRESH FORCE
+## 11. REFRESH FORCE
 
 ```
 REFRESH FORCE
@@ -437,11 +437,11 @@ EXEC DBMS_MVIEW.REFRESH (
 );
 ```
 
-? represents FORCE in DBMS\ _ MVIEW.REFRESH.
+? represents FORCE in DBMS_MVIEW.REFRESH.
 
 ---
 
-# 12. ON DEMAND
+## 12. ON DEMAND
 
 Very common in DWH:
 
@@ -467,7 +467,7 @@ From PL/SQL:
 BEGIN
 DBMS_MVIEW.REFRESH (
 list = "'MV_SALES_MONTHLY',"
-Method = = 'F'
+METHOD = 'F'
 );
 END;
 /
@@ -475,14 +475,14 @@ END;
 
 ---
 
-# 13. ON COMMIT
+## 13. ON COMMIT
 
 ```
 REFRESH FAST
 ON COMMIT
 ```
 
-MV- is updated when relevant transactions on source tables make COMMIT.
+MV is updated when relevant transactions on source tables make COMMIT.
 
 Example:
 
@@ -511,7 +511,7 @@ In OLTP systems with many transactions, it should be used with care.
 
 ---
 
-# 14. ON COMMIT vs ON DEMAND
+## 14. ON COMMIT vs ON DEMAND
 
 In general:
 
@@ -540,7 +540,7 @@ reporting
 
 ---
 
-# 15. Query Rewrite
+## 15. Query Rewrite
 
 This is one of the most powerful features.
 
@@ -550,7 +550,7 @@ We create:
 CREATE MATERIALIZED VIEW mv_sales_monthly
 REFRESH FAST
 ON DEMAND
-ENABLEQ1QX REWRITE
+ENABLE QUERY REWRITE
 AS
 SELECT
 product_id,
@@ -579,10 +579,10 @@ TRUNC (sale_date, 'MM');
 Observe:
 
 ```
-SQL- NU mentions MV-.
+SQL NU mentions MV.
 ```
 
-The optimiser can transform internally:
+The optimizer can transform internally:
 
 ```
 FACT_SALES
@@ -613,7 +613,7 @@ MV_SALES_MONTHLY FACT_SALES
 
 ---
 
-# 16. Why is Query Rewrite so important in DWH?
+## 16. Why is Query Rewrite so important in DWH?
 
 Suppose:
 
@@ -633,7 +633,7 @@ FROM fact_sales
 GROUP BY product_id;
 ```
 
-The optimiser can obtain the result using already aggregated data from MV, if the necessary conditions are met.
+The optimizer can obtain the result using already aggregated data from MV, if the necessary conditions are met.
 
 Instead of:
 
@@ -649,12 +649,12 @@ can process:
 
 ---
 
-# 17. How do I check if Query Rewrite has been used?
+## 17. How do I check if Query Rewrite has been used?
 
 Use the execution plan:
 
 ```
-EXPLAINQ1QX FOR
+EXPLAIN PLAN FOR
 
 SELECT
 product_id,
@@ -690,7 +690,7 @@ This shows that Oracle used the materialized view.
 
 ---
 
-# 18. Query Rewrite does not mean you have to select MV-ul
+## 18. Query Rewrite does not mean you have to select MVul
 
 That's a classic technical discussion question.
 
@@ -708,7 +708,7 @@ SELECT...
 FROM fact_sales;
 ```
 
-The optimiser decides:
+The optimizer decides:
 
 ```
 FACT_SALES query
@@ -724,9 +724,9 @@ MV_SALES_MONTHLY
 
 ---
 
-# 19. Materialized View with JOIN
+## 19. Materialized View with JOIN
 
-MV-s shall not be merely aggregates.
+MVs shall not be merely aggregates.
 
 Example:
 
@@ -762,7 +762,7 @@ This may remove repeated JOIN-uri in reporting.
 
 ---
 
-# 20. materialized Aggregate View
+## 20. materialized Aggregate View
 
 Very important in DWH.
 
@@ -783,13 +783,13 @@ sale_date,
 product_id;
 ```
 
-These are often the most valuable MV-uri for OLAP.
+These are often the most valuable MVuri for OLAP.
 
 ---
 
-# 21. COUNT (\ *) and FAST REFRESH
+## 21. COUNT (\ *) and FAST REFRESH
 
-One important thing about MV-uri aggregate is that the definition must comply with certain conditions to allow FAST REFRESH.
+One important thing about MVuri aggregate is that the definition must comply with certain conditions to allow FAST REFRESH.
 
 For example, you will often see:
 
@@ -822,7 +822,7 @@ Oracle has precise rules on what aggregates and constructions are compatible wit
 
 ---
 
-# 22. How do I check that FAST REFRESH is possible?
+## 22. How do I check that FAST REFRESH is possible?
 
 Very useful in practice:
 
@@ -860,7 +860,7 @@ PCT possible?
 
 ---
 
-# 23. PCT = Partition Change Tracking
+## 23. PCT = Partition Change Tracking
 
 Very important for large DWH-uri.
 
@@ -875,13 +875,13 @@ partition 2026-08
 partition 2026-09
 ```
 
-ETL- only amends:
+ETL only amends:
 
 ```
 partition 2026-09
 ```
 
-Why rebuild MV- for all months?
+Why rebuild MV for all months?
 
 Oracle may use:
 
@@ -910,7 +910,7 @@ refresh only relevant MV data
 
 ---
 
-# 24. Why Partitioning + Materialized Views go very well together?
+## 24. Why Partitioning + Materialized Views go very well together?
 
 In a big DWH we can have:
 
@@ -919,13 +919,13 @@ FACT_TRANSACTIONS
 (PHP 4 = 4.1.0)
 ```
 
-and ETL- loads:
+and ETL loads:
 
 ```
 September 2026
 ```
 
-If MV- is properly designed:
+If MV is properly designed:
 
 ```
 Partitioned fact table
@@ -941,7 +941,7 @@ This is a very important pattern for Data Developer / DWH Developer.
 
 ---
 
-# 25. FAST vs PCT
+## 25. FAST vs PCT
 
 Simplified:
 
@@ -979,7 +979,7 @@ MV definition
 
 ---
 
-# 26. Stale Materialized Views
+## 26. Stale Materialized Views
 
 The materialized View can stay behind the base table.
 
@@ -1004,9 +1004,9 @@ This is a fundamental difference from an VIEW.
 
 ---
 
-# 27. Status check
+## 27. Status check
 
-We can investigate the MV-s in the dictionary:
+We can investigate the MVs in the dictionary:
 
 ```
 SELECT
@@ -1020,7 +1020,7 @@ staleness
 FROM all_mviews;
 ```
 
-Or for your own scheme:
+Or, for your own schema:
 
 ```
 SELECT *
@@ -1039,7 +1039,7 @@ STALENESS
 
 ---
 
-# 28. Refresh Manual
+## 28. Refresh Manual
 
 The most important package:
 
@@ -1083,11 +1083,11 @@ END;
 /
 ```
 
-These codes are documented by DBMS\ _ MVIEW.
+These codes are documented by DBMS_MVIEW.
 
 ---
 
-# 29. Refreshing of multiple MV-uri
+## 29. Refreshing of multiple MVuri
 
 For example:
 
@@ -1095,7 +1095,7 @@ For example:
 BEGIN
 DBMS_MVIEW.REFRESH (
 list = "'MV_SALES_DAY,MV_SALES_MONTH,MV_CUSTOMER_SALES',"
-Method = = 'F'
+METHOD = 'F'
 );
 END;
 /
@@ -1105,9 +1105,9 @@ In DWH this can be part of the ETL orchestra.
 
 ---
 
-# 30. Refresh Groups
+## 30. Refresh Groups
 
-Sometimes several MV-uri must represent the same logical state of data.
+Sometimes several MVuri must represent the same logical state of data.
 
 The Oracle offers **refresh groups**, which allow the coordinated refresh of a set of materialized views so that they correspond to the same consistent point from a trading point of view.
 
@@ -1130,7 +1130,7 @@ the same data state
 
 ---
 
-# 31. The Real Scenario by DWH
+## 31. The Real Scenario by DWH
 
 You have:
 
@@ -1172,7 +1172,7 @@ For example:
 BEGIN
 DBMS_MVIEW.REFRESH (
 list = "'MV_TRANSACTION_DAILY',"
-Method = = 'F'
+METHOD = 'F'
 );
 END;
 /
@@ -1180,7 +1180,7 @@ END;
 
 ---
 
-# 32. Banking Example
+## 32. Banking Example
 
 Suppose:
 
@@ -1207,13 +1207,13 @@ Transactions / type
 % 1% 2
 ```
 
-Instead of permanently calculating over FACT\ _ TRANSACTION:
+Instead of permanently calculating over FACT_TRANSACTION:
 
 ```
 CREATE MATERIALIZED VIEW mv_transaction_daily
 REFRESH FAST
 ON DEMAND
-ENABLEQ1QX REWRITE
+ENABLE QUERY REWRITE
 AS
 SELECT
 TRUNC (transaction_date) transaction_day
@@ -1243,9 +1243,9 @@ can be rewritten to MV.
 
 ---
 
-# 33. Example ETL
+## 33. Example ETL
 
-At the end of ETL-:
+At the end of ETL:
 
 ```
 BEGIN
@@ -1279,7 +1279,7 @@ reporting
 
 ---
 
-# 34. What if FAST REFRESH fails?
+## 34. What if FAST REFRESH fails?
 
 If you have:
 
@@ -1287,7 +1287,7 @@ If you have:
 REFRESH FAST
 ```
 
-and MV-ul is not fast-refresh, the operation can fail.
+and MVul is not fast-refresh, the operation can fail.
 
 If you use:
 
@@ -1318,11 +1318,11 @@ An unexpected fallback to COMPLETE can strongly affect the batch.
 
 ---
 
-# 35. Real production problem
+## 35. Real production problem
 
 technical discussion:
 
-> The ETL- normally lasted 40 minutes, but today it took three hours.
+> The ETL normally lasted 40 minutes, but today it took three hours.
 
 One possibility:
 
@@ -1374,9 +1374,9 @@ This is a very good technical discussion scenario.
 
 ---
 
-# 36. Costs of a Materialized View
+## 36. Costs of a Materialized View
 
-MV-s are not free.
+MVs are not free.
 
 You win:
 
@@ -1409,7 +1409,7 @@ maintenance cost
 
 ---
 
-# 37. Materialized View vs Index
+## 37. Materialized View vs Index
 
 It doesn't solve the same problem.
 
@@ -1436,7 +1436,7 @@ WHERE customer_id = 123
 But:
 
 ```
-GROUPQ1QX product_id
+GROUP BY product_id
 SUM (amount)
 JOIN 5 tables
 ```
@@ -1445,7 +1445,7 @@ JOIN 5 tables
 
 ---
 
-# 38. Materialized View vs Partitioning
+## 38. Materialized View vs Partitioning
 
 Partitioning:
 
@@ -1480,7 +1480,7 @@ are complementary.
 
 ---
 
-# 39. Materialized View vs Result Cache
+## 39. Materialized View vs Result Cache
 
 Conceptual difference:
 
@@ -1505,109 +1505,9 @@ is usually the relevant mechanism.
 
 ---
 
-## Questions and answers
+## 42. Oracle Exercise 26ai
 
-### 1. What is a materialized view?
-
-> It is an Oracle object that physically stores the result of a query and can be periodically refresh. It is commonly used for precomputing expensive joints and aggregates.
-
----
-
-### 2. The Difference between View and materialized View?
-
-> The View stores the definition of the query, while the materialized View stores the result of the query.
-
----
-
-### 3. What does COMPLETE REFRESH mean?
-
-> The Oracle recalculates the entire MV content from its query.
-
----
-
-### 4. What is FAST REFRESH?
-
-> An incremental refresh by which only relevant changes from the last refresh are processed.
-
----
-
-### 5. What is Materialized View Log?
-
-> An object associated with the source table which keeps information about changes required for certain types of FAST REFRESH.
-
----
-
-### 6.FAST vs FORCE?
-
-```
-FAST
-→ must be able to make incremental refresh.
-
-FORCE
-→ try FAST;
-If he can't, he'll do COMPLETE.
-```
-
----
-
-### 7. ON COMMIT vs ON DEMAND?
-
-```
-ON COMMIT
-→ refresh after relevant comms.
-
-ON DEMAND
-→ explicit refresh / programmed.
-```
-
----
-
-### 8. What is Query Rewrite?
-
-> The Optimizer can turn transparent a query written over the base tables so as to use an equivalent and more efficient materialized view.
-
----
-
-### 9. How do you check if an MV can do FAST REFRESH?
-
-```
-DBMS_MVIEW.EXPLAIN_MVIEW
-```
-
----
-
-### 10. How do you do refresh manually?
-
-```
-EXEC DBMS_MVIEW.REFRESH ('MV_NAME', 'F');
-```
-
----
-
-## Questions and answers
-
-> We have an FACT table of 2 billion rows and reports that aggregate monthly sales. How would you optimize it?
-
-A good answer:
-
-```
-1. I'm checking the FACT partitioning
-2. check execution plans
-3. I create, if the workload justifies it,
-a Materialized Aggregate View
-4. use FAST/PCT refresh where possible
-5. create MV logs if needed
-6. ENABLEQ1QX REWRITE
-7. Synchronizing the ETL refresh
-8. check statistics
-9. check DBMS_XPLAN for Query Rewrite
-```
-
----
-
-# 42. Oracle Exercise 26ai
-
-You can do this exercise directly in DEV\ _ LAB.
+You can do this exercise directly in DEV_LAB.
 
 ### Step 1
 
@@ -1625,7 +1525,7 @@ amount NUMBER (12.2)
 ### Step 2
 
 ```
-INSERTQ1QX mv_sales_test
+INSERT INTO mv_sales_test
 SELECT
 LEVEL,
 MOD (LEVEL, 100) + 1,
@@ -1693,7 +1593,7 @@ ORDER BY month, product_id;
 Change the table:
 
 ```
-INSERTQ1QX mv_sales_test
+INSERT INTO mv_sales_test
 VALUES (
 100001,
 10,
@@ -1704,7 +1604,7 @@ DATE '2026-09-23',
 COMMIT;
 ```
 
-MV- is not automatically updated because it is:
+MV is not automatically updated because it is:
 
 ```
 ON DEMAND
@@ -1746,7 +1646,7 @@ WHERE mview_name = 'MV_SALES_MONTHLY_TEST';
 
 ---
 
-# 43. Next exercise: FAST REFRESH
+## 43. Next exercise: FAST REFRESH
 
 Once the above example works, the following level is:
 
@@ -1764,7 +1664,7 @@ This is where it really gets interesting for review of **Oracle Data Developer**
 
 ---
 
-# 44. Mental scheme to remember
+## 44. Mental scheme to remember
 
 ```
 MATERIALIZED VIEW
@@ -1808,20 +1708,114 @@ BI / REPORTING
 
 ## Questions and answers
 
+### 1. What is a materialized view?
+
+> A materialized view is an Oracle database object that physically stores the result of a query. It can be refreshed periodically and is commonly used to precompute expensive joins and aggregations.
+
+---
+
+### 2. The Difference between View and materialized View?
+
+> The View stores the definition of the query, while the materialized View stores the result of the query.
+
+---
+
+### 3. What does COMPLETE REFRESH mean?
+
+> The Oracle recalculates the entire MV content from its query.
+
+---
+
+### 4. What is FAST REFRESH?
+
+> An incremental refresh by which only relevant changes from the last refresh are processed.
+
+---
+
+### 5. What is Materialized View Log?
+
+> An object associated with the source table which keeps information about changes required for certain types of FAST REFRESH.
+
+---
+
+### 6.FAST vs FORCE?
+
+```
+FAST
+→ must be able to make incremental refresh.
+
+FORCE
+→ try FAST;
+If a fast refresh is not possible, Oracle performs a complete refresh.
+```
+
+---
+
+### 7. ON COMMIT vs ON DEMAND?
+
+```
+ON COMMIT
+→ refresh after relevant comms.
+
+ON DEMAND
+→ explicit refresh / programmed.
+```
+
+---
+
+### 8. What is Query Rewrite?
+
+> The Optimizer can turn transparent a query written over the base tables so as to use an equivalent and more efficient materialized view.
+
+---
+
+### 9. How do you check if an MV can do FAST REFRESH?
+
+```
+DBMS_MVIEW.EXPLAIN_MVIEW
+```
+
+---
+
+### 10. How do you do refresh manually?
+
+```
+EXEC DBMS_MVIEW.REFRESH ('MV_NAME', 'F');
+```
+
+---
+
+> We have an FACT table of 2 billion rows and reports that aggregate monthly sales. How would you optimize it?
+
+A good answer:
+
+```
+1. I'm checking the FACT partitioning
+2. check execution plans
+3. I create, if the workload justifies it,
+a Materialized Aggregate View
+4. use FAST/PCT refresh where possible
+5. create MV logs if needed
+6. ENABLE QUERY REWRITE
+7. Synchronizing the ETL refresh
+8. check statistics
+9. check DBMS_XPLAN for Query Rewrite
+```
+
+---
+
 If you only remember **6 things** from this module, these are:
 
 1. **Materialized View = result of the physically stored query.**
 2. **COMPLETE = reconstruction; FAST = incremental; FORCE = FAST if possible, otherwise COMPLETE.**
 3. **MV Logs are frequently required for FAST refresh based on changes.**
 4. **ON COMMIT** updates on commit, and **ON DEMAND** is explicitly controlled and is very common in DWH.
-5. **Query Rewrite** allows the optimiser to use MV- without the application to explicitly mention it.
-6. For large DWH-s, the important combination is **Partitioning + FAST/PCT refresh + materialized Views + Query Rewrite**.
+5. **Query Rewrite** allows the optimizer to use a materialized view without requiring the application to reference it explicitly.
+6. For large DWHs, the important combination is **Partitioning + FAST/PCT refresh + materialized Views + Query Rewrite**.
 
 The next useful step in the course would be to do **17. Parallel Execution**, because it connects directly to large volumes, DWH, partitioning and the Refresher Materialized Views.
 
 ---
-
-## Questions and answers
 
 ### How would you briefly explain materialized views to a colleague who knows SQL, but not this area?
 
@@ -1837,7 +1831,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

@@ -22,7 +22,7 @@ You also need to understand **join order**, indexed access, estimated cardinalit
 
 ## 14.1. JOIN logic vs. join algorithm
 
-SQL-:
+SQL:
 
 ```sql
 SELECT e.employee_id,
@@ -193,15 +193,15 @@ Conceptual:
 ```
 Outer table
      |
-♪ ♪ ♪
+| | |
      v
 inner-table lookup
 
-♪ ♪ ♪
+| | |
      v
 inner-table lookup
 
-♪ ♪ ♪
+| | |
      v
 inner-table lookup
 ```
@@ -452,7 +452,7 @@ SUM(f.amount)
 FROM fact_sales f
 JOIN dim_date d
 ON d.date_key = f.date_key
-JOIN dim_product
+JOIN dim_product p
 ON p.product_key = f.product_key
 GROUP BY
 d.year,
@@ -657,7 +657,7 @@ MERGE JOIN
 
 because Hash Join does not require complete sorting of both sets.
 
-But if the data is already in the right order or the condition of the joint favors the mercury, the optimizer can choose Sort Merge.
+If the data is already in the required order, or the join conditions make it efficient, the optimizer can choose a sort merge join.
 
 ---
 
@@ -772,7 +772,7 @@ JOIN A Result
 JOIN C result
 ```
 
-So SQL- doesn't necessarily determine physical order.
+So SQL doesn't necessarily determine physical order.
 
 ---
 
@@ -822,13 +822,13 @@ estimated rows = 10
 current rows = 2,000,000
 ```
 
-On the basis of the 10-line estimate, Oracle may choose:
+Based on the estimate of 10 rows, Oracle may choose:
 
 ```
 NESTED LOOPS
 ```
 
-But in reality 2 million lines can do:
+But in reality, 2 million rows can produce:
 
 ```
 HASH JOIN
@@ -860,7 +860,7 @@ But the reality is:
 5,000,000 rows
 ```
 
-He can choose:
+The optimizer can choose:
 
 ```
 NESTED LOOPS
@@ -885,7 +885,7 @@ E-Rows vs A-Rows
 Example:
 
 ```sql
-SELECT / * + gather_plan_statistics * /
+SELECT /*+ gather_plan_statistics */
 *
 FROM employees e
 JOIN departments d
@@ -1103,7 +1103,7 @@ Result:
 2 rows
 ```
 
-Then he can do the join with another board.
+It can then join the result to another table.
 
 So:
 
@@ -1362,8 +1362,7 @@ For study and diagnosis we can influence the optimizer.
 Nested Loops:
 
 ```sql
-SELECT / * + USE_NL (o)
-       ...
+SELECT /*+ USE_NL(o) */ *
 FROM customers c
 JOIN orders o
 ON o.customer_id = c.customer_id;
@@ -1372,8 +1371,7 @@ ON o.customer_id = c.customer_id;
 Hash Join:
 
 ```sql
-SELECT / * + USE_HASH (o)
-       ...
+SELECT /*+ USE_HASH(o) */ *
 FROM customers c
 JOIN orders o
 ON o.customer_id = c.customer_id;
@@ -1382,8 +1380,7 @@ ON o.customer_id = c.customer_id;
 Join's going:
 
 ```sql
-SELECT / * + USE_MERGE (o)
-       ...
+SELECT /*+ USE_MERGE(o) */ *
 FROM customers c
 JOIN orders o
 ON o.customer_id = c.customer_id;
@@ -1404,7 +1401,7 @@ We can influence and join the order.
 Example:
 
 ```sql
-SELECT / * + LEADING (c o) * /
+SELECT /*+ LEADING (c o) */
        ...
 FROM customers c
 JOIN orders o
@@ -1422,9 +1419,7 @@ O
 It can be combined with:
 
 ```sql
-SELECT / * + LEADING (c o)
-USE_NL (o) * /
-       ...
+SELECT /*+ LEADING(c o) USE_NL(o) */ *
 ```
 
 But again, these are primarily useful tools for experiment and diagnosis.
@@ -1467,7 +1462,7 @@ but in reality it produces:
 8 million
 ```
 
-He chose this:
+The optimizer chose this plan:
 
 ```
 NESTED LOOPS
@@ -1536,7 +1531,7 @@ It is intentionally simplified, but very useful as a mental model.
 The practical diagnostic order shall be:
 
 ```
-1. Implementation Plan
+1. execution plan
        ↓
 2. Join Algorithm
        ↓
@@ -1570,12 +1565,12 @@ Assuming your lab schematics, you can compare algorithms.
 ### Exercise 1)
 
 ```sql
-SELECT / * + gather_plan_statistics * /
+SELECT /*+ gather_plan_statistics */
 e.employee_id,
 e.last_name,
 d.department_name
-FROM hr.employment e
-JOIN hr departments d
+FROM hr.employees e
+JOIN hr.departments d
 ON d.department_id = e.department_id;
 ```
 
@@ -1604,39 +1599,36 @@ access methods
 ### Exercise 2 is pushing Nested Loops
 
 ```sql
-SELECT / * + gather_plan_statistics
-USE_NL (d) *
+SELECT /*+ GATHER_PLAN_STATISTICS USE_NL(d) */
 e.employee_id,
 e.last_name,
 d.department_name
-FROM hr.employment e
-JOIN hr departments d
+FROM hr.employees e
+JOIN hr.departments d
 ON d.department_id = e.department_id;
 ```
 
 ### Exercise 3 is pushing Hash Join
 
 ```sql
-SELECT / * + gather_plan_statistics
-USE_HASH (d) *
+SELECT /*+ GATHER_PLAN_STATISTICS USE_HASH(d) */
 e.employee_id,
 e.last_name,
 d.department_name
-FROM hr.employment e
-JOIN hr departments d
+FROM hr.employees e
+JOIN hr.departments d
 ON d.department_id = e.department_id;
 ```
 
 ### Exercise 4) Merge Join
 
 ```sql
-SELECT / * + gather_plan_statistics
-USE_MERGE (d) *
+SELECT /*+ GATHER_PLAN_STATISTICS USE_MERGE(d) */
 e.employee_id,
 e.last_name,
 d.department_name
-FROM hr.employment e
-JOIN hr departments d
+FROM hr.employees e
+JOIN hr.departments d
 ON d.department_id = e.department_id;
 ```
 
@@ -1656,7 +1648,7 @@ TRANSACTIONS
 run:
 
 ```sql
-SELECT / * + gather_plan_statistics * /
+SELECT /*+ gather_plan_statistics */
 a.account_type,
 COUNT(*) transaction_count,
 SUM(t.amount) total_amount
@@ -1689,46 +1681,6 @@ USE_HASH (t)
 ```
 
 Not to decide that one is always better, but to understand the cost of the two strategies.
-
----
-
-## Questions and answers
-
-**What main Join algorithms uses Oracle?**
-
-Answer:
-
-> The main are Nested Loops, Hash Join and Sort Merge Join. Nested Loops is especially suitable when the outer dataset is small and there is an efficient path access to inner table. Hash Join is very effective for large sets and equi-joins, being very common in DWH. Sort Merge Join sorts the two sets and then combines them and can be useful including for certain non-equi joins.
-
----
-
-**When is Nested Loops Performance?**
-
-> When the first set produces relatively few rows and matches rows from the second set can be found efficiently, usually by index.
-
----
-
-**When would you prefer Hash Join?**
-
-> For large volumes, especially equi-joins between large tables, when a significant proportion of the data needs to be processed. It is very common in DWH and ETL.
-
----
-
-**Is FULL TABLE SCAN + HASH JOIN a bad plan?**
-
-> No. In DWH there can be the exact optimal plan, especially when a lot of the tables need to be read. Repeated use of a million-row index can be much more expensive.
-
----
-
-**What can make Oracle choose the wrong Nested Loops instead of Hash Join?**
-
-> Often a misestimate of cardinality. If the optimizer estimates several dozen rows but in reality there are millions, it can consider Nested Loops cheap. That's why I'm checking E-Rows versus A-Rows, then statistics, predicates and data distribution.
-
----
-
-**What is built side in a Hash Join?**
-
-> Oracle builds a hash structure from one of the sources, usually the one estimated to be more suitable for the build, then reads the other source and tests the hash tablet for the matching rows.
 
 ---
 
@@ -1824,6 +1776,44 @@ These three elements explain much of the performance problems of the Oracle Join
 
 ## Questions and answers
 
+**What main Join algorithms uses Oracle?**
+
+Answer:
+
+> The main are Nested Loops, Hash Join and Sort Merge Join. Nested Loops is especially suitable when the outer dataset is small and there is an efficient path access to inner table. Hash Join is very effective for large sets and equi-joins, being very common in DWH. Sort Merge Join sorts the two sets and then combines them and can be useful including for certain non-equi joins.
+
+---
+
+**When is Nested Loops Performance?**
+
+> When the first set produces relatively few rows and matches rows from the second set can be found efficiently, usually by index.
+
+---
+
+**When would you prefer Hash Join?**
+
+> For large volumes, especially equi-joins between large tables, when a significant proportion of the data needs to be processed. It is very common in DWH and ETL.
+
+---
+
+**Is FULL TABLE SCAN + HASH JOIN a bad plan?**
+
+> No. In DWH there can be the exact optimal plan, especially when a lot of the tables need to be read. Repeated use of a million-row index can be much more expensive.
+
+---
+
+**What can make Oracle choose the wrong Nested Loops instead of Hash Join?**
+
+> Often a misestimate of cardinality. If the optimizer estimates several dozen rows but in reality there are millions, it can consider Nested Loops cheap. That's why I'm checking E-Rows versus A-Rows, then statistics, predicates and data distribution.
+
+---
+
+**What is built side in a Hash Join?**
+
+> Oracle builds a hash structure from one of the sources, usually the one estimated to be more suitable for the build, then reads the other source and tests the hash tablet for the matching rows.
+
+---
+
 ### How would you briefly explain Join Algorithms to a colleague who knows SQL, but not this area?
 
 Join Algorithms covers Nested Loops for small / selective outer sets, Hash Join for large equijoins, Sort Merge Join and ordered / range scenarios. In practice, first determine what data enter and what result must be obtained, then check implementation, execution plan and effects on flow.
@@ -1838,7 +1828,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

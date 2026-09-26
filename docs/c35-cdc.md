@@ -35,7 +35,7 @@ DATA WAREHOUSE
 
 ---
 
-# 1. Why we need CDC
+## 1. Why we need CDC
 
 Suppose we have the scoreboard:
 
@@ -62,7 +62,7 @@ SELECT *
 FROM customers;
 ```
 
-and compare 10 million lines.
+and compare 10 million rows.
 
 With CDC we process only those:
 
@@ -83,7 +83,7 @@ lower load on OLTP
 
 ---
 
-# 2. Types of amendments sought
+## 2. Types of amendments sought
 
 CDC aims mainly at:
 
@@ -98,7 +98,7 @@ Example.
 Initial status:
 
 ```
-CUSTOMER_IDQ1QX STATUS
+CUSTOMER_ID | STATUS
 -----------   -------  ------
 101 Ana ACTIVE
 102 Mihai ACTIVE
@@ -136,7 +136,7 @@ D = DELETE
 
 ---
 
-# 3. Full Load vs Incremental Load vs CDC
+## 3. Full Load vs Incremental Load vs CDC
 
 These concepts need to be differentiated.
 
@@ -145,7 +145,7 @@ These concepts need to be differentiated.
 It's loading up.
 
 ```
-INSERTQ1QX dwh_customer
+INSERT INTO dwh_customer
 SELECT *
 FROM src_customer;
 ```
@@ -185,9 +185,9 @@ CDC follows the changes explicitly.
 Conceptual:
 
 ```
-INSERT custoder 103
-UPDATE curator 101
-DELETE custodian 102
+INSERT INTO customer (customer_id) VALUES (103)
+UPDATE customer SET ... WHERE customer_id = 101
+DELETE FROM customer WHERE customer_id = 102
 ```
 
 CDC may be:
@@ -201,7 +201,7 @@ real-time
 
 ---
 
-# 4. Main Methods of CDC
+## 4. Main Methods of CDC
 
 There are several strategies.
 
@@ -218,7 +218,7 @@ The most important are:
 
 ---
 
-# 5. Timestamp-based CDC
+## 5. Timestamp-based CDC
 
 It's one of the simplest methods.
 
@@ -253,7 +253,7 @@ FROM customers
 WHERE last_update_date; TIMESTAMP '2026-09-23 01:00:00';
 ```
 
-Flux:
+Flow:
 
 ```
 ETL T1
@@ -281,7 +281,7 @@ checkpoint
 
 ---
 
-# 6. The problem of timestamps
+## 6. The problem of timestamps
 
 Variant:
 
@@ -330,7 +330,7 @@ AND last_update_date
 
 ---
 
-# 7. Sequence-based CDC
+## 7. Sequence-based CDC
 
 Sometimes the source offers a growing ID monotone.
 
@@ -371,7 +371,7 @@ But it only works if the identifier respects the order of the changes.
 
 ---
 
-# 8. Trigger-based CDC
+## 8. Trigger-based CDC
 
 We can create an audit board.
 
@@ -390,10 +390,10 @@ TRIGGER:
 CREATE OR REPLACE TRIGGER trg_customer_cdc
 AFTER INSERT OR UPDATE OR DELETE
 ON customers
-FORQ1QX ROW
+FOR EACH ROW
 BEGIN
 
-IFQ1QX THEN
+IF INSERTING THEN
 
 INSERT INTO customer_changes (
 customer_id,
@@ -401,12 +401,12 @@ operation,
 change_date
 )
 VALUES (
-NEW.customer_id,
+:NEW.customer_id,
 'I',
 SYSTIMESTAMP
 );
 
-ELSIFQ1QX THEN
+ELSIF UPDATING THEN
 
 INSERT INTO customer_changes (
 customer_id,
@@ -414,12 +414,12 @@ operation,
 change_date
 )
 VALUES (
-NEW.customer_id,
+:NEW.customer_id,
 'U',
 SYSTIMESTAMP
 );
 
-ELSIFQ1QX THEN
+ELSIF DELETING THEN
 
 INSERT INTO customer_changes (
 customer_id,
@@ -427,7 +427,7 @@ operation,
 change_date
 )
 VALUES (
-OLD.customer_id,
+:OLD.customer_id,
 'D',
 SYSTIMESTAMP
 );
@@ -453,7 +453,7 @@ CUSTOMER_CHANGES
 
 ---
 
-# 9. Trigger-based problem CDC
+## 9. Trigger-based problem CDC
 
 Triggers can affect the OLTP system.
 
@@ -485,7 +485,7 @@ log-based CDC
 
 ---
 
-# 10. Log-based CDC
+## 10. Log-based CDC
 
 This is one of the most important enterprise techniques.
 
@@ -519,7 +519,7 @@ and does not require trigger on each table.
 
 ---
 
-# 11. REDO and CDC
+## 11. REDO and CDC
 
 Suppose:
 
@@ -552,7 +552,7 @@ CUSTOMERS = 100
 
 ---
 
-# 12. Oracle LogMiner
+## 12. Oracle LogMiner
 
 Oracle provides mechanisms that allow analysis of redo logs.
 
@@ -587,13 +587,13 @@ operation,
 seg_owner,
 table_name,
 sql_redo
-FROM v $logmnr_contents;
+FROM V$logmnr_contents;
 ```
 
 The result may contain something like this:
 
 ```
-OPERATIONQ1QX SQL_REDO
+OPERATION | SQL_REDO
 ---------   ----------   -----------------------------
 INSERT CUSTOMER insert into...
 UPDATE CUSTOMER update...
@@ -604,7 +604,7 @@ In practice, LogMiner configuration involves privileges and LogMiner session con
 
 ---
 
-# 13. Oracle GoldenGate
+## 13. Oracle GoldenGate
 
 For CDC enterprise, an important product in the Oracle ecosystem is:
 
@@ -646,7 +646,7 @@ An important advantage is reduced latency.
 
 ---
 
-# 14. CDC and ODI
+## 14. CDC and ODI
 
 For an Oracle Data Developer, the relationship between CDC and:
 
@@ -682,7 +682,7 @@ DWH
 
 ---
 
-# 15. ODI Journalizing
+## 15. ODI Journalizing
 
 ODI defines two classic concepts:
 
@@ -708,7 +708,7 @@ where the J $table contains information about the changes.
 
 ---
 
-# 16. Consistent Set Journalizing
+## 16. Consistent Set Journalizing
 
 It is important when several tables need to be processed in a consistent state.
 
@@ -730,7 +730,7 @@ Consistent Set Journalizing tries to provide a consistent logical picture of ass
 
 ---
 
-# 17. CDC and Staging
+## 17. CDC and Staging
 
 A common DWH architecture is:
 
@@ -773,7 +773,7 @@ CDC_TIMESTAMP
 
 ---
 
-# 18. Example of Table CDC staging
+## 18. Example of Table CDC staging
 
 ```
 CREATE TABLE stg_customer_delta (
@@ -795,7 +795,7 @@ Example data:
 
 ---
 
-# 19. Application of changes in DWH
+## 19. Application of changes in DWH
 
 For INSERT and UPDATE we can use:
 
@@ -816,7 +816,7 @@ ON (
 d.customer_id = s.customer_id
 )
 
-WHENQ1QX THEN
+WHEN MATCHED THEN
 UPDATE SET
 d.customer_name = s.customer_name,
 d.status = s.status
@@ -825,7 +825,7 @@ WHEN NOT MATCHED THEN
 INSERT (
 customer_id,
 customer_name,
-stasis
+status
 )
 VALUES (
 s.customer_id,
@@ -836,7 +836,7 @@ sstatus
 
 ---
 
-# 20. Treatment of DELETE
+## 20. Treatment of DELETE
 
 Delegate is one of the most important aspects of CDC.
 
@@ -859,7 +859,7 @@ but not necessarily:
 DELETE
 ```
 
-Because the line no longer exists.
+Because the row no longer exists.
 
 This is why we need mechanisms such as:
 
@@ -872,7 +872,7 @@ redo / log-based CDC
 
 ---
 
-# 21. Soft Delete
+## 21. Soft Delete
 
 A common solution is:
 
@@ -907,7 +907,7 @@ active_flag = N
 
 ---
 
-# 22. Hard Delete in DWH
+## 22. Hard Delete in DWH
 
 If the traineeship contains:
 
@@ -933,7 +933,7 @@ We often keep track of history.
 
 ---
 
-# 23. CDC and SCD
+## 23. CDC and SCD
 
 CDC and SCD are different concepts.
 
@@ -945,7 +945,7 @@ SCD replies:
 
 > **How do we keep change in DWH size?**
 
-Flux:
+Flow:
 
 ```
 OLTP
@@ -961,7 +961,7 @@ DIM_CUSTOMER
 
 ---
 
-# 24.CDC + SCD Type 1
+## 24.CDC + SCD Type 1
 
 We have:
 
@@ -989,7 +989,7 @@ History is lost.
 
 ---
 
-# 25. CDC + SCD Type 2
+## 25. CDC + SCD Type 2
 
 CDC detects the same change:
 
@@ -1021,7 +1021,7 @@ create new version
 
 ---
 
-# 26. Watermark Table
+## 26. Watermark Table
 
 In a real ETL, the processed values are kept in a control table.
 
@@ -1053,7 +1053,7 @@ WHERE process_name = 'LOAD_CUSTOMER';
 
 ---
 
-# 27. Updating the watermark
+## 27. Updating the watermark
 
 After success:
 
@@ -1073,7 +1073,7 @@ Otherwise we can lose changes.
 
 ---
 
-# 28. Idempotency
+## 28. Idempotency
 
 A very important property in CDC/ETL is:
 
@@ -1090,7 +1090,7 @@ event:
 CUSTOMER 100 - EXCIPIENTS ACTIVE
 ```
 
-If he comes twice:
+If the same change arrives twice:
 
 ```
 UPDATE custodian
@@ -1112,7 +1112,7 @@ for deductions.
 
 ---
 
-# 29. Exactly-once vs At-least-once
+## 29. Exactly-once vs At-least-once
 
 Concepts of:
 
@@ -1144,7 +1144,7 @@ is very common.
 
 ---
 
-# 30. SCN; System Change Number
+## 30. SCN; System Change Number
 
 In Oracle it is very important that the concept:
 
@@ -1177,7 +1177,7 @@ This is safer than using a simple timestamp in many Oracle scenarios.
 
 ---
 
-# 31. Commit and CDC
+## 31. Commit and CDC
 
 A correct CDC must take into account transactions.
 
@@ -1216,7 +1216,7 @@ only then do the changes become consumable.
 
 ---
 
-# 32. Ordering
+## 32. Ordering
 
 The order of events matters.
 
@@ -1247,7 +1247,7 @@ comment order
 
 ---
 
-# 33. Evolution Scheme
+## 33. Evolution Scheme
 
 CDC must also manage structural changes.
 
@@ -1283,7 +1283,7 @@ CDC metadata
 
 ---
 
-# 34. CDC latency
+## 34. CDC latency
 
 An important KPI is:
 
@@ -1317,7 +1317,7 @@ streaming CDC - = seconds or sub-seconds
 
 ---
 
-# 35. CDC in a bank DWH
+## 35. CDC in a bank DWH
 
 A realistic scenario:
 
@@ -1368,7 +1368,7 @@ DWH_ACCOUNT
 
 ---
 
-# 36. CDC for fact tables
+## 36. CDC for fact tables
 
 Suppose:
 
@@ -1406,7 +1406,7 @@ For events tables, CDC can be much simpler than for dimensions.
 
 ---
 
-# 37. CDC for Dimensions
+## 37. CDC for Dimensions
 
 For:
 
@@ -1447,7 +1447,7 @@ business comparison
 
 ---
 
-# 38. Snappshot comparison
+## 38. Snappshot comparison
 
 If the source does not provide:
 
@@ -1488,7 +1488,7 @@ deleted rows
 
 ---
 
-# 39. Detection of INSERT by comparison
+## 39. Detection of INSERT by comparison
 
 ```
 SELECT n. *
@@ -1506,7 +1506,7 @@ INSERT
 
 ---
 
-# 40. Detection of DELETE
+## 40. Detection of DELETE
 
 ```
 SELECT o. *
@@ -1524,7 +1524,7 @@ DELETE
 
 ---
 
-# 41. Detection of UPDATE
+## 41. Detection of UPDATE
 
 ```
 SELECT n. *
@@ -1538,7 +1538,7 @@ For many columns, this gets expensive.
 
 ---
 
-# 42. Hash-based comparison
+## 42. Hash-based comparison
 
 A common optimization is the calculation of a hash.
 
@@ -1584,7 +1584,7 @@ normalisation
 
 ---
 
-# 43. CDC and Data Quality
+## 43. CDC and Data Quality
 
 The fact that the source sent a change doesn't mean it has to be automatically loaded.
 
@@ -1623,7 +1623,7 @@ instead of DWH.
 
 ---
 
-# 44. CDC and restartability
+## 44. CDC and restartability
 
 A good pipeline must bear:
 
@@ -1660,7 +1660,7 @@ incorrect doubling
 
 ---
 
-# 45. Recommended Design
+## 45. Recommended Design
 
 A robust simplified design:
 
@@ -1671,7 +1671,7 @@ SOURCE
    v
 RAW_DELTA
    |
-= = = Validation = = =
+VALIDATION
    v
 STAGING
    |
@@ -1706,7 +1706,7 @@ Because an error can cause data loss.
 
 ---
 
-# 46. CDC and Performance
+## 46. CDC and Performance
 
 In large volumes, the following must be observed:
 
@@ -1748,7 +1748,7 @@ for:
 
 ---
 
-# 47. Indexation of stagnation
+## 47. Indexation of stagnation
 
 For:
 
@@ -1764,7 +1764,7 @@ CDC_OPERATION
 BATCH_ID
 ```
 
-but overindexation should be avoided.
+but excessive indexing should be avoided.
 
 The trainee gets a lot:
 
@@ -1776,7 +1776,7 @@ and each index produces extra cost.
 
 ---
 
-# 48. Common errors
+## 48. Common errors
 
 ### 1. Watermark Updated Before Success
 
@@ -1846,6 +1846,157 @@ Several changes can be part of the same transaction.
 
 ---
 
+## 51. The more difficult scenario
+
+**Question:**
+
+> Your ETL reads all the lines where LAST_UPDATE_DATA at_run_data. How do you detect DELETE?
+
+Answer:
+
+> I can not reliably detect hard delete just by checking the current table, because the row no longer exists. I would use software-delete, audit / trigger table, log-based CDC or a comparison snapshot mechanism.
+
+---
+
+## 52. Oracle Scenario
+
+**Question:**
+
+> What would you use in Oracle for almost real-time CDC?
+
+Possible answers:
+
+```
+Oracle GoldenGate
+redo / log-based capture
+LogMiner-based solutions
+ODI Journalizing
+```
+
+The choice depends on:
+
+```
+latency requirements
+licensing
+volumes
+architecture
+source / target technologies
+```
+
+---
+
+## 53. Oracle Exercise 26ai
+
+You can create:
+
+```
+CREATE TABLE cdc_customer (
+customer_id NUMBER PRIMARY KEY,
+customer_name VARCHAR2 (100),
+VARCHAR2 status (20),
+last_update_date TIMESTAMP DEFAULT SYSTIMESTAMP
+);
+```
+
+Insert:
+
+```
+INSERT INTO cdc_customer
+VALUES (
+1,
+'Ana',
+'ACTIVE',
+SYSTIMESTAMP
+);
+
+COMMIT;
+```
+
+Simulate watermark:
+
+```
+VAR last_ts TIMESTAMP;
+
+EXEC: last_ts: = SYSTIMESTAMP;
+```
+
+Then amend the data:
+
+```
+UPDATE cdc_customer
+SET
+status = 'INACTIVE',
+last_update_date = SYSTIMESTAMP
+WHERE customer_id = 1;
+
+INSERT INTO cdc_customer
+VALUES (
+2,
+'Mihai',
+'ACTIVE',
+SYSTIMESTAMP
+);
+
+COMMIT;
+```
+
+Simplified CDC:
+
+```
+SELECT *
+FROM cdc_customer
+WHERE last_update_date
+```
+
+---
+
+## 54. Exercise closer to a real ETL
+
+Create the table:
+
+```
+CREATE TABLE etl_control (
+process_name VARCHAR2 (50) PRIMARY KEY,
+watermark TIMESTAMP
+);
+```
+
+Initialize:
+
+```
+INSERT INTO etl_control
+VALUES (
+'CUSTOMER_LOAD',
+TIMESTAMP '2000-01-01 00:00:00'
+);
+
+COMMIT;
+```
+
+Then ETL:
+
+```
+SELECT c. *
+FROM cdc_customer c
+CROSS JOIN etl_control
+WHERE e.process_name = 'CUSTOMER_LOAD'
+AND c.last_update_date,
+```
+
+After successful loading:
+
+```
+UPDATE etl_control
+SET watermark = SYSTIMESTAMP
+WHERE process_name = 'CUSTOMER_LOAD';
+
+COMMIT;
+```
+
+In real implementation, the current watermark should be captured before processing, not arbitrarily recalculated after completion.
+
+---
+
 ## Questions and answers
 
 ### What is CDC?
@@ -1896,7 +2047,7 @@ Because:
 
 ```
 the impact on the application is reduced
-does not require complete querys
+does not require complete queries
 can detect INSERT / UPDATE / DELETE
 can keep order of transactions
 ```
@@ -1937,170 +2088,15 @@ in dimension DWH
 
 ---
 
-## Questions and answers
-
 **Question:**
 
-> We have a 200 million-line CUSTOMER table. Every day it changes about 300,000. How would you design loading in DWH?
+> We have a CUSTOMER table with 200 million rows. Every day it changes about 300,000. How would you design loading in DWH?
 
 A good answer:
 
 > I would not make full scan and full reload daily. I would use CDC. If the source provides logbased CDC, it would be preferable for large volume. Alternatively, I would use a timestamp or a SCN as watermark. The changes would be loaded into a staging area, where I would do validations and deductions. Then I would apply SCD logic to the size of DWH. The checkpoint would be updated only after successful processing, so that the process is restartable.
 
 ---
-
-# 51. The more difficult scenario
-
-**Question:**
-
-> Your ETL- reads all the lines where LAST\ _ UPDATE\ _ DATA at\ _ run\ _ data. How do you detect DELETE?
-
-Answer:
-
-> I can not reliably detect hard delete just by checking the current table, because the row no longer exists. I would use software-delete, audit / trigger table, log-based CDC or a comparison snapshot mechanism.
-
----
-
-# 52. Oracle Scenario
-
-**Question:**
-
-> What would you use in Oracle for almost real-time CDC?
-
-Possible answers:
-
-```
-Oracle GoldenGate
-redo / log-based capture
-LogMiner-based solutions
-ODI Journalizing
-```
-
-The choice depends on:
-
-```
-latency requirements
-licensing
-volumes
-architecture
-source / target technologies
-```
-
----
-
-# 53. Oracle Exercise 26ai
-
-You can create:
-
-```
-CREATE TABLE cdc_customer (
-customer_id NUMBER PRIMARY KEY,
-customer_name VARCHAR2 (100),
-VARCHAR2 status (20),
-last_update_date TIMESTAMP DEFAULT SYSTIMESTAMP
-);
-```
-
-Insert:
-
-```
-INSERTQ1QX cdc_customer
-VALUES (
-1,
-'Ana',
-'ACTIVE',
-SYSTIMESTAMP
-);
-
-COMMIT;
-```
-
-Simulate watermark:
-
-```
-VAR last_ts TIMESTAMP;
-
-EXEC: last_ts: = SYSTIMESTAMP;
-```
-
-Then amend the data:
-
-```
-UPDATE cdc_customer
-SET
-status = 'INACTIVE',
-last_update_date = SYSTIMESTAMP
-WHERE customer_id = 1;
-
-INSERTQ1QX cdc_customer
-VALUES (
-2,
-'Mihai',
-'ACTIVE',
-SYSTIMESTAMP
-);
-
-COMMIT;
-```
-
-Simplified CDC:
-
-```
-SELECT *
-FROM cdc_customer
-WHERE last_update_date
-```
-
----
-
-# 54. Exercise closer to a real ETL
-
-Create the table:
-
-```
-CREATE TABLE etl_control (
-process_name VARCHAR2 (50) PRIMARY KEY,
-watermark TIMESTAMP
-);
-```
-
-Initialize:
-
-```
-INSERTQ1QX etl_control
-VALUES (
-'CUSTOMER_LOAD',
-TIMESTAMP '2000-01-01 00:00:00'
-);
-
-COMMIT;
-```
-
-Then ETL:
-
-```
-SELECT c. *
-FROM cdc_customer c
-CROSS JOIN etl_control
-WHERE e.process_name = 'CUSTOMER_LOAD'
-AND c.last_update_date,
-```
-
-After successful loading:
-
-```
-UPDATE etl_control
-SET watermark = SYSTIMESTAMP
-WHERE process_name = 'CUSTOMER_LOAD';
-
-COMMIT;
-```
-
-In real implementation, the current watermark should be captured before processing, not arbitrarily recalculated after completion.
-
----
-
-## Questions and answers
 
 The most useful mental scheme is:
 
@@ -2160,8 +2156,6 @@ This is exactly where CDC binds to previous modules about **ETL/ELT, SCD, DWH, R
 
 ---
 
-## Questions and answers
-
 ### How would you briefly explain the CDC's Change Data Capture to a colleague who knows SQL, but not this area?
 
 CDC's Change Data Capture covers capturing inserts, updates and deletes, log-based vs trigger / timestamp-based CDC, SCN / watermark concepts. In practice, first, I determine what data enter and what result to achieve, then I check implementation, execution plan and effects on flow.
@@ -2176,7 +2170,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

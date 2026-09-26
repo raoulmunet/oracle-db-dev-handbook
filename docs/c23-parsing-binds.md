@@ -8,11 +8,11 @@ sidebar_position: 23
 
 <div className="chapter-kicker">Chapter C23 · Complete course</div>
 
-The parsing is one of the most important areas for the performance of the Oracle. Two queries that do exactly the same can have very different costs if one reuses the SQL- already processed by the Oracle, and the other forces the base to parsing repeatedly.
+The parsing is one of the most important areas for the performance of the Oracle. Two queries that do exactly the same can have very different costs if one reuses the SQL already processed by the Oracle, and the other forces the base to parsing repeatedly.
 
 The central idea is:
 
-> **Band variables allow Oracle to reuse the cursor and execute the plane for the same SQL, avoiding repeated hard parses.**
+> **Bind variables allow Oracle to reuse the cursor and reuse the execution plan for the same SQL statement, avoiding repeated hard parses.**
 
 ---
 
@@ -43,7 +43,7 @@ Search existing cursor
    ↓
 Optimizer
    ↓
-Implementation Plan
+execution plan
    ↓
 Execution
 ```
@@ -52,7 +52,7 @@ This stage of analysis is called **parsing**.
 
 ---
 
-# 2. The two important types of parsing
+## 2. The two important types of parsing
 
 There are two main situations:
 
@@ -68,7 +68,7 @@ The difference is very important for performance.
 
 ## 3. Hard Parse
 
-In an **hard park**, the Oracle must do almost all of the SQL- training process.
+In an **hard park**, the Oracle must do almost all of the SQL training process.
 
 For example, the first execution:
 
@@ -86,11 +86,11 @@ The Oracle must verify:
 - the types of columns;
 - statistics;
 - access methods;
-- order of joints;
-- available inks;
+- join order;
+- available indexes;
 - the estimated costs.
 
-The optimiser then produces the execution of the plane.
+The optimizer then produces an execution plan.
 
 Conceptual example:
 
@@ -113,11 +113,11 @@ TABLE ACCESS BY INDEX ROWID
 INDEX UNIQUE SCAN EMP_EMP_ID_PK
 ```
 
-Execution of the plane and associated cursor are then kept in **Shared Pool**.
+execution plan and associated cursor are then kept in **Shared Pool**.
 
 ---
 
-# 4. Soft Parse
+## 4. Soft Parse
 
 Suppose the same command is executed again:
 
@@ -127,7 +127,7 @@ FROM
 WHERE employee_id = 100;
 ```
 
-Oracle is looking for the SQL-ul in Shared Pool.
+Oracle is looking for the SQL statement in Shared Pool.
 
 If it finds a reusable cursor:
 
@@ -145,11 +145,11 @@ This is one:
 
 **soft parse**
 
-The optimiser doesn't have to redo the whole process.
+The optimizer doesn't have to redo the whole process.
 
 ---
 
-# 5. Hard Parse vs Soft Parse
+## 5. Hard Parse vs Soft Parse
 
 Comparative:
 
@@ -160,13 +160,13 @@ Optimiszer, yes, no, usually
 New plan, yeah, no
 CPU consumption is lower
 The difference Shared Pool is higher and smaller
-♪ Weak ♪ ♪ Weak ♪
+| Weak | | Weak |
 
 In an OLTP system with thousands of transactions / second, the difference can be enormous.
 
 ---
 
-# 6. The Literal Problem SQL
+## 6. The Literal Problem SQL
 
 Suppose the app executes:
 
@@ -227,7 +227,7 @@ You can reach a very large number of hard parses.
 
 ---
 
-# 7. Bind Variables
+## 7. Bind Variables
 
 The solution is the use of **bind variables**.
 
@@ -247,7 +247,7 @@ FROM customers
 WHERE customer_id =: customer_id;
 ```
 
-: custodian\ _ id este bind variable.
+: custodian_id este bind variable.
 
 In different executions:
 
@@ -269,7 +269,7 @@ So Oracle can reuse the cursor.
 
 ---
 
-# 8. What happens internally
+## 8. What happens internally
 
 First execution:
 
@@ -329,7 +329,7 @@ executes
 
 ---
 
-# 9. The Advantages of Bind Variables
+## 9. The Advantages of Bind Variables
 
 Bind variables have many advantages.
 
@@ -350,9 +350,9 @@ but also:
 
 ---
 
-# 10. Example PL/SQL
+## 10. Example PL/SQL
 
-Band variables appear naturally in SQL executed from PL/SQL.
+Bind variables appear naturally in SQL executed from PL/SQL.
 
 Example:
 
@@ -373,11 +373,11 @@ END;
 /
 ```
 
-Oracle can treat the PL/SQL variable as a bind value in the internal SQL-.
+Oracle can treat the PL/SQL variable as a bind value in the internal SQL.
 
 ---
 
-# 11. SQL Dynamic Wrong
+## 11. SQL Dynamic Wrong
 
 A very common problem occurs with dynamic SQL.
 
@@ -405,7 +405,7 @@ FROM customers
 WHERE customer_id = 100
 ```
 
-and for 101 he receives:
+and for the value 101, the optimizer estimates:
 
 ```
 SELECT customer_name
@@ -417,7 +417,7 @@ The texts of SQL are different.
 
 ---
 
-# 12. Correct version with variable bind
+## 12. Correct version with variable bind
 
 ```
 EXECUTE IMMEDIATE
@@ -428,7 +428,7 @@ INTO v_name
 USING v_customer_id;
 ```
 
-SQL- remains constant:
+SQL remains constant:
 
 ```
 SELECT customer_name
@@ -440,46 +440,7 @@ and the values are transmitted separately.
 
 ---
 
-## Questions and answers
-
-Wrong version:
-
-```
-v_sql:
-* * *
-SET balance = balance +) p_amount
-' WHERE account_id = ';
-
-EXECUTE IMMEDIATE v_sql;
-```
-
-If we have:
-
-```
-account 100 / amount 50
-account 101 / amount 70
-account 102 / amount 40
-```
-
-Oracle receives three different texts.
-
-Correct version:
-
-```
-v_sql:
-* * *
-SET balance = balance +: amount
-WHERE account_id =: account_id;
-
-EXECUTEQ1QX v_sql
-USING p_amount, p_account_id;
-```
-
-Now SQL- is reusable.
-
----
-
-# 14. Bind Variables and Shared Pool
+## 14. Bind Variables and Shared Pool
 
 Shared Pool is part of SGA.
 
@@ -499,9 +460,9 @@ SGA
 - Data Dictionary Cache
 ```
 
-SQL- is stored in **Library Cache**.
+SQL is stored in **Library Cache**.
 
-If SQL- is reusable:
+If SQL is reusable:
 
 ```
 New SQL
@@ -515,7 +476,7 @@ Soft Parse
 
 ---
 
-# 15. What is a cursor in this context
+## 15. What is a cursor in this context
 
 An Oracle cursor represents the internal structure associated with an SQL command.
 
@@ -538,7 +499,7 @@ child cursor
 
 ---
 
-# 16. Parent Cursor and Child Cursor
+## 16. Parent Cursor and Child Cursor
 
 Suppose:
 
@@ -564,7 +525,7 @@ Child cursors can exist if Oracle needs different execution options.
 
 For example because of:
 
-- different band types;
+- different bind types;
 - NLS settings;
 - Optimizer settings;
 - object changes,
@@ -573,7 +534,7 @@ For example because of:
 
 ---
 
-# 17. Why isn't there always only one cursor
+## 17. Why isn't there always only one cursor
 
 Two sessions may execute:
 
@@ -599,7 +560,7 @@ Oracle can create different child cursors.
 
 ---
 
-# 18. Bind Peeking
+## 18. Bind Peeking
 
 Here comes a very important concept.
 
@@ -619,15 +580,15 @@ For example:
 : status = 'CANCELLED'
 ```
 
-The optimiser sees this value when he generates the plan.
+The optimizer uses this value when it generates the execution plan.
 
 This mechanism is called:
 
-**band peeking**
+**bind peeking**
 
 ---
 
-# 19. The problem of unbalanced distributions
+## 19. The problem of unbalanced distributions
 
 Let's assume the table:
 
@@ -644,7 +605,7 @@ FAILED 2,000
 There is an index:
 
 ```
-CREATEQ1QX idx_orders_status
+CREATE INDEX idx_orders_status
 ON orders (status);
 ```
 
@@ -665,12 +626,12 @@ status = 'ACTIVE'
 may be more effective:
 
 ```
-FULLQ1QX SCAN
+TABLE ACCESS FULL
 ```
 
 ---
 
-# 20. Bind Variable and Plan
+## 20. Bind Variable and Plan
 
 SQL:
 
@@ -686,7 +647,7 @@ First execution:
 : status = 'FAILED'
 ```
 
-The optimiser can choose:
+The optimizer can choose:
 
 ```
 INDERANGE SCAN
@@ -706,17 +667,17 @@ INDERANGE SCAN
 
 can become very ineffective.
 
-This is one of the classic problems associated with the band variables.
+This is one of the classic problems associated with the bind variables.
 
 ---
 
-# 21. Adaptive Sharing Course
+## 21. Adaptive Sharing Course
 
 Oracle can detect that the same SQL needs different plans depending on the Bind values.
 
 The mechanism is called:
 
-**Adaptive Saring** Cursor
+**Adaptive Cursor Sharing** Cursor
 
 Conceptual:
 
@@ -738,11 +699,11 @@ ACTIVE
 → FULL TABLE SCAN
 ```
 
-So Oracle retains the advantage of the band variables, but may have several plans.
+So Oracle retains the advantage of the bind variables, but may have several plans.
 
 ---
 
-# 22. Bend-sensitive cursor
+## 22. Bend-sensitive cursor
 
 Oracle can identify a straight cursor:
 
@@ -769,13 +730,13 @@ child_number,
 is_bind_sensitive,
 is_bind_aware,
 executions
-FROM v $sql
+FROM V$sql
 WHERE sql_text LIKE '%orders%';
 ```
 
 ---
 
-# 23. Bend-aware cursor
+## 23. Bend-aware cursor
 
 If Oracle determines that the distribution of values produces significant selectivity differences, the cursor may become:
 
@@ -783,13 +744,13 @@ If Oracle determines that the distribution of values produces significant select
 BIND_AWARE
 ```
 
-Then Oracle can use different child cursors for different categories of wind values.
+Then Oracle can use different child cursors for different categories of bind values.
 
 ---
 
-# 24. Histogram and Band Variables
+## 24. Histograms and Bind Variables
 
-Histograms help the optimiser understand uneven distributions.
+Histograms help the optimizer understand uneven distributions.
 
 For example:
 
@@ -799,10 +760,10 @@ CANCELLED 0.07%
 FAILED 0.03%
 ```
 
-Without the histogram, the optimiser may assume approximately:
+Without the histogram, the optimizer may assume approximately:
 
 ```
-1 / număr_valori_distincte
+1 / number_of_distinct_values
 ```
 
 for each value.
@@ -813,7 +774,7 @@ Bind peeking + histogram + Adaptive Sharing Cursor are closely linked in such ca
 
 ---
 
-# 25. SQL Injection
+## 25. SQL Injection
 
 Bind variables are not only important for performance.
 
@@ -856,7 +817,7 @@ The value is treated as a date, not as SQL.
 
 ---
 
-# 26. Bind variables cannot replace SQL objects
+## 26. Bind variables cannot replace SQL objects
 
 Very important:
 
@@ -889,7 +850,7 @@ SQL objects require Dynamic SQL.
 
 ---
 
-# 27. Example with dynamic table name
+## 27. Example with dynamic table name
 
 If the table is variable:
 
@@ -898,7 +859,7 @@ v_sql:
 *)
 FROM;
 
-EXECUTEQ1QX v_sql
+EXECUTE IMMEDIATE v_sql
 INTO v_count;
 ```
 
@@ -918,7 +879,7 @@ data values → bind variables
 
 ---
 
-# 28. Parsing in an important loop
+## 28. Parsing in an important loop
 
 Bad example:
 
@@ -930,7 +891,6 @@ FROM customers
 LOOP
 
 EXECUTE IMMEDIATE
-= = sync, corrected by elderman = = @ elder _ man
 WHERE customer_id = "customer_id ';
 
 END LOOP;
@@ -954,7 +914,6 @@ FROM customers
 LOOP
 
 EXECUTE IMMEDIATE
-= = sync, corrected by elderman = = @ elder _ man
 WHERE customer_id =: 1
 USING r.customer_id;
 
@@ -965,7 +924,7 @@ But even this can be improved.
 
 ---
 
-# 29. SQL set-based is even better
+## 29. SQL set-based is even better
 
 In fact, if logic allows:
 
@@ -996,7 +955,7 @@ Often the last one is the best.
 
 ---
 
-# 30. Parse calls vs Executions
+## 30. Parse calls vs Executions
 
 In V$SQL we can see:
 
@@ -1008,7 +967,7 @@ parse_calls,
 Loads,
 invalidations,
 sql_text
-FROM v $sql
+FROM V$sql
 WHERE executions
 ```
 
@@ -1032,7 +991,7 @@ can indicate a problem of cursor success.
 
 ---
 
-# 31. Very Important: Soft Parse does not mean zero cost
+## 31. Very Important: Soft Parse does not mean zero cost
 
 It's a common mistake to say:
 
@@ -1051,7 +1010,7 @@ That's why well-built applications sometimes try to reuse even the cursor alread
 
 ---
 
-# 32. Parse once, execute many
+## 32. Parse once, execute many
 
 The ideal model is approximately:
 
@@ -1085,7 +1044,7 @@ The concept is often expressed as:
 
 ---
 
-# 33. Example JDBC
+## 33. Example JDBC
 
 Bad example:
 
@@ -1111,21 +1070,21 @@ Stmt.setInt (1, customerId);
 Stmt.executeQuery ();
 ```
 
-? gets the wind variable in the interaction with Oracle.
+? is a bind variable placeholder supplied by the client when it executes the statement.
 
 ---
 
-# 34. Example Python
+## 34. Example Python
 
 With Oracle driver:
 
 ```
 course. Executes (
-♪ ♪
+| |
 SELECT *
 FROM customers
 WHERE customer_id =:
-♪ ♪
+| |
 id = 100
 )
 ```
@@ -1134,17 +1093,17 @@ No:
 
 ```
 course. Executes (
-♪ ♪
+| |
 SELECT *
 FROM customers
 WHERE customer_id = {customer_id}
-♪ ♪
+| |
 )
 ```
 
 ---
 
-# 35. Example DWH / ETL
+## 35. Example DWH / ETL
 
 Let's assume an ETL trial:
 
@@ -1190,13 +1149,13 @@ or set-based operation.
 
 ---
 
-# 36. Parsing Storm
+## 36. Parsing Storm
 
 A phenomenon called informal can occur in highly charged systems:
 
 **parse storm**
 
-Many sessions simultaneously make hard parse for many SQL-uri.
+Many sessions simultaneously make hard parse for many SQL statements.
 
 Symptoms:
 
@@ -1222,7 +1181,7 @@ bind variables
 
 ---
 
-# 37. CURSOR\ _ SHARING
+## 37. CURSOR_SHARING
 
 The Oracle has the parameter:
 
@@ -1255,7 +1214,7 @@ and:
 customer_id = 101
 ```
 
-are different SQL-s.
+are different SQL statements.
 
 ---
 
@@ -1279,11 +1238,11 @@ This can reduce the hard parsing of poorly designed applications.
 
 However:
 
-> CURSOR\ _ SHARING = FORCE is not an ideal substitute for the bind variables correctly implemented in the application.
+> CURSOR_SHARING = FORCE is not an ideal substitute for the bind variables correctly implemented in the application.
 
 ---
 
-# 38. How to find SQL-uri with many parses
+## 38. How to find SQL statements with many parses
 
 Example:
 
@@ -1294,7 +1253,7 @@ executions,
 parse_calls,
 ROUND (parse_calls / NULLIF (executions, 0), 3) AS parse_per_exec
 sql_text
-FROM v $sql
+FROM V$sql
 WHERE executions
 ORDER BY parse_per_exec DESC;
 ```
@@ -1309,7 +1268,7 @@ It's worth investigating.
 
 ---
 
-# 39. How to find almost identical SQL-uri
+## 39. How to find almost identical SQL statements
 
 Suppose in V$SQL:
 
@@ -1324,7 +1283,7 @@ It's a strong indication that the app does not use the bind variables.
 
 ---
 
-# 40. What SQL\ _ ID is
+## 40. What SQL_ID is
 
 The Oracle shall generate an identifier:
 
@@ -1340,7 +1299,7 @@ Example:
 SELECT
 sql_id,
 sql_text
-FROM v $sql;
+FROM V$sql;
 ```
 
 Bind variables:
@@ -1361,11 +1320,11 @@ account_id = 101
 account_id = 102
 ```
 
-you will see more distinct SQL-s.
+you will see more distinct SQL statements.
 
 ---
 
-# 41. Parse → Bind → Execute → Fetch
+## 41. Parse → Bind → Execute → Fetch
 
 For an SELECT, the complete conceptual model is:
 
@@ -1391,7 +1350,7 @@ Oracle:
 
 ```
 PARSE
-SQL-
+SQL
 
 BIND
 : id = 100
@@ -1414,97 +1373,7 @@ you don't have the FETCH stage in the same sense.
 
 ---
 
-## Questions and answers
-
-### What is hard parse?
-
-The process in which Oracle has to compile a new SQL, including semantic checks and the generation of the plane execution by the optimiser.
-
----
-
-### What is soft parse?
-
-Oracle finds a compatible cursor in Shared Pool and reuses the execution of the existing planet.
-
----
-
-### Why are the bind variables important?
-
-Because they allow the cursor to be re-used, they reduce the hard parsing, the consumption of CPU and the contention in Shared Pool.
-
----
-
-### What is the difference between these two SQL-uri?
-
-```
-SELECT *
-FROM custodian
-WHERE id = 10;
-```
-
-and:
-
-```
-SELECT *
-FROM custodian
-WHERE id =: id;
-```
-
-The first one contains literally and can generate distinct SQL-s for each value.
-
-The second allows the same SQL to be re-used.
-
----
-
-### Bind variables can have disadvantages?
-
-For columns with very uneven distributions, the same access strategy may not be optimal for all values.
-
-Oracle manages this situation including by:
-
-```
-bind peeking
-adaptive cursor sharing
-bind-aware cursors
-```
-
----
-
-### What's the bind peeking?
-
-At hard parse, the optimiser can inspect the initial value of the variable band to estimate selectivity and build the execution of the plane.
-
----
-
-### What is Adaptive Sharing Cursor?
-
-Mechanism through which Oracle can maintain several child cursors and execution plans for the same SQL with the bind variables, depending on the selectivity of the band values.
-
----
-
-### Is soft parse free?
-
-No.
-
-It is much cheaper than hard parse, but still has the cost of CPU and library cache lookup.
-
----
-
-## Questions and answers
-
-Interviewer:
-
-> We have a banking application where the CPU- database is very high, but the SQL-s are simple.
-
-A good answer:
-
-> I would first check if we have many hard parses. In V$SQL I would compare PARSE\ _ CALS with EXECUTIONS and I would look for almost identical SQL-s that differ only by literal values. If the application generates SQL as count\ _ id = 100, account\ _ id = 101 etc., I would recommend using the band variables. I would then check the number of child courses and the reasons why they are not re-used. For SQL-uri sensitive to data distribution I would analyze and bind peeking, histograms and Adaptive Course Sharing.
-
-This is a very good response for a role of **Oracle Data Developer / PL/SQL Developer**.
-
----
-
-# 44. Mental Pattern To Remember
+## 44. Mental Pattern To Remember
 
 for review, remember the chain:
 
@@ -1521,7 +1390,7 @@ Library Cache
  ↓
 Cursor
  ↓
-Implementation Plan
+execution plan
 ```
 
 and for the bind variables:
@@ -1570,11 +1439,11 @@ For the level of **Oracle Data Developer**, I would consider it mandatory to be 
 
 1. **Hard Parse vs Soft Parse**
 2. **Shared Pool / Library Cache**
-3. **Band Variables**
+3. **Bind Variables**
 4. **Parse once, execute many**
 5. **Parent Cursor vs Child Cursor**
-6. **Band Peeking**
-7. **Adaptive Saring** Cursor
+6. **bind peeking**
+7. **Adaptive Cursor Sharing** Cursor
 8. **Why Dynamic SQL should use USING for** values
 
 The link with the previous modules is very important:
@@ -1588,7 +1457,7 @@ Parsing
      ↓
 Bind Peeking
      ↓
-Implementation Plan
+execution plan
      ↓
 Child Cursor
      ↓
@@ -1600,6 +1469,129 @@ This explains why **Parsing and Bind Variables** is not only a syntax subject, b
 ---
 
 ## Questions and answers
+
+Wrong version:
+
+```
+v_sql:
+* * *
+SET balance = balance +) p_amount
+' WHERE account_id = ';
+
+EXECUTE IMMEDIATE v_sql;
+```
+
+If we have:
+
+```
+account 100 / amount 50
+account 101 / amount 70
+account 102 / amount 40
+```
+
+Oracle receives three different texts.
+
+Correct version:
+
+```
+v_sql:
+* * *
+SET balance = balance +: amount
+WHERE account_id =: account_id;
+
+EXECUTE IMMEDIATE v_sql
+USING p_amount, p_account_id;
+```
+
+Now SQL is reusable.
+
+---
+
+### What is hard parse?
+
+The process by which Oracle compiles a SQL statement, performs semantic checks, and generates an execution plan with the optimizer.
+
+---
+
+### What is soft parse?
+
+Oracle finds a compatible cursor in Shared Pool and reuses the existing execution plan.
+
+---
+
+### Why are the bind variables important?
+
+Because they allow the cursor to be re-used, they reduce the hard parsing, the consumption of CPU and the contention in Shared Pool.
+
+---
+
+### What is the difference between these two SQL statements?
+
+```
+SELECT *
+FROM custodian
+WHERE id = 10;
+```
+
+and:
+
+```
+SELECT *
+FROM custodian
+WHERE id =: id;
+```
+
+The first one contains literally and can generate distinct SQL statements for each value.
+
+The second allows the same SQL to be re-used.
+
+---
+
+### Bind variables can have disadvantages?
+
+For columns with very uneven distributions, the same access strategy may not be optimal for all values.
+
+Oracle manages this situation including by:
+
+```
+bind peeking
+adaptive cursor sharing
+bind-aware cursors
+```
+
+---
+
+### What's the bind peeking?
+
+During a hard parse, the optimizer can inspect the initial bind variable value to estimate selectivity and build an execution plan.
+
+---
+
+### What is Adaptive Sharing Cursor?
+
+Oracle can maintain multiple child cursors and execution plans for the same SQL statement when bind variable values have different selectivities.
+
+---
+
+### Is soft parse free?
+
+No.
+
+It is much cheaper than hard parse, but still has the cost of CPU and library cache lookup.
+
+---
+
+Interviewer:
+
+> We have a banking application where the CPU- database is very high, but the SQL statements are simple.
+
+A good answer:
+
+> I would first check if we have many hard parses. In V$SQL I would compare PARSE_CALLS with EXECUTIONS and I would look for almost identical SQL statements that differ only by literal values. If the application generates SQL as count_id = 100, account_id = 101 etc., I would recommend using the bind variables. I would then check the number of child cursors and the reasons why they are not re-used. For SQL statements sensitive to data distribution I would analyze and bind variable peeking, histograms and Adaptive Cursor Sharing.
+
+This is a very good response for a role of **Oracle Data Developer / PL/SQL Developer**.
+
+---
 
 ### How would you briefly explain Parsing and Bind Variables to a colleague who knows SQL, but not this area?
 
@@ -1615,7 +1607,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

@@ -23,7 +23,7 @@ For an **Oracle Data Developer / PL/SQL Developer / DWH Developer**, you don't n
 
 ---
 
-# 20.1 Overview
+## 20.1 Overview
 
 The Oracle Architecture can be seen as follows:
 
@@ -43,12 +43,12 @@ Server Process
 |   +-----------------------+   |
 SGA
 |   |                       |   |
-♪ Shared Pool ♪
-♪ Buffer Cache ♪
-♪ Redo Log Buffer ♪
+| Shared Pool |
+| Buffer Cache |
+| Redo Log Buffer |
 |   +-----------------------+   |
 |                               |
-♪ Background Process ♪
+| Background Process |
 * DBWn LGWR CKPT SMON PMON
 +---------------+---------------+
                 |
@@ -57,29 +57,29 @@ SGA
 * ORACLE DATABASE *
 |                               |
 Datafiles
-♪ Control Files ♪
+| Control Files |
 Online Redo Logs
-♪ Temphiles ♪
+| Tempfiles |
 +-------------------------------+
 ```
 
 The central concept is:
 
 ```
-Oracle Instant
+Oracle instance
     +
 Oracle Database
 ```
 
 ---
 
-# 20.2 Oracle Instant vs Oracle Database
+## 20.2 Oracle instance vs. Oracle database
 
 This is one of the most important questions and answers.
 
-## Oracle Instant
+## Oracle instance
 
-An **Oracle Instant** represents:
+An **Oracle instance** consists of:
 
 ```
 Memory
@@ -90,12 +90,12 @@ Processes
 More specifically:
 
 ```
-Instant
+Instance
 − SGA
 "Background Processes"
 ```
 
-The court only exists as long as the Oracle is running.
+The instance exists only while Oracle is running.
 
 At the shutdown:
 
@@ -117,7 +117,7 @@ Database
 - Online Redo Log Files
 ```
 
-They remain on the disk even if the court is stopped.
+The database files remain on disk even when the instance is stopped.
 
 ---
 
@@ -134,31 +134,30 @@ or:
 ```
 Oracle Server
 =
-Oracle Instant
+Oracle instance
     +
 Oracle Database
 ```
 
 ---
 
-# 20.3 SGA; System Global Area
+## 20.3 SGA; System Global Area
 
-SGA is the main area of common memory of the Oracle court.
+The SGA is the main area of shared memory for an Oracle instance.
 
-It's shared between the Oracle trials.
+It is shared by Oracle processes.
 
 Important components:
 
 ```
 SGA
-"Database Buffer Cache"
-¶ ¶ Shared Pool ¶
-Č eská republika
-* Data Dictionary Cache *
-- Redo Log Buffer
-¶ Large Pool ¶
-¶ ¶ Java Pool
-¶ Streams Pool ¶
+├── Database Buffer Cache
+├── Shared Pool
+│   └── Data Dictionary Cache
+├── Redo Log Buffer
+├── Large Pool
+├── Java Pool
+└── Streams Pool
 ```
 
 For the developer, the three most important are:
@@ -171,7 +170,7 @@ Redo Log Buffer
 
 ---
 
-# 20.4 Database Buffer Cache
+## 20.4 Database Buffer Cache
 
 Buffer Cache keeps **copies of Oracle blocks read from** datafiles in memory.
 
@@ -207,7 +206,7 @@ and Oracle reads it from:
 Data sheets → buffer cache
 ```
 
-Flux:
+Flow:
 
 ```
 SELECT
@@ -228,7 +227,7 @@ Buffer Cache
 
 ---
 
-# 20.5 Logical Read vs Physical Read
+## 20.5 Logical Read vs Physical Read
 
 These concepts frequently appear in the performance tuning.
 
@@ -258,7 +257,7 @@ That's why Oracle is trying to reuse the cache blocks.
 
 ---
 
-# 20.6 Dirty Blocks
+## 20.6 Dirty Blocks
 
 When you do:
 
@@ -268,7 +267,7 @@ SET balance = balance - 100
 WHERE account_id = 10;
 ```
 
-Oracle doesn't immediately write the modification directly into the datafils.
+Oracle doesn't immediately write the modification directly into the datafiles.
 
 The block is modified in Buffer Cache.
 
@@ -282,11 +281,11 @@ I mean:
 
 > the memory version differs from the existing version on the disk.
 
-Later on the DBWn trial writes it in the datafils.
+Later on the DBWn trial writes it in the datafiles.
 
 ---
 
-# 20.7 Shared Pool
+## 20.7 Shared Pool
 
 Shared Pool contains reusable information between SQL executions.
 
@@ -300,7 +299,7 @@ Shared Pool
 
 ---
 
-# 20.8 Library Cache
+## 20.8 Library Cache
 
 Library Cache contains among others:
 
@@ -336,7 +335,7 @@ soft parse
 
 ---
 
-# 20.9 Hard Parse vs Soft Parse
+## 20.9 Hard Parse vs Soft Parse
 
 ## Hard Parse
 
@@ -374,7 +373,7 @@ executes
 
 ---
 
-# 20.10 Why are important band variables
+## 20.10 Why are bind variables important?
 
 Compare:
 
@@ -392,7 +391,7 @@ FROM
 WHERE employee_id = 101;
 ```
 
-Under certain conditions they can generate distinct SQL-s.
+Under certain conditions they can generate distinct SQL statements.
 
 Better:
 
@@ -415,7 +414,7 @@ better scalability
 
 ---
 
-# 20.11 Date of Dictionary Cache
+## 20.11 Date of Dictionary Cache
 
 The Oracle keeps in memory information about the objects of the database.
 
@@ -449,7 +448,7 @@ The information comes from the dictionary date and they're cache-look.
 
 ---
 
-# 20.12 Redo Log Buffer
+## 20.12 Redo Log Buffer
 
 Redo Log Buffer contains information about changes made to the database.
 
@@ -476,12 +475,11 @@ UPDATE
    |
 --------- Buffer Cache → modified block
    |
-+ ---- = = sync, corrected by elderman = =
 ```
 
 ---
 
-# 20.13 LGWR - Log Writer
+## 20.13 LGWR - Log Writer
 
 Process:
 
@@ -499,7 +497,7 @@ It's critical for transactions.
 
 ---
 
-# 20.14 What happens to COMMIT
+## 20.14 What happens to COMMIT
 
 This is one of the most important Oracle sequences.
 
@@ -547,9 +545,9 @@ COMMIT Success
 
 ---
 
-# 20.15 A very important thing
+## 20.15 A very important thing
 
-In COMMIT, Oracle **should not necessarily write the modified block in** datafils.
+In COMMIT, Oracle **should not necessarily write the modified block in** datafiles.
 
 The block can stay dirty in Buffer Cache.
 
@@ -569,7 +567,7 @@ It allows Oracle to make a very quick commit.
 
 ---
 
-# 20.16 DBWn = Database Writer
+## 20.16 DBWn = Database Writer
 
 DBWn writes dirty blocks from Buffer Cache in datafiles.
 
@@ -603,7 +601,7 @@ date blocks
 
 ---
 
-# 20.17 Write-Ahead Logging Regulation
+## 20.17 Write-Ahead Logging Regulation
 
 Oracle complies with the principle of:
 
@@ -611,13 +609,13 @@ Oracle complies with the principle of:
 redo before data
 ```
 
-That is, the redo required for recovery must be written before the modified block is written in the datafils.
+That is, the redo required for recovery must be written before the modified block is written in the datafiles.
 
 It allows recovery after crash.
 
 ---
 
-# 20.18 Online Redo Logs
+## 20.18 Online Redo Logs
 
 Online Redo Logs contain redo generated by database changes.
 
@@ -649,7 +647,7 @@ log switch
 
 ---
 
-# 20.19 Archived Redo Logs
+## 20.19 Archived Redo Logs
 
 If the base is running in:
 
@@ -676,7 +674,7 @@ Data Guard
 
 ---
 
-# 20.20 Datafiles
+## 20.20 Datafiles
 
 Datafiles effectively contains database data.
 
@@ -712,7 +710,7 @@ Dataphiles
 
 ---
 
-# 20.21 Tablespace and Datafils
+## 20.21 Tablespace and Datafiles
 
 A tablespace is a logical structure.
 
@@ -736,7 +734,7 @@ DATAFILE = physical
 
 ---
 
-# 20.22 Control Files
+## 20.22 Control Files
 
 Control Files contains key structural metadata about the database.
 
@@ -755,12 +753,12 @@ Without valid file control, the base cannot be mounted normally.
 
 ---
 
-# 20.23 Temphiles
+## 20.23 Tempfiles
 
 TEMP tablespace uses:
 
 ```
-temphiles
+tempfiles
 ```
 
 for temporary operations.
@@ -785,7 +783,7 @@ TEMP
 
 ---
 
-# 20.24 PGA
+## 20.24 PGA
 
 PGA is a private **memory of the** process.
 
@@ -824,31 +822,29 @@ PGA 2
 
 ---
 
-# 20.25 SGA vs PGA
+## 20.25 SGA vs PGA
 
 Very important in the technical discussion:
 
-* * * * * * *
-♪ ♪ ♪ ♪ ♪
-♪ ♪ ♪ ♪
-instant-level-process / session-level
-= = sync, corrected by elderman = =
-♪ Shared Pool ♪ ♪ hash join memory ♪
-= = sync, corrected by elderman = = @ elder _ man
+| Property | SGA | PGA |
+| --- | --- | --- |
+| Scope | Instance-level | Process/session-level |
+| Typical contents | Shared Pool, Buffer Cache, Redo Log Buffer | Private process memory, including sort and hash work areas |
+| Shared between processes | Yes | No |
 
 Memorize simply:
 
 ```
-SGA = memory of the court
+SGA = shared memory for the instance
 
 PGA = process memory
 ```
 
 ---
 
-# 20.26 Server Process
+## 20.26 Server Process
 
-When a client connects to the Oracle, SQL- is executed by:
+When a client connects to the Oracle, SQL is executed by:
 
 ```
 server process
@@ -874,7 +870,7 @@ Server Process
 
 ---
 
-# 20.27 Listener
+## 20.27 Listener
 
 Oracle Listener is the process that receives requests for connection.
 
@@ -884,7 +880,7 @@ Usually:
 TCP port 1521
 ```
 
-Flux:
+Flow:
 
 ```
 Client
@@ -897,7 +893,7 @@ Listener
 Oracle Service
    |
    v
-Database Instant
+Database instance
 ```
 
 The list does not execute SQL.
@@ -906,7 +902,7 @@ He facilitates the connection.
 
 ---
 
-# 20.28 SID vs Service
+## 20.28 SID vs Service
 
 Another very important concept.
 
@@ -915,7 +911,7 @@ Another very important concept.
 Traditionally identify:
 
 ```
-court
+instance
 ```
 
 Example:
@@ -945,7 +941,7 @@ SERVICE_NAME
 
 ---
 
-# 20.29 Background Processes
+## 20.29 Background Processes
 
 Oracle uses multiple background processes.
 
@@ -962,7 +958,7 @@ ARCn
 
 ---
 
-# 20.30 DBWn; Database Writer
+## 20.30 DBWn; Database Writer
 
 Rol:
 
@@ -976,7 +972,7 @@ Write the modified blocks of Buffer Cache in the datafiles.
 
 ---
 
-# 20.31 LGWR
+## 20.31 LGWR
 
 Rol:
 
@@ -996,7 +992,7 @@ instance recovery
 
 ---
 
-# 20.32 CKPT - Checkpoint Process
+## 20.32 CKPT - Checkpoint Process
 
 The checkpoint synchronizes the status of the base and helps Oracle know how far the recoveryis needed.
 
@@ -1018,7 +1014,7 @@ Up to this point the data are synchronized
 
 ---
 
-# 20.33 SMON; System Monitor
+## 20.33 SMON; System Monitor
 
 SMON is responsible for, inter alia:
 
@@ -1027,7 +1023,7 @@ instance recovery
 internal cleanup
 ```
 
-If the court suddenly stops:
+If the instance stops unexpectedly:
 
 ```
 Crash
@@ -1037,7 +1033,7 @@ SMON reboot helps to recover the base.
 
 ---
 
-# 20.34 PMON - Process Monitor
+## 20.34 PMON - Process Monitor
 
 PMON deals with cleanup after abnormally completed processes / sessions.
 
@@ -1061,7 +1057,7 @@ State process
 
 ---
 
-# 20.35 ARCn
+## 20.35 ARCn
 
 In ARCHIVELOG mode:
 
@@ -1075,7 +1071,7 @@ Archived Redo Log
 
 ---
 
-# 20.36 CDB and PDB
+## 20.36 CDB and PDB
 
 Modern oracle uses multitenant architecture.
 
@@ -1092,7 +1088,7 @@ CDB
 
 ---
 
-# 20.37 CDB; Container Database
+## 20.37 CDB; Container Database
 
 CDB is the general container.
 
@@ -1101,12 +1097,12 @@ Includes:
 ```
 CDB$ROOT
 PDB$SEED
-PDB-uri
+PDBs
 ```
 
 ---
 
-# 20.38 CDB$ROOT
+## 20.38 CDB$ROOT
 
 Root container contains information Common to all CDB.
 
@@ -1114,13 +1110,13 @@ Root container contains information Common to all CDB.
 CDB$ROOT
 ```
 
-is not normally the scheme where an ordinary application creates its tables.
+is not normally the schema where an ordinary application creates its tables.
 
 ---
 
-# 20.39 PDB$SEED
+## 20.39 PDB$SEED
 
-It's the template used to create new PDB-uri.
+It's the template used to create new PDBs.
 
 ```
 PDB$SEED
@@ -1139,7 +1135,7 @@ PDB
 
 ---
 
-# 20.40 PDB = Pluggable Database
+## 20.40 PDB = Pluggable Database
 
 PDB is the logical basis used by applications.
 
@@ -1168,7 +1164,7 @@ DWH_ACCOUNT
 
 ---
 
-# 20.41 Why PDB-uri exist
+## 20.41 Why PDBs exist
 
 They allow for the logical isolation of several bases in the same Oracle infrastructure.
 
@@ -1197,7 +1193,7 @@ portability
 
 ---
 
-# 20.42 Connecting to an PDB
+## 20.42 Connecting to a PDB
 
 Example:
 
@@ -1219,7 +1215,7 @@ PDB FREEPDB1
 
 ---
 
-# 20.43 SCN; System Change Number
+## 20.43 SCN; System Change Number
 
 SCN is a logical number used by Oracle to order changes over time.
 
@@ -1246,7 +1242,7 @@ It must not be regarded strictly as a timestamp, but as a logical order of chang
 
 ---
 
-# 20.44 Undo
+## 20.44 Undo
 
 Undo retains the necessary information to reconstruct previous data versions.
 
@@ -1277,7 +1273,7 @@ Flashback
 
 ---
 
-# 20.45 Redo vs Undo
+## 20.45 Redo vs Undo
 
 That's a classic question.
 
@@ -1316,7 +1312,7 @@ But this is just conceptual simplification.
 
 ---
 
-# 20.46 Read Consistence and Undo
+## 20.46 Read Consistence and Undo
 
 The Oracle implements:
 
@@ -1365,7 +1361,7 @@ with the specific shades of Oracle transactions.
 
 ---
 
-# 20.47 What happens when you run an SELECT
+## 20.47 What happens when you run an SELECT
 
 Let's watch:
 
@@ -1375,7 +1371,7 @@ FROM
 WHERE employee_id =: id;
 ```
 
-### 1. The customer sends SQL-ul
+### 1. The customer sends SQL statement
 
 ```
 SQL Development
@@ -1383,7 +1379,7 @@ SQL Development
 Oracle server process
 ```
 
-### 2. Oracle seeks SQL- in Shared Pool
+### 2. Oracle seeks SQL in Shared Pool
 
 ```
 Library Cache
@@ -1437,7 +1433,7 @@ Client
 
 ---
 
-# 20.48 What happens when you run an UPDATE
+## 20.48 What happens when you run an UPDATE
 
 ```
 UPDATE
@@ -1491,7 +1487,7 @@ Date
 
 ---
 
-# 20.49 Crash before DBWn
+## 20.49 Crash before DBWn
 
 Suppose you did:
 
@@ -1502,7 +1498,7 @@ COMMIT;
 
 LGWR wrote the redo.
 
-But DBWn hasn't written the dirty block in the datafils yet.
+But DBWn hasn't written the dirty block in the datafiles yet.
 
 Then the server goes down.
 
@@ -1520,7 +1516,7 @@ That's why the commission remains valid.
 
 ---
 
-# 20.50 Crash before COMMIT
+## 20.50 Crash before COMMIT
 
 If a transaction has not been committed:
 
@@ -1543,7 +1539,7 @@ Oracle recovers the base in a consistent state.
 
 ---
 
-# 20.51 Checkpoint
+## 20.51 Checkpoint
 
 The checkpoint reduces the work needed for recovery.
 
@@ -1565,7 +1561,7 @@ The more recent the basis has a checkpoint, the less redo the recoveryhas to pro
 
 ---
 
-# 20.52 Logical and physical architecture
+## 20.52 Logical and physical architecture
 
 A useful perspective:
 
@@ -1594,7 +1590,7 @@ ARCn
 Datafiles
 Control Files
 Redo Logs
-Temphiles
+Tempfiles
 ```
 
 ## Logical storage
@@ -1615,12 +1611,12 @@ PDB
 
 ---
 
-# 20.53 How to Link to Execution Plans
+## 20.53 How to Link to Execution Plans
 
 When you see:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 Oracle must access the blocks of the table.
@@ -1641,7 +1637,7 @@ The plan tells **how the** data is accessed, and architecture explains **where t
 
 ---
 
-# 20.54 How to Link to indexes
+## 20.54 How to Link to indexes
 
 Example:
 
@@ -1671,7 +1667,7 @@ datafiles → Buffer Cache
 
 ---
 
-# 20.55 How to tie to JOIN algorithms
+## 20.55 How to tie to JOIN algorithms
 
 For example, a Hash Join mainly uses:
 
@@ -1699,7 +1695,7 @@ and the query can become significantly slower.
 
 ---
 
-# 20.56 How to tie to DWH
+## 20.56 How to tie to DWH
 
 In an DWH you frequently:
 
@@ -1744,7 +1740,7 @@ TEMP if memory fails
 
 ---
 
-# 20.57 Dedicated Server vs Shared Server
+## 20.57 Dedicated Server vs Shared Server
 
 In the common configuration:
 
@@ -1772,7 +1768,7 @@ For most developers it is enough to know the conceptual difference.
 
 ---
 
-# 20.58 Startup Oracle - conceptual
+## 20.58 Startup Oracle - conceptual
 
 The starting of the base is conceptually done in three stages:
 
@@ -1791,7 +1787,7 @@ OPEN
 The Oracle starts:
 
 ```
-Instant
+Instance
 ```
 
 I mean:
@@ -1835,7 +1831,7 @@ and the base becomes accessible to users.
 
 ---
 
-# 20.59 Conceptual Shutdown
+## 20.59 Conceptual Shutdown
 
 At the controlled shutdown:
 
@@ -1868,7 +1864,7 @@ SHUTDOWN IMMEDIATE;
 
 ---
 
-# 20.60 View of architecture in Oracle
+## 20.60 View of architecture in Oracle
 
 As a developer you can see certain information from dynamic performance views.
 
@@ -1876,54 +1872,54 @@ Examples:
 
 ```
 SELECT *
-FROM v $instant;
+FROM V$INSTANCE;
 ```
 
 ```
 SELECT *
-FROM v $database;
+FROM V$database;
 ```
 
 ```
 SELECT *
-FROM v $sga;
+FROM V$sga;
 ```
 
 ```
 SELECT *
-FROM v $session;
+FROM V$session;
 ```
 
 ```
 SELECT *
-FROM v $process;
+FROM V$process;
 ```
 
 ```
 SELECT *
-FROM v $tablespace;
+FROM V$tablespace;
 ```
 
 ```
 SELECT *
-FROM v $datafile;
+FROM V$datafile;
 ```
 
 ```
 SELECT *
-FROM v $log;
+FROM V$log;
 ```
 
 ```
 SELECT *
-FROM v $logfile;
+FROM V$logfile;
 ```
 
 These views may require additional privileges.
 
 ---
 
-# 20.61 Example for your laboratory Oracle 26ai
+## 20.61 Example for your laboratory Oracle 26ai
 
 In your conceptual configuration you have something close to:
 
@@ -1933,7 +1929,7 @@ Oracle Linux VM
        v
 Oracle Database 26ai Free
        |
-+ -- Instant: FREE
++ -- Instance: FREE
        |
 + -- CDB: FREE
               |
@@ -1958,7 +1954,7 @@ Oracle Listener
 Service FREEPDB1
      |
      v
-Oracle Instant FREE
+Oracle instance FREE
      |
      v
 PDB FREEPDB1
@@ -1976,12 +1972,12 @@ because you can identify which layer the problem appears in.
 
 ---
 
-# 20.62 Real Scenario: COMMIT in an ETL
+## 20.62 Real Scenario: COMMIT in an ETL
 
 You have an ETL:
 
 ```
-INSERTQ1QX fact_sales
+INSERT INTO fact_sales
 SELECT...
 FROM staging_sales;
 
@@ -2011,7 +2007,7 @@ LGWR
 Online Redo Logs
 ```
 
-The blocks of FACT\ _ SALES can be written later by:
+The blocks of FACT_SALES can be written later by:
 
 ```
 DBWn
@@ -2019,7 +2015,7 @@ DBWn
 
 ---
 
-# 20.63 Real scenario: query DWH slow
+## 20.63 Real scenario: query DWH slow
 
 You have:
 
@@ -2066,14 +2062,14 @@ execution plan
 
 ---
 
-# 20.64 Real Scenario: Too many hard parses
+## 20.64 Real Scenario: Too many hard parses
 
 The application generates:
 
 ```
-SELECT * FROM curator WHERE id = 100;
-SELECT * FROM custoder WHERE id = 101;
-SELECT * FROM custoder WHERE id = 102;
+SELECT * FROM customers WHERE id = 100;
+SELECT * FROM customers WHERE id = 101;
+SELECT * FROM customers WHERE id = 102;
 ```
 
 Instead of:
@@ -2100,7 +2096,7 @@ bind variables
 
 ---
 
-# 20.65 Real Scenario: Large Sort
+## 20.65 Real Scenario: Large Sort
 
 Query:
 
@@ -2115,7 +2111,7 @@ For millions of rows:
 ```
 PGA
  ↓
-apron
+sort
 ```
 
 If the memory does not reach:
@@ -2127,26 +2123,127 @@ TEMP tablespace
 So, when you see TEMP very big, one of the reasons can be:
 
 ```
-large apron
+large sort
 hash join
 aggregation
 ```
 
 ---
 
+## 20.67 Essential scheme to be memorised
+
+If you want to remember the Oracle architecture in a single mental picture:
+
+```
+CLIENT
+  |
+  v
+LISTENER
+  |
+  v
+SERVER PROCESS
+  |
+  +--------------+
+  |              |
+  v              v
+PGA SGA
+             +----------------+
+| Shared Pool |
+| Buffer Cache |
+| Redo Buffer |
+             +----------------+
+                |        |
+DBWn LGWR
+                |        |
+                v        v
+DATAFILES | REDO LOGS
+                |
+                v
+DATABASE
+```
+
+And in modern Oracle:
+
+```
+INSTANCE
+   |
+   v
+CDB
+ |
++ -- CDB$ROOT
++ -- PDB$SEED
++ -- FREEPDB1
+       |
++ -- HR
++ -- OE
++ -- DEV_LAB
++ -- DWH_ACCOUNT
+```
+
+---
+
+## 20.68 The 10 ideas you need to know for sure
+
+For the **Oracle Data Developer** level, these are the most important:
+
+1. **Instance = SGA + background processes.**
+2. **Database = datafiles + control files + redo logs.**
+3. **SGA is shared; PGA is private.**
+4. **Buffer Cache contains data blocks.**
+5. **Shared Pool contains SQL/PLSQL and reusable plans.**
+6. **LGWR writes redo; DBWn writes data blocks.**
+7. **COMMIT makes the redo persistent; it does not require the changed data blocks to have been written to datafiles.**
+8. **Undo is used for rollback and read consistency.**
+9. **Modern Oracle uses CDB + PDB.**
+10. **A SELECT passes conceptually through Shared Pool → execution plan → Buffer Cache → possibly Datafiles.**
+
+A very useful formula for review is:
+
+```
+SQL
+ ↓
+Parse / Shared Pool
+ ↓
+Optimizer / Execution Plan
+ ↓
+Buffer Cache
+ ↓
+Datafiles if required
+```
+
+and for DML:
+
+```
+DML
+ ↓
+Buffer Cache + Undo + Redo
+ ↓
+COMMIT
+ ↓
+LGWR → Redo Log
+
+later:
+
+DBWn → Datafiles
+```
+
+If you understand these flows and the differences between **an instance and a database, SGA and PGA, redo and undo, and LGWR and DBWn**, you have a solid foundation in Oracle architecture.
+
+---
+
 ## Questions and answers
 
-### 1. What is the difference between Oracle Instant and Oracle Database?
+### 1. What is the difference between an Oracle instance and an Oracle database?
 
 Answer:
 
-> Oracle Instant is made up of memory, especially SGA, and background processes. Oracle Database represents persistent files such as datafiles, control files and redo log files.
+> An Oracle instance consists of memory, especially the SGA, and background processes. The Oracle database consists of persistent files such as datafiles, control files, and redo log files.
 
 ---
 
 ### 2. What is the difference between SGA and PGA?
 
-> SGA is a memory shared by court processes, while PGA is a private memory associated with the server process or an Oracle process.
+> The SGA is shared memory used by Oracle processes. The PGA is private memory associated with a server process.
 
 ---
 
@@ -2208,112 +2305,9 @@ That's a very good technical discussion form.
 
 ### 12. What if the server falls immediately after COMMIT?
 
-> If the redo of the commission has been successfully written in online redo logs, Oracle can recover the change at the restart even if the dirty block had not yet been written in the datafils.
+> If the redo of the commission has been successfully written in online redo logs, Oracle can recover the change at the restart even if the dirty block had not yet been written in the datafiles.
 
 ---
-
-# 20.67 Essential scheme to be memorised
-
-If you want to remember the Oracle architecture in a single mental picture:
-
-```
-CLIENT
-  |
-  v
-LISTENER
-  |
-  v
-SERVER PROCESS
-  |
-  +--------------+
-  |              |
-  v              v
-PGA SGA
-             +----------------+
-♪ Shared Pool ♪
-♪ Buffer Cache ♪
-♪ Redo Buffalo ♪
-             +----------------+
-                |        |
-DBWn LGWR
-                |        |
-                v        v
-DATAFILESQ1QX LOGS
-                |
-                v
-DATABASE
-```
-
-And in modern Oracle:
-
-```
-INSTANCE
-   |
-   v
-CDB
- |
-+ -- CDB$ROOT
-+ -- PDB$SEED
-+ -- FREEPDB1
-       |
-+ -- HR
-+ -- OE
-+ -- DEV_LAB
-+ -- DWH_ACCOUNT
-```
-
----
-
-# 20.68 The 10 ideas you need to know for sure
-
-For the **Oracle Data Developer** level, these are the most important:
-
-1. **Instant = SGA + background processes.**
-2. **Database = datafiles + control files + redo logs.**
-3. **SGA is shared; PGA is private.**
-4. **Buffer Cache contains data blocks.**
-5. **Shared Pool contains SQL/PLSQL and reusable plans.**
-6. **LGWR writes redo; DBWn writes data blocks.**
-7. **COMMIT primarily assumes that the redo becomes persistent, not that the datafilee is already updated.**
-8. **Undo is used for rollback and read consistency.
-9. **Modern Oracle uses CDB + PDB.**
-10. **A SELECT passes conceptually through Shared Pool → execution plan → Buffer Cache → possibly Datafiles.**
-
-A very useful formula for review is:
-
-```
-SQL
- ↓
-Parse / Shared Pool
- ↓
-Optimizer / Execution Plan
- ↓
-Buffer Cache
- ↓
-Datafiles if required
-```
-
-and for DML:
-
-```
-DML
- ↓
-Buffer Cache + Undo + Redo
- ↓
-COMMIT
- ↓
-LGWR → Redo Log
-
-later:
-
-DBWn → Datafiles
-```
-
-If you master these two flows and the difference **Instant vs Database / SGA vs PGA / Redo vs Undo / LGWR vs DBWn**, you already have the Oracle architecture base required for most **Oracle PL/SQL / Data Developer / DWH Developer** interviews.
-
----
-
-## Questions and answers
 
 ### How would you briefly explain Oracle Architecture to a colleague who knows SQL, but not this area?
 
@@ -2329,7 +2323,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

@@ -8,19 +8,19 @@ sidebar_position: 39
 
 <div className="chapter-kicker">Chapter C39 · Complete course</div>
 
-**Data Linage** describes the data route through a system: **where they come from, what transformations they pass through, where they are stored and who consumes them**.
+**Data Lineage** describes the data route through a system: **where they come from, what transformations they pass through, where they are stored and who consumes them**.
 
 In a banking environment / DWH, the lineage answers questions such as:
 
-> The value of custodian\ _ exposure from the final report from which source it comes, which tables and transformations has passed and which jobs do it produce?
+> The value of custodian_exposure from the final report from which source it comes, which tables and transformations has passed and which jobs do it produce?
 
-It is an essential concept for **DWH, ETL/ELT, audit, Data Governance, Data Quality, impact analysis and troubleshooting**.
+amount_eur
 
 ---
 
 ## 1. The Fundamental Idea
 
-A typical flow can look like this:
+s.amount / fx.rate
 
 ```
 Core Banking
@@ -67,9 +67,9 @@ The line can be analyzed at multiple levels.
 
 ---
 
-# 2. Types of Data Linage
+## 2. Types of Data Lineage
 
-## 2.1 System-level linage
+## 2.1 System-level lineage
 
 Show the route between the systems.
 
@@ -115,7 +115,7 @@ AGG_DAILY_TRANSACTION
 
 ---
 
-## 2.3 Column-level linage
+## 2.3 Column-level lineage
 
 It's much more accurate.
 
@@ -141,7 +141,7 @@ This is very important for:
 
 ---
 
-# 3. Transformations are part of the lineage
+## 3. Transformations are part of the lineage
 
 The chain doesn't just say:
 
@@ -188,7 +188,7 @@ Here we have an **derivative assigned**.
 
 ---
 
-# 4. Direct vs Derived Linage
+## 4. Direct vs Derived Lineage
 
 ## Direct mapping
 
@@ -229,7 +229,7 @@ TRANSACTION_VALUE
 
 ---
 
-# 5. Linage in an ETL
+## 5. Lineage in an ETL
 
 Let's assume the following ETL:
 
@@ -244,8 +244,8 @@ SELECT
 s.transaction_id,
 c.customer_key,
 s.transaction_date,
-samount / fx.rate
-FROM stg_transaction
+s.amount / fx.rate
+FROM stg_transaction s
 JOIN dim_customer c
 ON c.customer_id = s.customer_id
 JOIN fx_rate fx
@@ -287,7 +287,7 @@ FACT_TRANSACTION.CUSTOMER_KEY
 
 ---
 
-# 6. Upstream and Downstream Linage
+## 6. Upstream and Downstream Lineage
 
 Two extremely important concepts.
 
@@ -343,11 +343,11 @@ It is very important for **Impact Analysis**.
 
 ---
 
-# 7. Data Linage and Impact Analysis
+## 7. Data Lineage and Impact Analysis
 
 We're assuming the businessman asks:
 
-> Change the meaning of column ACCOUNT\ _ STATUS.
+> Change the meaning of column ACCOUNT_STATUS.
 
 We need to find everything that depends on it.
 
@@ -366,11 +366,11 @@ REPORT_ACTIVE_ACCOUNTS
 The following should be considered:
 
 - tables;
-- Viewes,
+- views,
 - materialized views;
 - procedures;
 - packageuri,
-- ETL-uri;
+- ETLuri;
 - ODI mappings;
 - reports;
 - API-uri.
@@ -379,7 +379,7 @@ This is one of the most common real cases of lineage use.
 
 ---
 
-# 8. Data Linage and Data Quality
+## 8. Data Lineage and Data Quality
 
 We submit that in a report it appears:
 
@@ -425,7 +425,7 @@ The chain speeds up the Troubleshooting enormously.
 
 ---
 
-# 9. Data Lineage and Reconciliation
+## 9. Data Lineage and Reconciliation
 
 The line is closely linked to **Reconciliation**.
 
@@ -460,7 +460,7 @@ We can compare every step.
 
 ---
 
-# 10. Data Linage and Data Government
+## 10. Data Lineage and Data Government
 
 In a large organization, the lineage is part of **Data Governance**.
 
@@ -471,10 +471,10 @@ Business
 Technical
 Source System
 Source Table
-Source Colour
+Source Column
 Transformation Rule
 Target Table
-Target Colour
+Target Column
 Owner
 Data Steward
 Classification
@@ -484,22 +484,19 @@ Consumption
 
 Example:
 
-♪ Property ♪
-♪ ♪ ♪ ♪ ♪
-♪ Business term ♪
-# Source # Core Banking #
-Source Columm = LOAN.OUTSTANDING\ _ AMOUNT
-= = sync, corrected by elderman = =
-* Target
-* * * * *
-♪ Owner ♪ Risk Department ♪
-= > Dossier = =
+| Property | Example value |
+| --- | --- |
+| Business term | Loan outstanding amount |
+| Source system | Core Banking |
+| Source column | `LOAN.OUTSTANDING_AMOUNT` |
+| Target | Risk reporting dataset |
+| Owner | Risk Department |
 
 ---
 
-# 11. Business Linage vs Technical Linage
+## 11. Business Lineage vs Technical Lineage
 
-## Business Linage
+## Business Lineage
 
 It's business-oriented.
 
@@ -515,7 +512,7 @@ The business is not necessarily interested in all intermediate tables.
 
 ---
 
-## Technical Linage
+## Technical Lineage
 
 He's focused on developers.
 
@@ -533,7 +530,7 @@ In practice, both are important.
 
 ---
 
-# 12. Linage in a Data Warehouse
+## 12. Lineage in a Data Warehouse
 
 A classic model:
 
@@ -569,7 +566,7 @@ AML_REPORT
 
 ---
 
-# 13. Linage for a Size
+## 13. Lineage for a Size
 
 Example:
 
@@ -587,7 +584,7 @@ For:
 DIM_CUSTOMER.CUSTOMER_SEGMENT
 ```
 
-linage:
+lineage:
 
 ```
 CRM.CUSTOMER.INCOME
@@ -601,7 +598,7 @@ DIM_CUSTOMER.CUSTOMER_SEGMENT
 
 ---
 
-# 14. Linage and SCD
+## 14. Lineage and SCD
 
 For SCD Type 2:
 
@@ -630,7 +627,7 @@ The line must also document this logic.
 
 ---
 
-# 15. Linage and CDC
+## 15. Lineage and CDC
 
 With Change Data Capture:
 
@@ -660,7 +657,7 @@ The line may include the CDC mechanism.
 
 ---
 
-# 16. Linage in ODI
+## 16. Lineage in ODI
 
 In Oracle Data Integrator we can have:
 
@@ -688,18 +685,18 @@ AMOUNT / FX_RATE
 DWH.TRANSACTION_AMOUNT_EUR
 ```
 
-In a real project, ODI mappings are a very important source of metadata for linage.
+In a real project, ODI mappings are a very important source of metadata for lineage.
 
 ---
 
-# 17. Linage using Oracle Metadata
+## 17. Lineage using Oracle Metadata
 
 Oracle provides a lot of information about dependencies.
 
 For example:
 
 ```
-SELECT *
+SELECT name, type, referenced_name, referenced_type
 FROM user_dependencies
 WHERE referenced_name = 'DWH_ACCOUNT';
 ```
@@ -729,7 +726,7 @@ that depend on certain objects.
 
 ---
 
-# 18. Dependencies between objects
+## 18. Dependencies between objects
 
 Example:
 
@@ -760,7 +757,7 @@ WHERE name = 'V_ACTIVE_ACCOUNTS';
 
 ---
 
-# 19. Lines manual vs automatic
+## 19. Lines manual vs automatic
 
 ## Manual
 
@@ -774,8 +771,8 @@ Can be documented in:
 Example:
 
 ```
-Source Colour
-Target Colour
+Source Column
+Target Column
 Transformation Rule
 ```
 
@@ -810,7 +807,7 @@ and automatically generate linear graphs.
 
 ---
 
-# 20. Metadata-drive Linage
+## 20. Metadata-drive Lineage
 
 The mature systems use metadata.
 
@@ -831,7 +828,7 @@ transformation_rule VARCHAR2 (1000)
 Example:
 
 ```
-INSERTQ1QX data_lineage
+INSERT INTO data_lineage
 VALUES (
 'CORE_BANKING',
 'ACCOUNT',
@@ -845,7 +842,7 @@ VALUES (
 
 ---
 
-# 21. More realistic example of linear table
+## 21. More realistic example of linear table
 
 ```
 SOURCE_SYSTEM
@@ -879,7 +876,7 @@ CURRENT_BALANCE
 
 ---
 
-# 22. Linage and Audit
+## 22. Lineage and Audit
 
 In banking, there may be a question:
 
@@ -917,7 +914,7 @@ version
 
 ---
 
-# 23. Data Linage and Batch Processing
+## 23. Data Lineage and Batch Processing
 
 The chain can also include the jobs.
 
@@ -940,14 +937,14 @@ AGG_TRANSACTION
 In this case, sometimes we talk about:
 
 ```
-Process Linage
+Process Lineage
 ```
 
-not just Data Linage.
+not just Data Lineage.
 
 ---
 
-# 24. Example of Troubleshooting
+## 24. Example of Troubleshooting
 
 Business says:
 
@@ -970,7 +967,7 @@ Report
 We're checking:
 
 ```
-SELECT COUNT *
+SELECT COUNT(*)
 FROM stg_transaction
 WHERE transaction_date = DATE '2026-09-22';
 ```
@@ -978,7 +975,7 @@ WHERE transaction_date = DATE '2026-09-22';
 then:
 
 ```
-SELECT COUNT *
+SELECT COUNT(*)
 FROM fact_transaction
 WHERE transaction_date = DATE '2026-09-22';
 ```
@@ -995,7 +992,7 @@ We can quickly determine where the 500 transactions were lost.
 
 ---
 
-# 25. Example of Impact Analysis
+## 25. Example of Impact Analysis
 
 We have the column:
 
@@ -1010,7 +1007,7 @@ P → PERSON
 C → COMPANY
 ```
 
-Linage downstream can be:
+Lineage downstream can be:
 
 ```
 DWH_CUSTOMER.CUSTOMER_TYPE
@@ -1030,7 +1027,7 @@ All of these components should be analysed prior to change.
 
 ---
 
-# 26. Data Linage vs. Data Flow
+## 26. Data Lineage vs. Data Flow
 
 They're close concepts, but not identical.
 
@@ -1040,7 +1037,7 @@ They're close concepts, but not identical.
 how the data circulates
 ```
 
-**Data Linage** describes:
+**Data Lineage** describes:
 
 ```
 origin + transformations + destinations
@@ -1066,7 +1063,7 @@ RISK_SCORE.INCOME_COMPONENT
 
 ---
 
-# 27. Data Linage vs Data Catalog
+## 27. Data Lineage vs Data Catalog
 
 Catalogue date:
 
@@ -1084,7 +1081,7 @@ Example Catalog date:
 
 ```
 Tables: DWH_CUSTOMER
-Colour: MONTHLY_INCOME
+Column: MONTHLY_INCOME
 Type: NUMBER
 Owner: Customer Domain
 ```
@@ -1103,9 +1100,9 @@ The two are complementary.
 
 ---
 
-# 28. Linage Graph
+## 28. Lineage Graph
 
-The line is naturally represented as an **directed graph**.
+Data lineage is naturally represented as a **directed graph**.
 
 ```
 A → B → C → D
@@ -1136,7 +1133,7 @@ That's why many data governance tools display lineages as a graph.
 
 ---
 
-# 29. What information should contain a good lineage
+## 29. What information should contain a good lineage
 
 Ideal:
 
@@ -1167,7 +1164,7 @@ Downstream consumers
 
 ---
 
-# 30. Full banking example
+## 30. Full banking example
 
 Suppose we want to calculate:
 
@@ -1225,7 +1222,7 @@ FROM overdraft
 GROUP BY customer_id;
 ```
 
-His necklace:
+Its lineage chain:
 
 ```
 TOTAL_EXPOSURE
@@ -1235,7 +1232,7 @@ includes all three systems / sources.
 
 ---
 
-# 31. Real script DWH
+## 31. Real script DWH
 
 You have the pipelineum:
 
@@ -1275,11 +1272,11 @@ CORE_BANKING.LOAN
 
 plus the transformations applied.
 
-This is the classic case of **Data Linage**.
+This is the classic case of **Data Lineage**.
 
 ---
 
-# 32. Oracle Exercise 26ai
+## 32. Oracle Exercise 26ai
 
 Consider:
 
@@ -1305,12 +1302,12 @@ amount_eur NUMBER
 We have:
 
 ```
-INSERTQ1QX fact_transaction
+INSERT INTO fact_transaction
 SELECT
 s.transaction_id,
 s.customer_id,
 s.amount / f.rate
-FROM stg_transaction
+FROM stg_transaction s
 JOIN fx_rate f
 ON f.currency_code = s.currency_code;
 ```
@@ -1353,11 +1350,11 @@ FACT_TRANSACTION.AMOUNT_EUR
 
 ## Questions and answers
 
-### What is Data Linage?
+### What is Data Lineage?
 
 A good answer:
 
-> Data Linage is the traceability of data from the source to the final consumer, including systems, tables, columns and transformations through which data are passed.
+> Data Lineage is the traceability of data from the source to the final consumer, including systems, tables, columns and transformations through which data are passed.
 
 ---
 
@@ -1373,7 +1370,7 @@ Where is the date used?
 
 ---
 
-### What is Data Linage used for?
+### What is Data Lineage used for?
 
 Answer:
 
@@ -1390,7 +1387,7 @@ Change management
 
 ---
 
-### What difference is there between tablet-level and column-level linage?
+### What difference is there between tablet-level and column-level lineage?
 
 Table-level:
 
@@ -1404,7 +1401,7 @@ Column-level:
 TABLE_A.COL_X → TABLE_B.COL_Y
 ```
 
-Colour-level linage is much more accurate.
+Column-level lineage is much more accurate.
 
 ---
 
@@ -1431,7 +1428,7 @@ ODI mappings
 
 ---
 
-### Why is Data Linage important in a bank?
+### Why is Data Lineage important in a bank?
 
 Because we need to be able to prove:
 
@@ -1455,11 +1452,9 @@ audit
 
 ---
 
-## Questions and answers
-
 If you have to compress the whole chapter to a few ideas:
 
-> **Data Linage = Data traceability Source → Transformations → Target → Consumer.**
+> **Data Lineage = Data traceability Source → Transformations → Target → Consumer.**
 
 Main mental scheme:
 
@@ -1489,26 +1484,24 @@ Who's using it?
 And the two essential directions are:
 
 ```
-Upstream linage
+Upstream lineage
 Where does the value come from?
 
-Downstream linage
+Downstream lineage
 What will be affected if I change it?
 ```
 
-In practice, **Data Linage + Reconciliation + Data Quality + Impact Analysis** forms a very important group of concepts for an **Oracle DWH / Data Developer**, especially in a banking environment.
+In practice, **Data Lineage + Reconciliation + Data Quality + Impact Analysis** forms a very important group of concepts for an **Oracle DWH / Data Developer**, especially in a banking environment.
 
 ---
 
-## Questions and answers
-
-### How would you briefly explain Data Linage to a colleague who knows SQL, but not this area?
+### How would you briefly explain Data Lineage to a colleague who knows SQL, but not this area?
 
 Data Lines cover where data came from and how it changed, technical vs business lineage, column-level and tablet-level lineages. In practice, first, I set out what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
 
-### What are the two most common practical problems related to Data Linage?
+### What are the two most common practical problems related to Data Lineage?
 
-Two recurring problems are the misinterpretation of data or granularity and degradation of performance at real volume. For Data Linage, I explicitly follow where data came from and how it changed, technical vs business lineage, column-level and table-level linage and compare the result with a control set.
+Two recurring problems are the misinterpretation of data or granularity and degradation of performance at real volume. For Data Lineage, I explicitly follow where data came from and how it changed, technical vs business lineage, column-level and table-level lineage and compare the result with a control set.
 
 ### How do you check that the result is correct and not just fast?
 
@@ -1516,7 +1509,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

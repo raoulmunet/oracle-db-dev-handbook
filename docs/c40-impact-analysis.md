@@ -8,7 +8,7 @@ sidebar_position: 40
 
 <div className="chapter-kicker">Chapter C40 · Complete course</div>
 
-**Impact Analysis** means identifying **that will be affected by a change before the change is implemented**.
+**Impact analysis** means identifying what may be affected by a change before that change is implemented.
 
 In Oracle, ETL and DWH, the fundamental question is:
 
@@ -22,18 +22,12 @@ The mental model is:
 CHANGE
   |
   v
-DEPENDENCIES
-  |
-+ --
-+ --
-+ --
-+ --
-+ --
-+ -- www. MATERIALIZED VIEWS
-+ -- = ETL / ODI
-+ --
-+ - APIS
-+ -- www. DOWNSTREAM SYSTEMS
+DEPENDENT OBJECTS
+   |
+   +--> Views and materialized views
+   +--> PL/SQL packages and triggers
+   +--> ETL / ODI workflows
+   +--> APIs and downstream systems
 ```
 
 ---
@@ -71,28 +65,20 @@ Change seems simple.
 But CUSTOMER.STATUS can be used by:
 
 ```
-CUSTOMER
+CUSTOMER.STATUS
    |
-+ --
-   |
-+ --
-   |
-+ --
-   |
-+ --
-   |
-+ --
-   |
-+ --
-   |
-+ --
+   +--> Views
+   +--> PL/SQL
+   +--> ETL mappings
+   +--> Reports
+   +--> Downstream applications
 ```
 
-Impact Analysis tries to discover this **graph before the** modification.
+Impact analysis tries to discover this dependency graph before the change is made.
 
 ---
 
-# 40.2 Main types of impact
+## 40.2 Main types of impact
 
 You have to think about the impact on multiple levels.
 
@@ -101,8 +87,8 @@ You have to think about the impact on multiple levels.
 Changes such as:
 
 ```
-ALTER TABLE custodian
-MODIFY status VARCHAR2 (20);
+ALTER TABLE customer
+MODIFY status VARCHAR2(20);
 ```
 
 may affect:
@@ -156,7 +142,7 @@ This is **semantic** impact.
 
 ### 3. Impact on Data
 
-Change may require:
+The change may require:
 
 ```
 date of migration
@@ -182,7 +168,7 @@ MODIFY customer_type NOT NULL;
 It must be examined whether it already exists:
 
 ```
-SELECT COUNT *
+SELECT COUNT(*)
 FROM custodian
 WHERE customer_type IS NULL;
 ```
@@ -234,14 +220,14 @@ A change may be logically correct, but it may affect performance.
 Example:
 
 ```
-WHERE TRUNC (transaction_date) =: p_date
+WHERE TRUNC(transaction_date) = :p_date
 ```
 
 Replace:
 
 ```
-WHERE transaction_date; p_date
-AND transaction_date, p_date + 1
+WHERE transaction_date >= :p_date
+   AND transaction_date < :p_date + 1
 ```
 
 Existing index on:
@@ -255,8 +241,8 @@ may no longer be used efficiently.
 So Impact Analysis must also include:
 
 ```
-Implementation Plan
-Index
+Execution plan
+Indexes
 Partition pruning
 Cardinality
 Statistics
@@ -265,7 +251,7 @@ Join methods
 
 ---
 
-# 40.3 Impact Analysis is an addiction graph
+## 40.3 Impact analysis is a dependency graph
 
 The most useful way to think about the problem is like a graph.
 
@@ -300,15 +286,15 @@ If you change:
 SRC_CUSTOMER.CUSTOMER_ID
 ```
 
-you must follow the impact of **downstream**.
+you must trace its **downstream dependencies**.
 
-This is very close to the idea of **Data Linage**.
+This is very close to the idea of **Data Lineage**.
 
 The simplified difference is:
 
 ```
-Date of Lineage:
-Where does the date come from and where does it go?
+Data lineage:
+Where does the data come from, and where does it go?
 
 Impact Analysis:
 what will be affected if I change anything?
@@ -316,7 +302,7 @@ what will be affected if I change anything?
 
 ---
 
-# 40.4 Impact upstream vs downstream
+## 40.4 Impact upstream vs downstream
 
 There are two important directions.
 
@@ -324,7 +310,7 @@ There are two important directions.
 
 Question:
 
-> What does this object use?
+> What depends on this object?
 
 Example:
 
@@ -340,7 +326,7 @@ ETL
 REPORT
 ```
 
-If I change CUSTOMER, you track down.
+If I change CUSTOMER, trace its downstream dependencies.
 
 ---
 
@@ -368,7 +354,7 @@ If the report has a problem, Impact Analysis can go backwards to identify the so
 
 ---
 
-# 40.5 Dependency analysis in Oracle
+## 40.5 Dependency analysis in Oracle
 
 Oracle keeps dependencies between many objects.
 
@@ -384,6 +370,7 @@ Example:
 
 ```
 SELECT
+name,
 type,
 referenced_name,
 referenced_type
@@ -393,12 +380,13 @@ ORDER BY name
 
 ---
 
-# 40.6 Who depends on CUSTOMER?
+## 40.6 Who depends on CUSTOMER?
 
 Example:
 
 ```
 SELECT
+name,
 type
 FROM user_dependencies
 WHERE referenced_name = 'CUSTOMER';
@@ -410,7 +398,7 @@ Possible result:
 NAME TYPE
 ---------------------  ----------------
 VW_CUSTOMER_ACTIVE VIEW
-PKG_CUSTOMERQ1QX BODY
+PKG_CUSTOMER BODY
 PRC_CUSTOMER_LOAD PROCEDURE
 TRG_CUSTOMER_AUDIT TRIGGER
 ```
@@ -419,7 +407,7 @@ This is the first stage of the technical analysis.
 
 ---
 
-# 40.7 Which objects uses a package?
+## 40.7 Which objects does a package use?
 
 Reverse direction:
 
@@ -438,11 +426,11 @@ ACCOUNT TABLE
 VW_BALANCE VIEW
 ```
 
-That way you can build addictive grafts.
+This query shows the objects referenced by the package and helps build a dependency graph.
 
 ---
 
-# 40.8 USER\ _ DEPENDENCIES is not enough
+## 40.8 USER_DEPENDENCIES is not enough
 
 Very important in the technical discussion:
 
@@ -474,7 +462,7 @@ SELECT * FROM user_dependencies;
 
 ---
 
-# 40.9 Search for references in code
+## 40.9 Search for references in code
 
 For PL/SQL you can use:
 
@@ -512,7 +500,7 @@ Very useful in Impact Analysis.
 
 ---
 
-# 40.10 Attention to false positives
+## 40.10 Attention to false positives
 
 Search:
 
@@ -533,7 +521,7 @@ Therefore, the search in the code is useful, but must be interpreted.
 
 ---
 
-# 40.11 Impact on Views
+## 40.11 Impact on Views
 
 Suppose:
 
@@ -578,7 +566,7 @@ correct business logic
 
 ---
 
-# 40.12 Impact on PL/SQL
+## 40.12 Impact on PL/SQL
 
 Example:
 
@@ -611,14 +599,14 @@ scheduler jobs
 
 ---
 
-# 40.13 INVALID Objects After Modification
+## 40.13 INVALID Objects After Modification
 
 After structural changes check:
 
 ```
 SELECT object_name,
 object_type,
-stasis
+status
 FROM user_objects
 WHERE status = 'INVALID';
 ```
@@ -627,7 +615,7 @@ Example:
 
 ```
 PKG_CUSTOMER PACKAGE BODY INVALID
-VW_CUSTOMERQ1QX INVALID
+VW_CUSTOMER | INVALID
 ```
 
 This is an important post-deployment control.
@@ -642,7 +630,7 @@ does not guarantee a lack of functional impact.
 
 ---
 
-# 40.14 Compilation errors
+## 40.14 Compilation errors
 
 For PL/SQL objects:
 
@@ -676,7 +664,7 @@ ALTER PACKAGE pkg_customer COMPILE BODY;
 
 ---
 
-# 40.15 Impact on constraints
+## 40.15 Impact on constraints
 
 Suppose:
 
@@ -716,7 +704,7 @@ WHERE table_name = 'CUSTOMER';
 
 ---
 
-# 40.16 Impact on indexes
+## 40.16 Impact on indexes
 
 For the amended column:
 
@@ -741,12 +729,12 @@ the impact must be checked.
 
 ---
 
-# 40.17 Functional-based indexes
+## 40.17 Functional-based indexes
 
 Example:
 
 ```
-CREATEQ1QX ix_customer_status
+CREATE INDEX ix_customer_status
 ON custodian (UPPER (status));
 ```
 
@@ -754,7 +742,7 @@ If the logic or type of column changes, this index should be included in Impact 
 
 ---
 
-# 40.18 Impact on materialized views
+## 40.18 Impact on materialized views
 
 Example:
 
@@ -786,7 +774,7 @@ FROM user_mviews;
 
 ---
 
-# 40.19 Impact on ETL
+## 40.19 Impact on ETL
 
 This is where the analysis becomes critical.
 
@@ -835,18 +823,18 @@ reject rules
 
 ---
 
-# 40.20 Example ETL
+## 40.20 Example ETL
 
 We have:
 
 ```
 INSERT INTO stg_customer (
 customer_id,
-stasis
+status
 )
 SELECT
 customer_id,
-stasis
+status
 FROM src_customer;
 ```
 
@@ -869,7 +857,7 @@ Impact Analysis must identify this incompatibility before production.
 
 ---
 
-# 40.21 Impact on SCD
+## 40.21 Impact on SCD
 
 Suppose:
 
@@ -909,7 +897,7 @@ historical interpretation
 
 ---
 
-# 40.22 Impact on fact tables
+## 40.22 Impact on fact tables
 
 If you change the key to a size:
 
@@ -936,7 +924,7 @@ This impact is usually much higher than it appears from the original table.
 
 ---
 
-# 40.23 Impact on partitioning
+## 40.23 Impact on partitioning
 
 Example:
 
@@ -962,7 +950,7 @@ historical partitions
 
 ---
 
-# 40.24 Impact on SQL performance
+## 40.24 Impact on SQL performance
 
 Suppose a column:
 
@@ -987,7 +975,7 @@ Change:
 ```
 cardinality
 selectivity
-Estimated optimiser
+Estimated optimizer
 index usefulness
 common strategies
 ```
@@ -1008,21 +996,21 @@ END;
 
 ---
 
-# 40.25 Impact on APIS
+## 40.25 Impact on APIS
 
-Suppose the API- returns:
+Suppose the API returns this field:
 
-```
+```json
 {
-(PHP 4 = 4.1.0)
+  "field": "old_value"
 }
 ```
 
-and the new value is:
+and the field value changes to:
 
-```
+```json
 {
-= = References = =
+  "field": "new_value"
 }
 ```
 
@@ -1045,7 +1033,7 @@ USER_DEPENDENCIES
 
 ---
 
-# 40.26 Impact on reports
+## 40.26 Impact on reports
 
 A report may contain:
 
@@ -1068,7 +1056,7 @@ business logic dependencies
 
 ---
 
-# 40.27 Impact on Reconciliation
+## 40.27 Impact on Reconciliation
 
 Suppose:
 
@@ -1098,7 +1086,7 @@ business-rule validation
 
 ---
 
-# 40.28 Impact on Data Quality
+## 40.28 Impact on Data Quality
 
 A change can cause:
 
@@ -1115,7 +1103,7 @@ Example:
 
 ```
 SELECT status,
-COUNT *
+COUNT(*)
 FROM custodian
 GROUP BY status
 ORDER BY status;
@@ -1125,7 +1113,7 @@ It's a simple check, but very strong.
 
 ---
 
-# 40.29 Impact Analysis before vs after change
+## 40.29 Impact Analysis before vs after change
 
 Ideal:
 
@@ -1155,7 +1143,7 @@ Impact Analysis
 
 ---
 
-# 40.30 Practical Impact Analysis Workflow
+## 40.30 Practical Impact Analysis Workflow
 
 A very good workflow is:
 
@@ -1183,7 +1171,7 @@ A very good workflow is:
 
 ---
 
-# 40.31 Complete example
+## 40.31 Complete example
 
 Requirement:
 
@@ -1211,7 +1199,7 @@ DORMANT
 
 ```
 SELECT status,
-COUNT *
+COUNT(*)
 FROM account
 GROUP BY status;
 ```
@@ -1315,7 +1303,7 @@ Example:
 
 ```
 SELECT status,
-COUNT *
+COUNT(*)
 FROM dwh_account
 GROUP BY status;
 ```
@@ -1324,7 +1312,7 @@ The expected distribution must appear.
 
 ---
 
-# 40.32 Direct dependencies vs transitional dependencies
+## 40.32 Direct dependencies vs transitional dependencies
 
 Let's have:
 
@@ -1338,7 +1326,7 @@ VIEW_C
 PACKAGE_D
 ```
 
-VIEW\ _ B is directly dependent on TABLE\ _ A.
+VIEW_B is directly dependent on TABLE_A.
 
 But:
 
@@ -1353,7 +1341,7 @@ Serious Impact Analysis must also follow these.
 
 ---
 
-# 40.33 Recursive dependence analysis
+## 40.33 Recursive dependence analysis
 
 Conceptual:
 
@@ -1371,11 +1359,11 @@ B, C and D
 
 Not just B.
 
-For advanced analysis you can build recursive graphics from ALL\ _ DEPENDENCIES.
+For advanced analysis you can build recursive graphics from ALL_DEPENDENCIES.
 
 ---
 
-# 40.34 DDL vs DML impact
+## 40.34 DDL vs DML impact
 
 It is useful to separate:
 
@@ -1409,12 +1397,12 @@ They're often more dangerous precisely because the system continues to run.
 
 ---
 
-# 40.35 DROP COLUMN
+## 40.35 DROP COLUMN
 
 Suppose:
 
 ```
-ALTER TABLE custodian
+ALTER TABLE customer
 DROP COLUMN segment_code;
 ```
 
@@ -1423,11 +1411,11 @@ The impact on:
 ```
 views
 packages
-procedus
-function
+procedures
+functions
 triggers
 indexes
-Constraints
+constraints
 materialized views
 ETL
 reports
@@ -1437,7 +1425,7 @@ APIS
 Otherwise you can get:
 
 ```
-ORA-00904: invalid identity
+ORA-00904: invalid identifier
 ```
 
 or objects:
@@ -1448,7 +1436,7 @@ INVALID
 
 ---
 
-# 40.36 Rename is more dangerous than it looks
+## 40.36 Rename is more dangerous than it looks
 
 Change:
 
@@ -1484,7 +1472,7 @@ than a brutal rename in a large ecosystem.
 
 ---
 
-# 40.37 Impact Analysis and Dynamic SQL
+## 40.37 Impact Analysis and Dynamic SQL
 
 Dynamic SQL is one of the most difficult areas.
 
@@ -1511,9 +1499,9 @@ runtime execution
 
 ---
 
-# 40.38 Impact Analysis and configuration-driving ETL
+## 40.38 Impact Analysis and configuration-driving ETL
 
-In mature ETL- systems can be configured:
+In mature ETL systems can be configured:
 
 ```
 ETL_MAPPING
@@ -1535,7 +1523,7 @@ Impact Analysis should therefore also include ETL metadata.
 
 ---
 
-# 40.39 Impact Analysis in ODI
+## 40.39 Impact Analysis in ODI
 
 In ODI you could have:
 
@@ -1575,7 +1563,7 @@ This is the impact at orchestration level.
 
 ---
 
-# 40.40 Impact Analysis and Batch Processing
+## 40.40 Impact Analysis and Batch Processing
 
 An object can be used in a chain:
 
@@ -1589,7 +1577,7 @@ JOB_03
 JOB_04
 ```
 
-If you change the JOB\ _ 02 output, you need to consider:
+If you change the JOB_02 output, you need to consider:
 
 ```
 JOB_03
@@ -1603,7 +1591,7 @@ Impact Analysis does not stop at SQL level.
 
 ---
 
-# 40.41 Impact Analysis and Data Linage
+## 40.41 Impact Analysis and Data Lineage
 
 The two concepts are perfectly completed.
 
@@ -1629,25 +1617,25 @@ CHANGE HERE
 + ---- → what breaks or changes downstream?
 ```
 
-That's why a good solution by Data Linage greatly simplifies Impact Analysis.
+That's why a good solution by Data Lineage greatly simplifies Impact Analysis.
 
 ---
 
-# 40.42 Impact Analysis and Reconciliation
+## 40.42 Impact Analysis and Reconciliation
 
 After implementation of the change check if the results are correct.
 
 Examples:
 
 ```
-SELECT COUNT *
+SELECT COUNT(*)
 FROM src_customer;
 ```
 
 versus:
 
 ```
-SELECT COUNT *
+SELECT COUNT(*)
 FROM dwh_customer;
 ```
 
@@ -1679,7 +1667,7 @@ if the change has produced the correct result
 
 ---
 
-# 40.43 Impact Assessment Checklist
+## 40.43 Impact Assessment Checklist
 
 For any important change ask:
 
@@ -1704,14 +1692,14 @@ This is a very good checklist and for review.
 
 ---
 
-# 40.44 What do you check for after deployment
+## 40.44 What do you check for after deployment
 
 At least:
 
 ```
 SELECT object_name,
 object_type,
-stasis
+status
 FROM user_objects
 WHERE status = 'INVALID';
 ```
@@ -1731,7 +1719,7 @@ But also data validations:
 
 ```
 SELECT status,
-COUNT *
+COUNT(*)
 FROM custodian
 GROUP BY status;
 ```
@@ -1749,11 +1737,11 @@ report validation
 
 ---
 
-# 40.45
+## 40.45
 
 ### Mistake 1
 
-> I checked USER\ _ DEPENDENCIES, so I'm done.
+> I checked USER_DEPENDENCIES, so I'm done.
 
 No.
 
@@ -1827,7 +1815,7 @@ Impact Analysis should lead to an **** plan test.
 
 ---
 
-# 40.46 Real script DWH / Banking
+## 40.46 Real script DWH / Banking
 
 Suppose the Core Banking system:
 
@@ -1905,15 +1893,15 @@ This is exactly the kind of problem that Impact Analysis needs to prevent.
 
 ---
 
-# 40.47 Oracle exercise 26ai
+## 40.47 Oracle exercise
 
 Create:
 
 ```
-CREATE TABLE custodian (
+CREATE TABLE customer (
 customer_id NUMBER PRIMARY KEY,
 customer_name VARCHAR2 (100),
-VARCHAR2 status (1)
+status VARCHAR2(1)
 );
 ```
 
@@ -1923,7 +1911,7 @@ View:
 CREATE VIEW vw_active_customer AS
 SELECT customer_id,
 customer_name
-FROM custodian
+FROM customer
 WHERE status = 'A';
 ```
 
@@ -1932,7 +1920,7 @@ Procedure:
 ```
 CREATE OR REPLACE PROCEDURE show_active_customer AS
 BEGIN
-FOR r IN
+FOR r IN (
 SELECT *
 FROM vw_active_customer
 )
@@ -1951,6 +1939,7 @@ Discover who depends on CUSTOMER:
 
 ```
 SELECT
+name,
 type
 FROM user_dependencies
 WHERE referenced_name = 'CUSTOMER';
@@ -2003,12 +1992,147 @@ Check the invalid objects:
 ```
 SELECT object_name,
 object_type,
-stasis
+status
 FROM user_objects
 WHERE status = 'INVALID';
 ```
 
 Notice that a semantic problem may exist even if all objects are VALID.
+
+---
+
+## 40.50 Mental pattern to memorize
+
+When you hear:
+
+> **Impact Analysis**
+
+think immediately:
+
+```
+CHANGE
+   |
+   v
+WHAT USES IT?
+   |
++ -- * Oracle dependencies
++ --
++ -- *
++ -- = Indexes / Constraints
++ -- = ETL / ODI
++ --
++ --
++ - APIS
++ -- = External systems
+   |
+   v
+WHAT CAN BREAK?
+   |
++ --
++ -- * Data quality
++ - Business logic
++ -- • Performance
++ --
+   |
+   v
+TEST
+   |
+   v
+DEPLOY
+   |
+   v
+VALIDATE
+```
+
+---
+
+## What should remain after module 40
+
+For an Oracle Data Developer you must know very well the following idea:
+
+```
+Impact analysis is more than a dependency query.
+```
+
+It is the combination of:
+
+```
+Technical dependencies
+        +
+Data lineage
+        +
+Business rules
+        +
+ETL dependencies
+        +
+Operational dependencies
+        +
+Testing
+        +
+Reconciliation
+```
+
+The most important Oracle instruments are:
+
+Diagram: see HTML/PDF export
+
+SQL
+```
+USER_DEPENDENCIES
+ALL_DEPENDENCIES
+
+USER_SOURCE
+ALL_SOURCE
+
+USER_OBJECTS
+USER_ERRORS
+
+USER_CONSTRAINTS
+USER_CONS_COLUMNS
+
+USER_INDEXES
+USER_IND_COLUMNS
+
+USER_VIEWS
+USER_MVIEWS
+```
+
+And the final model to memorize is:
+
+```
+CHANGE
+                 |
+                 v
+IMPACT ANALYSIS
+                 |
+       +---------+---------+
+       |                   |
+TECHNICAL FUNCTIONAL
+       |                   |
+depending business rules
+PL/SQL data meaning
+indexes reports
+APIS constraints
+       |                   |
+       +---------+---------+
+                 |
+                 v
+ETL / DWH FLOW
+                 |
+                 v
+SOURCE → STAGING → DWH → DIM/FACT → MART → REPORT
+                 |
+                 v
+TEST
+                 |
+                 v
+RECONCILIATION
+                 |
+                 v
+DEPLOYMENT
+```
+
+**Key idea:** in a large Oracle / DWH system, the difficulty of a change is not necessarily the change in itself, but **identifying all places where that change propagates the effects of**.
 
 ---
 
@@ -2062,7 +2186,7 @@ ETL metadata
 
 ---
 
-### 4. What difference exists between Data Linage and Impact Analysis?
+### 4. What difference exists between Data Lineage and Impact Analysis?
 
 Data Lineage describes the data route:
 
@@ -2142,152 +2266,13 @@ source
 
 ---
 
-## Questions and answers
-
 A very good wording:
 
-> I start Impact Analysis by identifying the object and type of structural, semantic or business change. Then I check Oracle's dependencies through ALL\ _ DEPENDENCIES, I look for references in the code through ALL\ _ SOURCE and I check views, constraints, indexes and objects that can become invalid. In an DWH I also follow the lineage through staging, mappings ETL/ODI, dimensions, facts, witnesses and reports. I am not just relying on dependence metadata because dynamic SQL, configuration-driving ETL and external systems can introduce additional dependencies. Finally, I define tests, reconciliation and post-deploying validations.
+> I start Impact Analysis by identifying the object and type of structural, semantic or business change. Then I check Oracle's dependencies through ALL_DEPENDENCIES, I look for references in the code through ALL_SOURCE and I check views, constraints, indexes and objects that can become invalid. In an DWH I also follow the lineage through staging, mappings ETL/ODI, dimensions, facts, witnesses and reports. I am not just relying on dependence metadata because dynamic SQL, configuration-driving ETL and external systems can introduce additional dependencies. Finally, I define tests, reconciliation and post-deploying validations.
 
 This is very close to what is expected to be a role **Senior Oracle / DWH / Data Developer**.
 
 ---
-
-# 40.50 Mental pattern to memorize
-
-When you hear:
-
-> **Impact Analysis**
-
-think immediately:
-
-```
-CHANGE
-   |
-   v
-WHAT USES IT?
-   |
-+ -- * Oracle dependencies
-+ --
-+ -- *
-+ -- = Indexes / Constraints
-+ -- = ETL / ODI
-+ --
-+ --
-+ - APIS
-+ -- = External systems
-   |
-   v
-WHAT CAN BREAK?
-   |
-+ --
-+ -- * Data quality
-+ - Business logic
-+ -- • Performance
-+ --
-   |
-   v
-TEST
-   |
-   v
-DEPLOY
-   |
-   v
-VALIDATE
-```
-
----
-
-# What should remain after module 40
-
-For an Oracle Data Developer you must know very well the following idea:
-
-```
-Impact Analysis is just dependence query.
-```
-
-It is the combination of:
-
-```
-Technical dependencies
-        +
-Linage date
-        +
-Business rules
-        +
-ETL dependence
-        +
-Operational dependencies
-        +
-Testing
-        +
-Reconciliation
-```
-
-The most important Oracle instruments are:
-
-Diagram: see HTML/PDF export
-
-SQL
-```
-USER_DEPENDENCIES
-ALL_DEPENDENCIES
-
-USER_SOURCE
-ALL_SOURCE
-
-USER_OBJECTS
-USER_ERRORS
-
-USER_CONSTRAINTS
-USER_CONS_COLUMNS
-
-USER_INDEXES
-USER_IND_COLUMNS
-
-USER_VIEWS
-USER_MVIEWS
-```
-
-And the final model to memorize is:
-
-```
-CHANGE
-                 |
-                 v
-IMPACT ANALYSIS
-                 |
-       +---------+---------+
-       |                   |
-TECHNICAL FUNCTIONAL
-       |                   |
-depending business rules
-PL/SQL data meaning
-indexes reports
-APIS constraints
-       |                   |
-       +---------+---------+
-                 |
-                 v
-ETL / DWH FLOW
-                 |
-                 v
-SOURCE → STAGING → DWH → DIM/FACT → MART → REPORT
-                 |
-                 v
-TEST
-                 |
-                 v
-RECONCILIATION
-                 |
-                 v
-DEPLOYMENT
-```
-
-**Key idea:** in a large Oracle / DWH system, the difficulty of a change is not necessarily the change in itself, but **identifying all places where that change propagates the effects of**.
-
----
-
-## Questions and answers
 
 ### How would you briefly explain Impact Analysis to a colleague who knows SQL, but not this area?
 
@@ -2303,8 +2288,8 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 
-Change the type of column to DIM _ CUSTOMER.
+Change the type of column to DIM _CUSTOMER.

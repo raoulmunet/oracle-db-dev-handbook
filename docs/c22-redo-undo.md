@@ -38,7 +38,7 @@ In short:
 
 ---
 
-# 2. Simple Example
+## 2. Simple Example
 
 We have:
 
@@ -86,7 +86,7 @@ It should not necessarily be considered as two complete copies of the row. Oracl
 
 ---
 
-# 3. What UNDO is
+## 3. What UNDO is
 
 UNDO is the information used to rebuild the **data status.
 
@@ -110,7 +110,7 @@ This information gets into the undo blocks.
 
 ---
 
-# 4. What UNDO is used for
+## 4. What UNDO is used for
 
 The most important uses are:
 
@@ -124,7 +124,7 @@ The first three are essential for review.
 
 ---
 
-# 5. UNDO and ROLLBACK
+## 5. UNDO and ROLLBACK
 
 Example:
 
@@ -156,7 +156,7 @@ UNDO:
 
 ---
 
-# 6. UNDO and SAVEPOINT
+## 6. UNDO and SAVEPOINT
 
 UNDO also allows partial rollback.
 
@@ -184,7 +184,7 @@ The first change remains in the transaction.
 
 ---
 
-# 7. UNDO and Read Consistence
+## 7. UNDO and Read Consistence
 
 This is one of the most important Oracle concepts.
 
@@ -242,7 +242,7 @@ Oracle can reconstruct this version using **UNDO**.
 
 ---
 
-# 8. MVCC = Multi-Version Competition Control
+## 8. MVCC = Multi-Version Competition Control
 
 Oracle uses a **MVCC** mechanism.
 
@@ -277,11 +277,11 @@ Hence the principle:
 
 > **Readers don't block writers and writers don't block readers** in the usual Oracle situations.
 
-Writers can, however, block each other if they change the same lines.
+Writers can, however, block each other if they change the same rows.
 
 ---
 
-# 9. UNDO and SCN
+## 9. UNDO and SCN
 
 SCN = **System Change Number**.
 
@@ -309,13 +309,13 @@ The query started at:
 SCN 105
 ```
 
-He needs to see the image of the base at the time.
+Oracle needs the before image of the data at that point in time.
 
 UNDO helps the Oracle rebuild that image.
 
 ---
 
-# 10. UNDO and Flashback Query
+## 10. UNDO and Flashback Query
 
 UNDO also allows the interrogation of a previous version.
 
@@ -339,7 +339,7 @@ Oracle tries to rebuild historical data using the information available in undo.
 
 ---
 
-# 11. Undo Tablespace
+## 11. Undo Tablespace
 
 Oracle normally uses a dedicated tablespace.
 
@@ -371,7 +371,7 @@ undo_tablespace = UNDOTBS1
 
 ---
 
-# 12. Undo Retention
+## 12. Undo Retention
 
 Oracle is trying to keep undo for a certain period.
 
@@ -393,11 +393,11 @@ that is approximately:
 900 seconds = 15 minutes
 ```
 
-But UNDO\ _ RETENTION should not be interpreted simply as an absolute guarantee in all configurations. Oracle can reuse undo depending on the available space and the configuration of the tablet.
+But UNDO_RETENTION should not be interpreted simply as an absolute guarantee in all configurations. Oracle can reuse undo depending on the available space and the configuration of the tablet.
 
 ---
 
-# 13. ORA-01555 = Snapshot Too Old
+## 13. ORA-01555 = Snapshot Too Old
 
 It is the classic error related to undo:
 
@@ -441,7 +441,7 @@ competing transactions
 
 ---
 
-# What REDO is
+## What REDO is
 
 Redo is the information needed to restore **changes made in the** database.
 
@@ -467,7 +467,7 @@ Redo is essential for:
 
 ```
 Durability
-Instant Recovery
+Instance Recovery
 Media Recovery
 Data Guard / reply mechanisms
 Archiving
@@ -475,7 +475,7 @@ Archiving
 
 ---
 
-# 15. Redo Log Buffer
+## 15. Redo Log Buffer
 
 Redo is first generated in memory, in:
 
@@ -495,16 +495,16 @@ Scheme:
 SGA
 
 +-----------------------------+
-♪ Buffer Cache ♪
-♪ Shared Pool ♪
-♪ Redo Log Buffer ♪
+| Buffer Cache |
+| Shared Pool |
+| Redo Log Buffer |
 | ...                         |
 +-----------------------------+
 ```
 
 ---
 
-# 16. LGWR
+## 16. LGWR
 
 Process:
 
@@ -536,7 +536,7 @@ Online Redo Log
 
 ---
 
-# 17. Online Redo Logs
+## 17. Online Redo Logs
 
 Oracle usually has multiple redo log groups.
 
@@ -574,7 +574,7 @@ LOG SWITCH
 
 ---
 
-# 18. COMMIT and Redo
+## 18. COMMIT and Redo
 
 This is an extremely important concept.
 
@@ -620,7 +620,7 @@ Effective blocks can then reach datafiles through DBWR.
 
 ---
 
-# 19. LGWR vs DBWR
+## 19. LGWR vs DBWR
 
 This difference is very important in the technical discussion.
 
@@ -662,7 +662,7 @@ DBWR must write all blocks
 
 ---
 
-# 20. Why is this mechanism effective
+## 20. Why is this mechanism effective
 
 We're imagining a transaction that changes 10,000 blocks.
 
@@ -690,7 +690,7 @@ This is one of the reasons why the redo is fundamental to the Oracle architectur
 
 ---
 
-# 21. What happens to crash
+## 21. What happens to crash
 
 We assume:
 
@@ -739,7 +739,7 @@ not required
 
 ---
 
-# 22. Roll Forward + Roll Back
+## 22. Roll Forward + Roll Back
 
 Recovery is often explained as two conceptual phases.
 
@@ -769,7 +769,7 @@ Very good technical discussion forms:
 
 ---
 
-# 23. The Complete Relationship between Data Block, Undo and Redo
+## 23. The Complete Relationship between Data Block, Undo and Redo
 
 At:
 
@@ -815,7 +815,7 @@ The reason is that Oracle must also be able to recover the information required 
 
 ---
 
-# 24. Does UNDO generated REDO?
+## 24. Does UNDO generated REDO?
 
 Classic technical discussion question.
 
@@ -841,7 +841,7 @@ Therefore, an DML operation can generate more redo than the apparent size of the
 
 ---
 
-# 25. INSERT / UPDATE / DELETE and UNDO
+## 25. INSERT / UPDATE / DELETE and UNDO
 
 ### INSERT
 
@@ -866,7 +866,7 @@ DELETE FROM
 WHERE id = 10;
 ```
 
-Undo must be able to restore the line.
+Undo must be able to restore the row.
 
 ---
 
@@ -882,7 +882,7 @@ Undo must allow the restoration of the old value.
 
 ---
 
-# 26. Complete example with two sessions
+## 26. Complete example with two sessions
 
 ## Session 1
 
@@ -958,7 +958,7 @@ and can see:
 
 ---
 
-# 27. UNDO does not just mean ROLLBACK
+## 27. UNDO does not just mean ROLLBACK
 
 A very common mistake:
 
@@ -979,7 +979,7 @@ In practice, read consistency is one of the most important uses.
 
 ---
 
-# 28. REDO does not mean backup
+## 28. REDO does not mean backup
 
 Other common confusion:
 
@@ -1003,7 +1003,7 @@ Online Redo Logs
 
 ---
 
-# 29. ARCHIVELOG
+## 29. ARCHIVELOG
 
 In mode:
 
@@ -1017,7 +1017,7 @@ Oracle keeps old redo logs in the form of:
 Archived Redo Logs
 ```
 
-Flux:
+Flow:
 
 ```
 Online Redo Log
@@ -1040,10 +1040,9 @@ Archived redo is fundamental to recovery and technologies such as standby / Data
 
 ---
 
-# 30. Online Redo vs Archived Redo
+## 30. Online Redo vs Archived Redo
 
-= = sync, corrected by elderman = =
-♪ ♪ ♪ ♪ ♪
+| | | | |
 Active use by Oracle and copy of the complete redo log
 Written by LGWR Archived by ARCn
 Circular reused and stored for recovery
@@ -1051,7 +1050,7 @@ The limited number of groups can accumulate over time
 
 ---
 
-# 31. NOLOGGING
+## 31. NOLOGGING
 
 For large operations there is the concept:
 
@@ -1062,7 +1061,7 @@ NOLOGGING
 Typical example:
 
 ```
-CREATEQ1QX sales_stage
+CREATE TABLE sales_stage
 NOLOGGING
 AS
 SELECT *
@@ -1087,7 +1086,7 @@ And it involves compromises on recoverability.
 
 ---
 
-# 32. Redo in DWH / ETL
+## 32. Redo in DWH / ETL
 
 In an DWH you can have:
 
@@ -1112,7 +1111,7 @@ Example:
 MERGE INTO fact_transactions
 USING stg_transactions
 ON (f.transaction_id = s.transaction_id)
-WHENQ1QX THEN
+WHEN MATCHED THEN
 UPDATE SET f.amount = s.amount
 WHEN NOT MATCHED THEN
 INSERT (
@@ -1121,7 +1120,7 @@ transaction_id,
 )
 VALUES (
 s.transaction_id,
-♪ amount ♪
+| amount |
 );
 ```
 
@@ -1138,12 +1137,12 @@ intense archiving
 
 ---
 
-# 33. Very large transactions
+## 33. Very large transactions
 
 Example:
 
 ```
-DELETEQ1QX fact_transactions
+DELETE FROM fact_transactions
 WHERE transaction_date; DATE '2020-01-01';
 
 COMMIT;
@@ -1168,20 +1167,20 @@ prolonged housing
 In DWH, a partition-based strategy is sometimes more effective:
 
 ```
-ALTERQ1QX fact_transactions
+ALTER TABLE fact_transactions
 DROP PARTITION p2019;
 ```
 
 than:
 
 ```
-DELETEQ1QX fact_transactions
+DELETE FROM fact_transactions
 WHERE transaction_date BETWEEN...;
 ```
 
 ---
 
-# 34. Commit too often
+## 34. Commit too often
 
 Alt anti-pattern ETL:
 
@@ -1228,7 +1227,7 @@ There is no universal rule. I commit to N lines.
 
 ---
 
-# 35. Log file sync
+## 35. Log file sync
 
 When a session runs:
 
@@ -1263,7 +1262,7 @@ It's an important anti-pattern.
 
 ---
 
-# 36. Redo Log Switch Too Frequently
+## 36. Redo Log Switch Too Frequently
 
 If the redo logs are too small:
 
@@ -1285,7 +1284,7 @@ A large ETL batch can highlight the problem immediately.
 
 ---
 
-# 37. Redo and Checkpoint
+## 37. Redo and Checkpoint
 
 The checkpoint synchronizes the progress between:
 
@@ -1324,7 +1323,7 @@ dirty buffers → datafiles
 
 ---
 
-# 38. Undo and Long Transactions
+## 38. Undo and Long Transactions
 
 A very large transaction:
 
@@ -1356,7 +1355,7 @@ We need to find the balance.
 
 ---
 
-# 39. DWH: Batch control and restartability
+## 39. DWH: Batch control and restartability
 
 Suppose an ETL:
 
@@ -1388,7 +1387,7 @@ with a table control:
 ETL_BATCH
 
 batch_id
-stasis
+status
 start_time
 end_time
 rows_processed
@@ -1417,13 +1416,13 @@ but it must be designed so that the process remains correct and idempotent.
 
 ---
 
-# 40. As you see Undo in Oracle
+## 40. As you see Undo in Oracle
 
 With sufficient privileges:
 
 ```
 SELECT *
-FROM v $undostat;
+FROM V$undostat;
 ```
 
 It is very useful for the analysis:
@@ -1445,7 +1444,7 @@ V$UNDOSTAT
 
 ---
 
-# 41. As you see Redo
+## 41. As you see Redo
 
 You can see the redo logs:
 
@@ -1454,8 +1453,8 @@ SELECT
 group #,
 sequence #,
 bytes / 1024 / 1024 AS size_mb,
-stasis
-FROM v $log;
+status
+FROM V$log;
 ```
 
 Members of the redo:
@@ -1464,12 +1463,12 @@ Members of the redo:
 SELECT
 group #,
 member
-FROM v $logfile;
+FROM V$logfile;
 ```
 
 ---
 
-# 42. How much redo the session produces
+## 42. How much redo the session produces
 
 With the right privileges you can investigate the session statistics.
 
@@ -1491,8 +1490,8 @@ Conceptual:
 ```
 SELECT sn.name,
 ss.value
-FROM v $sesstat ss
-JOIN v $status
+FROM V$sesstat ss
+JOIN V$status
 ON sn.statistical # = ss.statistical #
 WHERE ss.sid = SYS_CONTEXT ('USERENV', 'SID')
 AND sn.name = 'redo size';
@@ -1502,7 +1501,7 @@ Run before and after an DML and compare.
 
 ---
 
-# 43. Oracle Exercise 26ai - UNDO
+## 43. Oracle Exercise 26ai - UNDO
 
 Create:
 
@@ -1516,7 +1515,7 @@ amount NUMBER
 Data:
 
 ```
-INSERTQ1QX redo_undo_lab
+INSERT INTO redo_undo_lab
 VALUES (1,000);
 
 COMMIT;
@@ -1566,7 +1565,7 @@ UNDO made it possible to return.
 
 ---
 
-# 44. Oracle Exercise 26ai - Read Consistency
+## 44. Oracle Exercise 26ai - Read Consistency
 
 Use two DataGrip consoles.
 
@@ -1625,7 +1624,7 @@ COMMIT
 
 ---
 
-# 45. Exercise at SAVEPOINT
+## 45. Exercise at SAVEPOINT
 
 ```
 UPDATE redo_undo_lab
@@ -1670,7 +1669,7 @@ revert to initial commited value.
 
 ---
 
-# 46. Example DWH
+## 46. Example DWH
 
 You have:
 
@@ -1683,7 +1682,7 @@ FACT_TRANSACTION
 and:
 
 ```
-INSERTQ1QX fact_transaction
+INSERT INTO fact_transaction
 SELECT *
 FROM stg_transaction;
 ```
@@ -1710,6 +1709,170 @@ recovery
 Not just at the execution plan.
 
 This is an important aspect for a Data Developer Oracle.
+
+---
+
+## 48. Conceptual Traps
+
+Don't memorize:
+
+```
+UNDO = old row
+REDO = new row
+```
+
+It's too much simplification.
+
+More correctly:
+
+```
+UNDO
+=
+information necessary to restore / rebuild
+previous versions
+
+REDO
+=
+change records required to reproduce changes
+```
+
+---
+
+## 49. Link with the other Oracle concepts
+
+Redo / Undo links many chapters:
+
+```
+Transactions
+     |
++ -- = COMMIT / ROLLBACK
+     |
++ --
+     |      |
+- MVCC
+- Read Consistency
+- Flashback.
+     |
++ --
+            |
++ --
++ -- • Online Redo Logs
++ --
++ --} Recovery
+```
+
+And architectural:
+
+```
+Oracle Instance
+
+SGA
+       |                                |
+* LGWR / DBWR / CKPT
+       |
++ -- Buffer Cache
+       |
++ -- Redo Log Buffer
+               |
+* * *
+               v
+
+Database
+               |
+        +------+------+
+        |             |
+Datafiles Redo Logs
+        |
+Undo Tablespace
+```
+
+---
+
+## 50. Mental schematics to memorize
+
+for review, remember the chain:
+
+```
+UPDATE
+   |
++ --
+   |
++ --
+   |
++ --
+             |
+             v
+Redo Log Buffer
+             |
+LGWR
+             |
+             v
+Online Redo Log
+```
+
+At:
+
+```
+ROLLBACK
+```
+
+think:
+
+```
+UNDO
+```
+
+At:
+
+```
+COMMIT
+```
+
+think:
+
+```
+LGWR + REDO
+```
+
+At:
+
+```
+CRASH
+```
+
+think:
+
+```
+REDO → roll forward
+UNDO → rollback uncommited transactions
+```
+
+At:
+
+```
+consistent SELECT
+```
+
+think:
+
+```
+SCN + UNDO + MVCC
+```
+
+---
+
+## What must remain
+
+The eight most important ideas are:
+
+1. **Redo and Undo are not perfect opposites; they have different goals.**
+2. **UNDO allows rollback and rebuilding old data versions.**
+3. **UNDO is fundamental to MVCC and read consistency.**
+4. **REDO allows you to restore changes and ensure durability.**
+5. **LGWR writes redo; DBWR writes blocks in datafiles.**
+6. **COMMIT should persist redo, not all dirty blocks.**
+7. **In recovery: REDO makes roll forward, and UNDO removes unsettled transactions.**
+8. For an **Oracle Data Developer / ETL / DWH**, both SQL and **redo / undo volume, commutation strategy, restartability and the effect of large** batches shall be followed.
 
 ---
 
@@ -1796,172 +1959,6 @@ Reduce redo for certain operations, but does not remove any redo.
 
 ---
 
-# 48. Conceptual Traps
-
-Don't memorize:
-
-```
-UNDO = old row
-REDO = new row
-```
-
-It's too much simplification.
-
-More correctly:
-
-```
-UNDO
-=
-information necessary to restore / rebuild
-previous versions
-
-REDO
-=
-change records required to reproduce changes
-```
-
----
-
-# 49. Link with the other Oracle concepts
-
-Redo / Undo links many chapters:
-
-```
-Transactions
-     |
-+ -- = COMMIT / ROLLBACK
-     |
-+ --
-     |      |
-- MVCC
-- Read Consistency
-- Flashback.
-     |
-+ --
-            |
-+ --
-+ -- • Online Redo Logs
-+ --
-+ --} Recovery
-```
-
-And architectural:
-
-```
-Oracle Instant
-
-SGA
-       |                                |
-* LGWR / DBWR / CKPT
-       |
-+ -- Buffer Cache
-       |
-+ -- Redo Log Buffer
-               |
-* * *
-               v
-
-Database
-               |
-        +------+------+
-        |             |
-Datafiles Redo Logs
-        |
-Undo Tablespace
-```
-
----
-
-# 50. Mental schematics to memorize
-
-for review, remember the chain:
-
-```
-UPDATE
-   |
-+ --
-   |
-+ --
-   |
-+ --
-             |
-             v
-Redo Log Buffer
-             |
-LGWR
-             |
-             v
-Online Redo Log
-```
-
-At:
-
-```
-ROLLBACK
-```
-
-think:
-
-```
-UNDO
-```
-
-At:
-
-```
-COMMIT
-```
-
-think:
-
-```
-LGWR + REDO
-```
-
-At:
-
-```
-CRASH
-```
-
-think:
-
-```
-REDO → roll forward
-UNDO → rollback uncommited transactions
-```
-
-At:
-
-```
-consistent SELECT
-```
-
-think:
-
-```
-SCN + UNDO + MVCC
-```
-
----
-
-## What must remain
-
-The eight most important ideas are:
-
-1. **Redo and Undo are not perfect opposites; they have different goals.**
-2. **UNDO allows rollback and rebuilding old data versions.**
-3. **UNDO is fundamental to MVCC and read consistency.**
-4. **REDO allows you to restore changes and ensure durability.**
-5. **LGWR writes redo; DBWR writes blocks in datafiles.**
-6. **COMMIT should persist redo, not all dirty blocks.**
-7. **In recovery: REDO makes roll forward, and UNDO removes unsettled transactions.**
-8. For an **Oracle Data Developer / ETL / DWH**, both SQL and **redo / undo volume, commutation strategy, restartability and the effect of large** batchs shall be followed.
-
----
-
-## Questions and answers
-
 ### How would you briefly explain Redo / Undo to a colleague who knows SQL, but not this area?
 
 Redo / Undo covers redo as revised-oriented change records, undo as logical before-image information, commit durability and LGWR. In practice, first determine what data enter and what result to achieve, then check implementation, execution plan and effects on flow.
@@ -1976,7 +1973,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

@@ -29,11 +29,11 @@ PL/SQL also lets you define **how** the logic should be executed:
 
 ```sql
 BEGIN
-UPDATE
+UPDATE employees
 SET salary = salary * 1.05
 WHERE department_id = 50;
 
-DBMS_OUTPUT.PUT_LINE(SQL%ROWCOUNT; ' employees updated');
+DBMS_OUTPUT.PUT_LINE(SQL%ROWCOUNT || ' employees updated');
 END;
 /
 ```
@@ -47,7 +47,7 @@ PL/SQL introduces:
 - cursors;
 - exceptions;
 - procedures;
-- functionss;
+- functions;
 - packages;
 - collections,
 - bulk processing;
@@ -182,7 +182,7 @@ Very important in real Oracle code.
 Instead of:
 
 ```
-v_salary NUMBER(10.2);
+v_salary NUMBER(10,2);
 ```
 
 you can write:
@@ -279,7 +279,7 @@ If it finds no rows:
 NO_DATA_FOUND
 ```
 
-If he finds multiple rows:
+If the query returns multiple rows:
 
 ```
 TOO_MANY_ROWS
@@ -519,14 +519,14 @@ BEGIN
 
 EXCEPTION
 
-WHEN  THEN
-        ...
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20001, 'No matching employee was found.');
 
-WHEN  THEN
-        ...
+    WHEN TOO_MANY_ROWS THEN
+        RAISE_APPLICATION_ERROR(-20002, 'More than one employee matched.');
 
-WHEN  THEN
-        ...
+    WHEN OTHERS THEN
+        RAISE;
 
 END;
 /
@@ -797,7 +797,7 @@ Function
 calculate and return a value
 ```
 
-In practice, both procedures and functionss can be much more complex.
+In practice, both procedures and functions can be much more complex.
 
 ---
 
@@ -867,7 +867,7 @@ p_percent NUMBER
 IS
 BEGIN
 
-UPDATE
+UPDATE employees
 SET salary =
 salary * (1 + p_percent / 100)
 WHERE employee_id = p_employee_id;
@@ -1611,7 +1611,7 @@ SELECT
 customer_id,
 customer_name,
 SYSDATE
-FROM stg_customer
+FROM stg_customer s
 WHERE NOT EXISTS (
 SELECT 1
 FROM dwh_customer d
@@ -1624,7 +1624,7 @@ SQL%ROWCOUNT
 
 EXCEPTION
 
-WHEN  THEN
+WHEN OTHERS THEN
 
 pkg_log.write_error (
 p_process => 'LOAD_CUSTOMERS',
@@ -1748,118 +1748,6 @@ Performs an operation
 ```
 
 In mature Oracle projects, much of the PL/SQL logic is organized into packages.
-
----
-
-## Questions and answers
-
-For an Oracle / Data Developer role, I would consider it mandatory to be able to explain without hesitation:
-
-```
-PL/SQL block
-DECLARE / BEGIN / EXCEPTION / END
-
-%TYPE
-%ROWTYPE
-
-SELECT INTO
-NO_DATA_FOUND
-TOO_MANY_ROWS
-
-IF / CASE
-LOOP / FOR / WHILE
-
-implicit cursor
-explicit cursor
-parameterized cursor
-
-procedure
-functions
-package specification
-package body
-public / private members
-package state
-
-exception handling
-SQLCODE
-SQLERRM
-RAISE
-RAISE_APPLICATION_ERROR
-
-transactions
-COMMIT
-ROLLBACK
-SAVEPOINT
-
-collections
-BULK COLLECT
-FORALL
-LIMIT
-
-dynamic SQL
-EXECUTE IMMEDIATE
-bind variables
-SQL injection
-
-triggers
-BEFORE / AFTER
-row-level / statement-level
-:OLD /:NEW
-```
-
----
-
-## Further questions and answers
-
-### What is the difference between procedure and functions?
-
-The functions must return a value through RETURN; the procedure is mainly directed at performing an operation and can return information through OUT parameters.
-
-### What happens if SELECT INTO finds no rows?
-
-```
-NO_DATA_FOUND
-```
-
-### What if he finds two lines?
-
-```
-TOO_MANY_ROWS
-```
-
-### What's RAISE doing?
-
-It raises an exception or, inside an exception handler, re-raises the current exception to the caller.
-
-### Why BULK COLLECT?
-
-It reduces the number of context switches between the PL/SQL engine and SQL engine.
-
-### Why FORALL?
-
-It allows bulk execution of DML using collection elements.
-
-### Package specification vs. package body?
-
-Spec:
-
-```
-public interface
-```
-
-Body:
-
-```
-Implementation + private members
-```
-
-### Why use bind variables in dynamic SQL?
-
-For security, reuse of the cursor and reduction of parse overhead.
-
-### What problem is there with WHEN OTHERS THEN NULL?
-
-It completely hides the error.
 
 ---
 
@@ -2015,9 +1903,117 @@ A natural next step would be a separate **advanced / expert PL/SQL** chapter cov
 
 ## Questions and answers
 
+For an Oracle / Data Developer role, I would consider it mandatory to be able to explain without hesitation:
+
+```
+PL/SQL block
+DECLARE / BEGIN / EXCEPTION / END
+
+%TYPE
+%ROWTYPE
+
+SELECT INTO
+NO_DATA_FOUND
+TOO_MANY_ROWS
+
+IF / CASE
+LOOP / FOR / WHILE
+
+implicit cursor
+explicit cursor
+parameterized cursor
+
+procedure
+functions
+package specification
+package body
+public / private members
+package state
+
+exception handling
+SQLCODE
+SQLERRM
+RAISE
+RAISE_APPLICATION_ERROR
+
+transactions
+COMMIT
+ROLLBACK
+SAVEPOINT
+
+collections
+BULK COLLECT
+FORALL
+LIMIT
+
+dynamic SQL
+EXECUTE IMMEDIATE
+bind variables
+SQL injection
+
+triggers
+BEFORE / AFTER
+row-level / statement-level
+:OLD /:NEW
+```
+
+---
+
+### What is the difference between procedure and functions?
+
+The functions must return a value through RETURN; the procedure is mainly directed at performing an operation and can return information through OUT parameters.
+
+### What happens if SELECT INTO finds no rows?
+
+```
+NO_DATA_FOUND
+```
+
+### What if a query returns two rows?
+
+```
+TOO_MANY_ROWS
+```
+
+### What's RAISE doing?
+
+It raises an exception or, inside an exception handler, re-raises the current exception to the caller.
+
+### Why BULK COLLECT?
+
+It reduces the number of context switches between the PL/SQL engine and SQL engine.
+
+### Why FORALL?
+
+It allows bulk execution of DML using collection elements.
+
+### Package specification vs. package body?
+
+Spec:
+
+```
+public interface
+```
+
+Body:
+
+```
+Implementation + private members
+```
+
+### Why use bind variables in dynamic SQL?
+
+For security, reuse of the cursor and reduction of parse overhead.
+
+### What problem is there with WHEN OTHERS THEN NULL?
+
+It completely hides the error.
+
+---
+
 ### How would you briefly explain PL/SQL from fundamentals to advanced to a colleague who knows SQL?
 
-PL/SQL covers anonymous blocks, variables, records and control flow, procedures, functionss, packages and scopes, explicit and implicit cursors. In practice, first, I determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
+PL/SQL covers anonymous blocks, variables, records and control flow, procedures, functions, packages and scopes, explicit and implicit cursors. In practice, first, I determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
 
 ### What are two common practical problems related to PL/SQL?
 
@@ -2029,9 +2025,8 @@ I compare row counts, amounts, and keys with the source or a reference result; I
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functionsal requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 
 In a banking flow, PL/SQL is often combined with logging, auditing, reconciliation, transaction control, and impact analysis.
-

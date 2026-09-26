@@ -12,7 +12,7 @@ Optimization of SQL in Oracle means reducing **the amount of effective work** th
 
 The central idea is:
 
-> We do not optimize SQL- as it looks like, but after **Execution Plan + actual** execution statistics.
+> We do not optimize SQL as it looks like, but after **Execution Plan + actual** execution statistics.
 
 ---
 
@@ -25,12 +25,12 @@ For a slow SQL we need to identify where the resources are consumed:
 - inadequate index or missing index;
 - inappropriate join;
 - Join made too early on big sets;
-- misestimates of the optimiser;
+- misestimates of the optimizer;
 - large sorting;
 - costly aggregates;
 - repeated access to the same table;
 - functions applied to indexed columns;
-- default conversions;
+- implicit conversions;
 - too many logical reads;
 - too much physical I/O;
 - Spill in TEMP;
@@ -39,7 +39,7 @@ For a slow SQL we need to identify where the resources are consumed:
 
 ---
 
-# 2. First Principle: Measure Before Modify
+## 2. First Principle: Measure Before Modify
 
 Don't assume the problem is the index.
 
@@ -48,7 +48,7 @@ A healthy process of tuning is:
 ```
 Slow SQL
    ↓
-Implementation Plan
+execution plan
    ↓
 A-Rows vs E-Rows
    ↓
@@ -64,7 +64,7 @@ Measurement again
 In Oracle you can use:
 
 ```
-SELECT / * + gather_plan_statistics * /
+SELECT /*+ gather_plan_statistics */
        ...
 FROM...
 WHERE...;
@@ -87,7 +87,7 @@ This is one of the most useful tools for tuning.
 
 ---
 
-# 3. Estimated cost vs real performance
+## 3. Estimated cost vs real performance
 
 Oracle Optimizer works primarily with **estimates**.
 
@@ -101,7 +101,7 @@ For example:
 
 E-Rows = 10
 
-The optimiser thought there'd be about 10 lines.
+The optimizer estimated that there would be about 10 rows.
 
 A-Rows = 450000
 
@@ -129,7 +129,7 @@ That's why in tuning:
 
 ---
 
-# 4. Selective predictions
+## 4. Selective predictions
 
 One of the most important ideas is **selectivity**.
 
@@ -141,7 +141,7 @@ FROM transactions
 WHERE transaction_id = 12345;
 ```
 
-If the transaction\ _ id is unique:
+If the transaction_id is unique:
 
 ```
 1 row out of 100 million
@@ -164,14 +164,14 @@ if 90% of the rows are ACTIVE, the index may not help.
 Oracle may prefer:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
-Because he has to read most of the tables anyway.
+Because the query must read most of the table blocks anyway.
 
 ---
 
-# 5. Full Table Scan does not automatically mean stupid SQL
+## 5. Full Table Scan does not automatically mean stupid SQL
 
 A common mistake is:
 
@@ -186,12 +186,12 @@ SELECT SUM (amount)
 FROM fact_transactions;
 ```
 
-on a large table, the Oracle must probably read almost all the lines.
+on a large table, the Oracle must probably read almost all the rows.
 
 In this case:
 
 ```
-TABLEQ1QX FULL
+TABLE ACCESS FULL
 ```
 
 It could be the right plan.
@@ -210,7 +210,7 @@ The index becomes especially useful when filtering drastically reduces the numbe
 
 ---
 
-# 6. Avoid SELECT\ *
+## 6. Avoid SELECT\ *
 
 For example:
 
@@ -247,12 +247,12 @@ Advantages:
 
 ---
 
-# 7. Do not apply unnecessary functions on indexed columns
+## 7. Do not apply unnecessary functions on indexed columns
 
 Suppose:
 
 ```
-CREATEQ1QX ix_orders_order_date
+CREATE INDEX ix_orders_order_date
 ON orders (order_date);
 ```
 
@@ -270,7 +270,7 @@ Function:
 TRUNC (order_date)
 ```
 
-may prevent the use of the normal index on the order _ data.
+may prevent the use of the normal index on the order _data.
 
 Better:
 
@@ -285,7 +285,7 @@ This is a very important pattern.
 
 ---
 
-# 8. Function - Based Index
+## 8. Function - Based Index
 
 If the application has to use:
 
@@ -296,7 +296,7 @@ TRUNC (order_date)
 you can create:
 
 ```
-CREATEQ1QX ix_orders_trunc_date
+CREATE INDEX ix_orders_trunc_date
 ON orders (TRUNC (order_date));
 ```
 
@@ -311,7 +311,7 @@ can use the index.
 Other example:
 
 ```
-CREATEQ1QX ix_customer_upper_email
+CREATE INDEX ix_customer_upper_email
 ON customers (UPPER (email));
 ```
 
@@ -323,7 +323,7 @@ WHERE UPPER (email) = UPPER (: email);
 
 ---
 
-# 9. Default Conversions are Dangerous
+## 9. Default Conversions are Dangerous
 
 Suppose:
 
@@ -361,11 +361,11 @@ or:
 WHERE customer_id =: customer_id
 ```
 
-where the variable band has the right guy.
+when the bind variable has the correct data type.
 
 ---
 
-# 10. Avoid functions on columns in JOIN
+## 10. Avoid functions on columns in JOIN
 
 Problem:
 
@@ -389,11 +389,11 @@ and:
 ON c.customer_id = t.customer_id
 ```
 
-Conversion to joints is very expensive on large volumes.
+Joins can be expensive when they process large volumes of data.
 
 ---
 
-# 11. Filter as early as possible
+## 11. Filter as early as possible
 
 Suppose:
 
@@ -417,13 +417,13 @@ JOIN customers c
 ON c.customer_id = t.customer_id;
 ```
 
-The optimiser can make this transformation by himself through **predicated** pushdown, but the important idea remains:
+The optimizer can perform this transformation through **predicate pushdown**, but the important idea remains:
 
 > the fewer rows the joinks and aggregates, the better.
 
 ---
 
-# 12. JOIN just what you need
+## 12. JOIN just what you need
 
 Query problematic:
 
@@ -435,7 +435,7 @@ JOIN customers c
 ON c.customer_id = t.customer_id;
 ```
 
-If you don't use any column in your customers and the joint doesn't validate something necessary, it can be useless.
+If no columns from the customer table are used and the join does not filter or validate anything required, the join may be unnecessary.
 
 Simple:
 
@@ -445,11 +445,11 @@ SELECT transaction_id,
 FROM transactions;
 ```
 
-In real systems, some querys accumulate unnecessary joinings over time.
+In real systems, some queries accumulate unnecessary joins over time.
 
 ---
 
-# 13. EXISTS vs IN vs JOIN
+## 13. EXISTS vs IN vs JOIN
 
 For example:
 
@@ -490,7 +490,7 @@ EXISTS expresses the intention more correctly.
 
 ---
 
-# 14. Attention to DISTINCT
+## 14. Attention to DISTINCT
 
 DISTINCT is sometimes used as a patch:
 
@@ -518,7 +518,7 @@ The question must be:
 
 > Why are there duplicates?
 
-Maybe the problem is the joint:
+Maybe the problem is the join:
 
 ```
 A
@@ -530,7 +530,7 @@ where a relationship 1: N multiplies rows.
 
 ---
 
-# 15. UNION vs UNION ALL
+## 15. UNION vs UNION ALL
 
 UNION removes duplicates:
 
@@ -566,7 +566,7 @@ For ETL/DWH, the difference can become very important.
 
 ---
 
-# 16. Avoid unnecessary sorting
+## 16. Avoid unnecessary sorting
 
 For example:
 
@@ -575,7 +575,7 @@ SELECT *
 FROM (
 SELECT *
 FROM transactions
-ORDERQ1QX transaction_date
+ORDER BY transaction_date
 );
 ```
 
@@ -584,7 +584,7 @@ if the outside query doesn't need that order.
 Or:
 
 ```
-INSERTQ1QX staging_transactions
+INSERT INTO staging_transactions
 SELECT *
 FROM source_transactions
 ORDER BY transaction_date;
@@ -594,7 +594,7 @@ The order is not physically guaranteed in the table and sorting can be completel
 
 ---
 
-# 17. Optimize aggregation
+## 17. Optimize aggregation
 
 Query:
 
@@ -631,7 +631,7 @@ GROUP BY customer_id;
 
 ---
 
-# 18. The indexes must be chosen after the workload
+## 18. The indexes must be chosen after the workload
 
 Suppose:
 
@@ -645,7 +645,7 @@ AND transaction_date
 A possible index:
 
 ```
-CREATEQ1QX ix_trans_customer_date
+CREATE INDEX ix_trans_customer_date
 ON transactions (customer_id, transaction_date);
 ```
 
@@ -660,12 +660,12 @@ But the order of the columns matters.
 
 ---
 
-# 19. Compound index and order of columns
+## 19. Compound index and order of columns
 
 Index:
 
 ```
-CREATEQ1QX ix_test
+CREATE INDEX ix_test
 ON transactions (customer_id, transaction_date);
 ```
 
@@ -698,7 +698,7 @@ This is the concept of **leading in**.
 
 ---
 
-# 20. Covering index
+## 20. Covering index
 
 Suppose:
 
@@ -712,7 +712,7 @@ WHERE customer_id =: id;
 An index:
 
 ```
-CREATEQ1QX ix_trans_customer
+CREATE INDEX ix_trans_customer
 ON transactions (customer_id);
 ```
 
@@ -721,7 +721,7 @@ Find the ROWID-uri, but the Oracle must then access the table.
 If you have:
 
 ```
-CREATEQ1QX ix_trans_customer_cover
+CREATE INDEX ix_trans_customer_cover
 ON transactions (
 customer_id,
 transaction_date,
@@ -741,7 +741,7 @@ But we don't have to turn every index into a gigantic index: the cost of DML and
 
 ---
 
-# 21. NESTED LOOPS vs HASH JOIN
+## 21. NESTED LOOPS vs HASH JOIN
 
 Example OLTP:
 
@@ -789,7 +789,7 @@ But the final choice must be confirmed by plan and statistics.
 
 ---
 
-# 22. Attention to correlated subqueries
+## 22. Attention to correlated subqueries
 
 Example:
 
@@ -822,7 +822,7 @@ We need to check out the real plan.
 
 ---
 
-# 23. Avoid PL/SQL row-by-row for SQL operations
+## 23. Avoid PL/SQL row-by-row for SQL operations
 
 Problem:
 
@@ -854,11 +854,11 @@ Classic Oracle Principle:
 
 Or the familiar expression:
 
-> ♪ Slow-by-slow processing ♪
+> | Slow-by-slow processing |
 
 ---
 
-# 24. MERGE for ETL
+## 24. MERGE for ETL
 
 Instead of:
 
@@ -876,7 +876,7 @@ USING staging_customer
 ON (
 d.source_customer_id = s.source_customer_id
 )
-WHENQ1QX THEN
+WHEN MATCHED THEN
 UPDATE SET
 d.customer_name = s.customer_name
 WHEN NOT MATCHED THEN
@@ -896,7 +896,7 @@ It's a very important pattern in ETL.
 
 ---
 
-# 25. Partition Pounding
+## 25. Partition Pounding
 
 Suppose:
 
@@ -924,7 +924,7 @@ Oracle can only read the partition for September.
 The plan can show:
 
 ```
-PARTITIONQ1QX SINGLE
+PARTITION RANGE SINGLE
 ```
 
 instead of reading the whole table.
@@ -937,7 +937,7 @@ Extremely important in DWH.
 
 ---
 
-# 26. How can you ruin Partition Pounding
+## 26. How can you ruin Partition Pounding
 
 Problem:
 
@@ -952,13 +952,13 @@ WHERE transaction_date = DATE '2026-09-01'
 AND transaction_date; DATE '2026-10-01';
 ```
 
-The second variant is even clearer semantic and allows the optimiser to identify the partition more easily.
+The second version is semantically clearer and allows the optimizer to identify the partition more easily.
 
 ---
 
-# 27. Statistics are essential
+## 27. Statistics are essential
 
-The optimiser needs information about:
+The optimizer needs information about:
 
 ```
 row number
@@ -981,11 +981,11 @@ END;
 /
 ```
 
-If the statistics are old, the optimiser can make completely wrong estimates.
+If the statistics are old, the optimizer can make completely wrong estimates.
 
 ---
 
-# 28. Histograms
+## 28. Histograms
 
 Let's assume the column:
 
@@ -1001,7 +1001,7 @@ CANCELLED 4%
 ERROR 1%
 ```
 
-Without the histogram, the optimiser may require a more uniform distribution.
+Without a histogram, the optimizer may assume a more uniform data distribution.
 
 But:
 
@@ -1015,7 +1015,7 @@ In such cases, histogram can help optimizer to better estimate cardinality.
 
 ---
 
-# 29. Bind Variables
+## 29. Bind Variables
 
 Instead of:
 
@@ -1055,7 +1055,7 @@ In OLTP applications this is very important.
 
 ---
 
-# 30. LIKE '%text%'
+## 30. LIKE '%text%'
 
 Query:
 
@@ -1073,7 +1073,7 @@ WHERE customer_name LIKE 'BANK%'
 
 can use a much better index.
 
-Because he can look for the range:
+It can then look up the range:
 
 ```
 BANK...
@@ -1081,7 +1081,7 @@ BANK...
 
 ---
 
-# 31. NOT IN and NULL
+## 31. NOT IN and NULL
 
 Query:
 
@@ -1112,7 +1112,7 @@ This pattern is relevant for both fairness and tuning.
 
 ---
 
-# 32. Optimize according to the lines running through the plan
+## 32. Optimize according to the lines running through the plan
 
 Consider:
 
@@ -1138,11 +1138,11 @@ Join 1,000
 
 One of the best questions when you read the plan is:
 
-> How many lines do you get in and out of every operation?
+> How many rows enter and leave each operation?
 
 ---
 
-# 33. Logical Reads
+## 33. Logical Reads
 
 A query can be slow even if it doesn't read from the disk.
 
@@ -1154,7 +1154,7 @@ However, if it does:
 10,000,000 Buffer Gets
 ```
 
-It means he processes a lot of blocks.
+This means the operation processes many blocks.
 
 Therefore:
 
@@ -1180,14 +1180,14 @@ And the difference can be enormous.
 
 ---
 
-# 34. TEMP usage
+## 34. TEMP usage
 
 Operations such as:
 
 ```
 SORT
 HASH JOIN
-HASHQ1QX BY
+HASH GROUP BY
 DISTINCT
 ORDER BY
 ```
@@ -1202,7 +1202,7 @@ TEMP tablespace
 
 That's when much more expensive operations occur.
 
-An SQL with:
+A SQL statement with:
 
 ```
 5 million rows → SORT
@@ -1212,7 +1212,7 @@ can become very slow.
 
 ---
 
-# 35. CTE = WITH
+## 35. CTE = WITH
 
 Example:
 
@@ -1228,13 +1228,13 @@ JOIN customers c
 ON c.customer_id = rt.customer_id;
 ```
 
-CTE- can make SQL- more legible.
+CTE- can make SQL more legible.
 
 But:
 
 > CTE does not automatically mean materialisation.
 
-The optimiser may:
+The optimizer may:
 
 - CTE- inline;
 - materialize the result;
@@ -1244,7 +1244,7 @@ The decision is in the plan.
 
 ---
 
-# 36. Hints is the last instrument, not the first
+## 36. Hints is the last instrument, not the first
 
 Examples:
 
@@ -1288,9 +1288,9 @@ only then hints if necessary
 
 ---
 
-# 37. Practical investigation pattern
+## 37. Practical investigation pattern
 
-You SQL-ul:
+You SQL statement:
 
 ```
 SELECT c.customer_name,
@@ -1305,7 +1305,7 @@ GROUP BY c.customer_name;
 Run:
 
 ```
-SELECT / * + gather_plan_statistics * /
+SELECT /*+ gather_plan_statistics */
 c.customer_name,
 SUM (t.amount)
 FROM customers c
@@ -1351,7 +1351,7 @@ AND t.transaction_date - DATE '2026-09-24'
 If there is an index:
 
 ```
-CREATEQ1QX ix_trans_date
+CREATE INDEX ix_trans_date
 ON transactions (transaction_date);
 ```
 
@@ -1359,7 +1359,7 @@ or the table is partitioned after date, the plan can become dramatically better.
 
 ---
 
-# 38. Example DWH
+## 38. Example DWH
 
 We have:
 
@@ -1390,13 +1390,13 @@ TABLE ACCESS FULL FACT partition
         ↓
 HASH JOIN
         ↓
-HASHQ1QX BY
+HASH GROUP BY
 ```
 
 It shouldn't scare us:
 
 ```
-FULLQ1QX SCAN
+TABLE ACCESS FULL
 ```
 
 because it can only be about one of the partitions.
@@ -1417,7 +1417,7 @@ not necessarily from indexes.
 
 ---
 
-# 39. OLTP vs DWH
+## 39. OLTP vs DWH
 
 ### OLTP
 
@@ -1425,7 +1425,7 @@ Characteristics:
 
 ```
 few rows
-many querys
+many queries
 very low latency
 ```
 
@@ -1446,16 +1446,16 @@ Characteristics:
 very large volumes
 scans
 aggregation
-large joints
+large joins
 ```
 
 You often prefer:
 
 ```
-FULLQ1QX SCAN
+TABLE ACCESS FULL
 partition pruning
 HASH JOIN
-HASHQ1QX BY
+HASH GROUP BY
 parallelism
 materialized views
 ```
@@ -1464,7 +1464,7 @@ The same type of plan is not optimal for both.
 
 ---
 
-# 40. Quick checklist of SQL tuning
+## 40. Quick checklist of SQL tuning
 
 When you get a slow SQL, check roughly in this order:
 
@@ -1473,10 +1473,10 @@ When you get a slow SQL, check roughly in this order:
 3. where most of the rows are processed
 4. access to tables: FULL SCAN / index
 5. predicate
-6. default conversions
+6. implicit conversions
 7. column functions
 8. Joins
-9. order and cardinality of joints
+9. order and cardinality of joins
 10. statistics
 11. indexes
 12. partition pruning
@@ -1489,13 +1489,138 @@ When you get a slow SQL, check roughly in this order:
 
 ---
 
+## 42. Exercise for Oracle 26ai
+
+We assume:
+
+```
+CREATE TABLE sql_tuning_test AS
+SELECT level id,
+MOD (level, 10000) customer_id,
+TRUNC (SYSDATE) - MOD (level, 365) transaction_date,
+ROUND (DBMS_RANDOM.VALUE (1,10000), 2) amount
+FROM dual
+CONNECT BY level = 1000000;
+```
+
+Create index:
+
+```
+CREATE INDEX ix_tuning_customer
+ON sql_tuning_test (customer_id);
+```
+
+Test:
+
+```
+SELECT /*+ gather_plan_statistics */
+*
+FROM sql_tuning_test
+WHERE customer_id = 123;
+```
+
+then:
+
+```
+SELECT *
+FROM TABLE (
+DBMS_XPLAN.DISPLAY_CURSOR (
+NULL,
+NULL,
+'ALLSTATS LAST'
+)
+);
+```
+
+Compare with:
+
+```
+SELECT /*+ gather_plan_statistics */
+*
+FROM sql_tuning_test
+WHERE MOD (customer_id, 100) returns 23;
+```
+
+Notice the difference in access path.
+
+Then test:
+
+```
+CREATE INDEX ix_tuning_date
+ON sql_tuning_test (transaction_date);
+```
+
+and compare:
+
+```
+WHERE TRUNC (transaction_date) = TRUNC (SYSDATE)
+```
+
+with:
+
+```
+WHERE transaction_date = TRUNC (SYSDATE)
+AND transaction_date; TRUNC (SYSDATE) + 1;
+```
+
+This is a very good exercise to see directly the effects of optimization.
+
+---
+
+## 43. The fundamental idea to remember
+
+In Oracle SQL tuning, the most important questions are:
+
+```
+How many rows does Oracle read?
+        ↓
+How many rows should the optimizer read?
+        ↓
+How does it get to them?
+        ↓
+Why did the optimizer choose that plan?
+```
+
+The objective is not to:
+
+```
+to use index
+```
+
+but:
+
+```
+to process as little data as possible
+with the most effective strategy.
+```
+
+And the connection to the previous modules is direct:
+
+```
+Statistics
+     ↓
+Optimizer
+     ↓
+execution plan
+     ↓
+Indexes / Partitioning
+     ↓
+Join Algorithms
+     ↓
+SQL Tuning
+```
+
+Basically, **Optimization SQL is the point where all concepts in modules 10 and 23 meet.**
+
+---
+
 ## Questions and answers
 
 ### How do you approach a slow Oracle query?
 
 A good answer:
 
-> Start by getting the actual execution plan with DBMS\ _ XPLAN.DISPLAY\ _ CURSOR and ALLSTATS LAST. Compare E-Rows with A-Rows to identify possible problems of cardinality. I then check operations that process most of the lines, types of access path and join algorithms. I analyze predicates, statistics, indexes, partition plunking and possible default conversions. After each change I compare the actual plan and statistics again.
+> Start by getting the actual execution plan with DBMS_XPLAN.DISPLAY_CURSOR and ALLSTATS LAST. Compare E-Rows with A-Rows to identify possible problems of cardinality. I then check operations that process the most rows, types of access path and join algorithms. I analyze predicates, statistics, indexes, partition pruning and possible implicit conversions. After each change I compare the actual plan and statistics again.
 
 ---
 
@@ -1521,7 +1646,7 @@ and the relationship between them.
 
 ---
 
-### Why can the optimiser choose a bad plan?
+### Why can the optimizer choose a bad plan?
 
 Possible reasons:
 
@@ -1532,138 +1657,11 @@ data skew
 missing histograms
 bind peeking / bind sensitivity
 the correlation of columns
-default conversions
+implicit conversions
 SQL difficult to estimate
 ```
 
 ---
-
-# 42. Exercise for Oracle 26ai
-
-We assume:
-
-```
-CREATE TABLE sql_tuning_test AS
-SELECT level id,
-MOD (level, 10000) customer_id,
-TRUNC (SYSDATE) - MOD (level, 365) transaction_date,
-ROUND (DBMS_RANDOM.VALUE (1,10000), 2) amount
-FROM dual
-CONNECT BY level = 1000000;
-```
-
-Create index:
-
-```
-CREATEQ1QX ix_tuning_customer
-ON sql_tuning_test (customer_id);
-```
-
-Test:
-
-```
-SELECT / * + gather_plan_statistics * /
-*
-FROM sql_tuning_test
-WHERE customer_id = 123;
-```
-
-then:
-
-```
-SELECT *
-FROM TABLE (
-DBMS_XPLAN.DISPLAY_CURSOR (
-NULL,
-NULL,
-'ALLSTATS LAST'
-)
-);
-```
-
-Compare with:
-
-```
-SELECT / * + gather_plan_statistics * /
-*
-FROM sql_tuning_test
-WHERE MOD (customer_id, 100) returns 23;
-```
-
-Notice the difference in access path.
-
-Then test:
-
-```
-CREATEQ1QX ix_tuning_date
-ON sql_tuning_test (transaction_date);
-```
-
-and compare:
-
-```
-WHERE TRUNC (transaction_date) = TRUNC (SYSDATE)
-```
-
-with:
-
-```
-WHERE transaction_date = TRUNC (SYSDATE)
-AND transaction_date; TRUNC (SYSDATE) + 1;
-```
-
-This is a very good exercise to see directly the effects of optimization.
-
----
-
-# 43. The fundamental idea to remember
-
-In Oracle SQL tuning, the most important questions are:
-
-```
-How many lines does Oracle read?
-        ↓
-How many lines should he read?
-        ↓
-How does it get to them?
-        ↓
-Why did the optimiser choose that plan?
-```
-
-The objective is not to:
-
-```
-to use index
-```
-
-but:
-
-```
-to process as little data as possible
-with the most effective strategy.
-```
-
-And the connection to the previous modules is direct:
-
-```
-Statistics
-     ↓
-Optimizer
-     ↓
-Implementation Plan
-     ↓
-Indexes / Partitioning
-     ↓
-Join Algorithms
-     ↓
-SQL Tuning
-```
-
-Basically, **Optimization SQL is the point where all concepts in modules 10 and 23 meet.**
-
----
-
-## Questions and answers
 
 ### How would you briefly explain SQL Optimization to a colleague who knows SQL, but not this area?
 
@@ -1679,7 +1677,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

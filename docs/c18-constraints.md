@@ -12,7 +12,7 @@ In Oracle, **constraints** are declarative rules defined directly in the databas
 
 The main idea:
 
-> The application can validate the data, ETL- can validate the data, but the database must remain the last line of defence.
+> The application can validate the data, ETL can validate the data, but the database must remain the last line of defence.
 
 For a Data Developer, constraints are important both in **OLTP** and in **ETL/DWH**, even though in DWH are sometimes used differently.
 
@@ -24,19 +24,12 @@ Data integrity means that data constantly complies with certain rules.
 
 We can talk mainly about:
 
-Type of integrity
-♪ ♪ ♪ ♪ ♪
-• Energy integrity • Each customer has a unique ID •
-The reference integrity of an account must belong to an existing client;
-The Domain integrity of STATUS can only have certain values
-The business integrity balance cannot be negative, if this is the business rule
-The Uniqueness of IBAN- cannot appear twice
-
+| Integrity type | Rule |,| --- | --- |,| Entity integrity | Every customer has a unique identifier |,| Referential integrity | Every account must belong to an existing customer |,| Domain integrity | `STATUS` can contain only allowed values |,| Business integrity | A balance must not be negative when that is the business rule |,| Uniqueness | An IBAN must not appear more than once |,
 Oracle implements most of these rules through **constraints**.
 
 ---
 
-# 18.2. The 5 Main Constraints Oracle
+## 18.2. The 5 Main Constraints Oracle
 
 They must be known very well:
 
@@ -52,7 +45,7 @@ DEFAULT, INDEX, SEQUENCE, IDENTITY and TRIGGER **are not constraints**.
 
 ---
 
-# 18.3. NOT NULL
+## 18.3. NOT NULL
 
 It requires a value.
 
@@ -93,7 +86,7 @@ But we need to be careful not to do columns NOT NULL just because they usually e
 
 ---
 
-# 18.4. PRIMARY KEY
+## 18.4. PRIMARY KEY
 
 Unique identification of each row.
 
@@ -158,16 +151,16 @@ not individually on each column.
 
 ---
 
-# 18.5. UNIQUE
+## 18.5. UNIQUE
 
-UNIQUE ensures that non-zero values do not repeat.
+UNIQUE ensures that non-NULL values do not repeat.
 
 ```
 CREATE TABLE customers (
 customer_id NUMBER PRIMARY KEY,
 
 email VARCHAR2 (200)
-CONSTRAINTQ1QX UNIQUE
+CONSTRAINT uq_customers_email UNIQUE
 );
 ```
 
@@ -184,13 +177,11 @@ a @ test.com
 
 Very important difference in the technical discussion:
 
-* PRIMARY KEY *
-♪ ♪ ♪ ♪ ♪
-♪ It identifies the row ♪ ♪ It requires uniqueness ♪
-There may be more than one table.
-It does not allow NULL can allow NULL
-= = sync, corrected by elderman = = @ elder _ man
-Usually the main key is the additional business rule
+| Feature | Primary key | Unique constraint |
+| --- | --- | --- |
+| Purpose | Identifies each row | Enforces uniqueness |
+| Number per table | One | More than one is allowed |
+| NULL values | Not allowed | Allowed |
 
 Example:
 
@@ -202,7 +193,7 @@ CNP → UNIQUE
 
 ---
 
-# 18.6. FOREIGN KEY
+## 18.6. FOREIGN KEY
 
 FOREIGN KEY implements **referential integrity**.
 
@@ -283,7 +274,7 @@ but there is no PARENT.
 
 ---
 
-# 18.7. ORA-02292
+## 18.7. ORA-02292
 
 Reverse situation.
 
@@ -327,7 +318,7 @@ Very good pair of memorized:
 
 ---
 
-# 18.8. ON DELETE
+## 18.8. ON DELETE
 
 Oracle allows controlling the behavior of FOREIGN KEY when erasing the parent.
 
@@ -342,13 +333,13 @@ Do not allow the erasure of the parent if there is children.
 
 ---
 
-## ONQ1QX CASCADE
+## ON DELETE CASCADE
 
 ```
 CONSTRAINT fk_accounts_customer
 FOREIGN KEY (customer_id)
 REFERENCES customers (customer_id)
-ONQ1QX CASCADE
+ON DELETE CASCADE
 ```
 
 If we delete the client:
@@ -358,7 +349,7 @@ DELETE FROM Customers
 WHERE customer_id = 100;
 ```
 
-Oracle automatically deletes his accounts.
+Oracle automatically deletes the associated rows from the child table.
 
 It's strong, but it needs to be used carefully.
 
@@ -389,7 +380,7 @@ It is only possible if the column allows NULL.
 Oracle does not offer directly:
 
 ```
-ONQ1QX CASCADE
+ON DELETE CASCADE
 ```
 
 like some other DBMS-uri.
@@ -398,7 +389,7 @@ In practice, PRIMARY KEY-s are usually designed so that they do not need to be m
 
 ---
 
-# 18.9. CHECK constraint
+## 18.9. CHECK constraint
 
 CHECK validates an expression.
 
@@ -413,7 +404,7 @@ VARCHAR2 status (20),
 balance NUMBER,
 
 CONSTRAINT ck_accounts_status
-CHECK (IN status ('ACTIVE', 'BLOCKED', 'CLOSED')),
+CHECK (status IN ('ACTIVE', 'BLOCKED', 'CLOSED')),
 
 CONSTRAINT ck_accounts_balance
 CHECK (balance = 0)
@@ -436,7 +427,7 @@ VALUES (1, 'ACTIVE', -500);
 
 ---
 
-# 18.10. Attention: CHECK and NULL
+## 18.10. Attention: CHECK and NULL
 
 Very important in Oracle.
 
@@ -489,7 +480,7 @@ CHECK
 
 ---
 
-# 18.11. Column-level vs tablet-level constraints
+## 18.11. Column-level vs tablet-level constraints
 
 Constraint defined by column:
 
@@ -519,7 +510,7 @@ UNIQUE (source_system, source_customer_id)
 
 ---
 
-# 18.12. Naming Conventions
+## 18.12. Naming Conventions
 
 It is recommended that we explicitly call the constraints.
 
@@ -553,11 +544,11 @@ The investigation becomes more difficult.
 
 ---
 
-# 18.13. Adding a constraint after creating the table
+## 18.13. Adding a constraint after creating the table
 
 ```
 ALTER TABLE Customers
-ADDQ1QX pk_customers
+ADD CONSTRAINT pk_customers
 PRIMARY KEY (customer_id);
 ```
 
@@ -565,7 +556,7 @@ Foreign key:
 
 ```
 ALTER TABLE accounts
-ADDQ1QX fk_accounts_customer
+ADD CONSTRAINT fk_accounts_customer
 FOREIGN KEY (customer_id)
 REFERENCES customers (customer_id);
 ```
@@ -574,13 +565,13 @@ CHECK:
 
 ```
 ALTER TABLE accounts
-ADDQ1QX ck_accounts_balance
+ADD CONSTRAINT ck_accounts_balance
 CHECK (balance = 0);
 ```
 
 ---
 
-# 18.14. ENABLE / DISABLE
+## 18.14. ENABLE / DISABLE
 
 A constraint may be disabled:
 
@@ -614,7 +605,7 @@ If the data contain inconsistencies, reactivation may fail.
 
 ---
 
-# 18.15. VALIDATE vs NOVALIDATE
+## 18.15. VALIDATE vs NOVALIDATE
 
 Important concept for large volumes of data.
 
@@ -656,7 +647,7 @@ Data can break the rule.
 
 ---
 
-# 18.16. DEFERRABLE constraints
+## 18.16. DEFERRABLE constraints
 
 By default, Oracle checks a constraint immediately after each station.
 
@@ -710,7 +701,7 @@ Useful in complex situations where intermediate operations can temporarily produ
 
 ---
 
-# 18.17. Constraints and indexes
+## 18.17. Constraints and indexes
 
 Oracle usually creates or uses an index for:
 
@@ -740,7 +731,7 @@ ACCOUNTS.CUSTOMER_ID
 may require a separate index:
 
 ```
-CREATEQ1QX ix_accounts_customer
+CREATE INDEX ix_accounts_customer
 ON accounts (customer_id);
 ```
 
@@ -748,7 +739,7 @@ Especially for the performance and operations on the parent.
 
 ---
 
-# 18.18. Date Dictionary
+## 18.18. Date Dictionary
 
 To see the constraints:
 
@@ -757,19 +748,17 @@ SELECT
 constraint_name,
 constraint_type,
 table_name,
-stasis
+status
 FROM user_constraints
 WHERE table_name = 'ACCOUNTS';
 ```
 
-Main codes:
-
-♪ Code ♪
-♪ ♪ ♪ ♪ ♪
-♪ Priory Key ♪
-♪ Foreign Key ♪
-♪ U ♪ Unique ♪
-* * *
+| Constraint type | Dictionary code |
+| --- | --- |
+| Check | C |
+| Primary key | P |
+| Referential integrity (foreign key) | R |
+| Unique | U |
 
 For columns:
 
@@ -786,9 +775,9 @@ ORDER BY constraint_name position;
 
 ---
 
-# 18.19. How to find out the relationship of an FOREIGN KEY
+## 18.19. How to find out the relationship of an FOREIGN KEY
 
-Query useful at debuting:
+Query useful for debugging:
 
 ```
 SELECT
@@ -824,7 +813,7 @@ What parent?
 
 ---
 
-# 18.20. Full OLTP banking example
+## 18.20. Full OLTP banking example
 
 ```
 CREATE TABLE customers (
@@ -867,7 +856,7 @@ FOREIGN KEY (customer_id)
 REFERENCES customers (customer_id),
 
 CONSTRAINT ck_accounts_status
-CHECK (IN status ('ACTIVE', 'BLOCKED', 'CLOSED')),
+CHECK (status IN ('ACTIVE', 'BLOCKED', 'CLOSED')),
 
 CONSTRAINT ck_accounts_balance
 CHECK (balance = 0)
@@ -890,7 +879,7 @@ BALANCE nen and then = 0
 
 ---
 
-# 18.21. Constraints in an DWH
+## 18.21. Constraints in an DWH
 
 In OLTP constraints are usually very important.
 
@@ -907,7 +896,7 @@ DIM_DATE
 FACT_TRANSACTION
 ```
 
-FACT\ _ TRANSACTION contains:
+FACT_TRANSACTION contains:
 
 ```
 CUSTOMER_SK
@@ -944,7 +933,7 @@ It means that responsibility is being moved to the ETL/DQ process.
 
 ---
 
-# 18.22. Business Key vs Surrogate Key
+## 18.22. Business Key vs Surrogate Key
 
 Very important in DWH.
 
@@ -961,7 +950,7 @@ Size:
 customer_sk = 781992
 ```
 
-CUSTOMER\ _ SK is surrogate key.
+CUSTOMER_SK is surrogate key.
 
 The key to business can be:
 
@@ -986,7 +975,7 @@ Business key identifies the entity in the source system.
 
 ---
 
-# 18.23. Scenario ETL - ORA-02291
+## 18.23. Scenario ETL - ORA-02291
 
 Suppose:
 
@@ -1027,7 +1016,7 @@ VALUES (
 );
 ```
 
-but ETL\ _ BATCH does not contain:
+but ETL_BATCH does not contain:
 
 ```
 BATCH_ID = 500
@@ -1057,7 +1046,7 @@ The problem is often the **process order ETL**, not the constraint.
 
 ---
 
-# 18.24. Detecting Orphan Records
+## 18.24. Detecting Orphan Records
 
 If the constraints are not active, we need to check manually.
 
@@ -1090,7 +1079,7 @@ This pattern is very important in Data Quality.
 
 ---
 
-# 18.25. What NU rules can be solved simply with CHECK
+## 18.25. What NU rules can be solved simply with CHECK
 
 Let's assume the rule:
 
@@ -1137,7 +1126,7 @@ The complex cross-table rules must be treated separately.
 
 ---
 
-# 18.26. Constraints vs. Data Quality
+## 18.26. Constraints vs. Data Quality
 
 Constraints:
 
@@ -1192,7 +1181,7 @@ Constraints are just one of the levels of protection.
 
 ---
 
-# 18.27. Laboratory Oracle 26ai
+## 18.27. Laboratory Oracle 26ai
 
 ### Exercise 1
 
@@ -1309,7 +1298,7 @@ DIM_CUSTOMER
 FACT_TRANSACTION
 ```
 
-and try to load a non-existent CUSTOMER\ _ SK.
+and try to load a non-existent CUSTOMER_SK.
 
 Then write the query:
 
@@ -1318,6 +1307,103 @@ NOT EXISTS
 ```
 
 to detect orphan invoices / transactions.
+
+---
+
+## 18.29. A Useful Way to Debug Constraint Violations
+
+When you encounter a constraint violation, ask:
+
+```
+1. What kind of constraint is that?
+        ↓
+2. What type of constraint is it?
+        ↓
+3. What column / columns?
+        ↓
+4. What rule does it enforce?
+        ↓
+5. The data are wrong
+Or is the process wrong?
+```
+
+For FK:
+
+```
+ORA-02291
+    ↓
+child → parent missing
+    ↓
+I'm looking for the key to parenting.
+```
+
+For deleterias:
+
+```
+ORA-02292
+    ↓
+parent → child exists
+    ↓
+I'm looking for children
+```
+
+---
+
+## 18.30. What to remember for Data Developer
+
+The most important ideas are:
+
+```
+PRIMARY KEY
+→ uniquely identifies row
+
+UNIQUE
+→ prevents duplicates
+
+FOREIGN KEY
+→ guarantees parental-child relationship
+
+CHECK
+→ imposes domain rules
+
+NOT NULL
+→ the value is mandatory
+```
+
+and:
+
+```
+ORA-02291
+→ Child without parent
+
+ORA-02292
+→ attempt to delete parent with children
+```
+
+In OLTP:
+
+```
+Constraints
+→ strong and immediate protection.
+```
+
+In DWH:
+
+```
+Constraints
++
+ETL validation
++
+Data Quality
++
+Reconciliation
+```
+
+together form the integrity protection system.
+
+And the idea of an technical discussion worth memorizing is:
+
+> **Constraints protects the database from impossible states, and in an DWH lack of physical constraint does not remove the integrity rule; it only moves responsibility to ETL and Data Quality.**
 
 ---
 
@@ -1425,105 +1511,6 @@ Conceptual relationships always exist, but in some large DWH-uri FK constraints 
 
 ---
 
-# 18.29. Mental pattern for debuting
-
-When you see a mistake of constraint, think:
-
-```
-1. What kind of constraint is that?
-        ↓
-2. What guy is he?
-        ↓
-3. What column / columns?
-        ↓
-4. What rule does he protect?
-        ↓
-5. The data are wrong
-Or is the process wrong?
-```
-
-For FK:
-
-```
-ORA-02291
-    ↓
-child → parent missing
-    ↓
-I'm looking for the key to parenting.
-```
-
-For deleterias:
-
-```
-ORA-02292
-    ↓
-parent → child exists
-    ↓
-I'm looking for children
-```
-
----
-
-# 18.30. What to remember for Data Developer
-
-The most important ideas are:
-
-```
-PRIMARY KEY
-→ uniquely identifies row
-
-UNIQUE
-→ prevents duplicates
-
-FOREIGN KEY
-→ guarantees parental-child relationship
-
-CHECK
-→ imposes domain rules
-
-NOT NULL
-→ the value is mandatory
-```
-
-and:
-
-```
-ORA-02291
-→ Child without parent
-
-ORA-02292
-→ attempt to delete parent with children
-```
-
-In OLTP:
-
-```
-Constraints
-→ strong and immediate protection.
-```
-
-In DWH:
-
-```
-Constraints
-+
-ETL validation
-+
-Data Quality
-+
-Reconciliation
-```
-
-together form the integrity protection system.
-
-And the idea of an technical discussion worth memorizing is:
-
-> **Constraints protects the database from impossible states, and in an DWH lack of physical constraint does not remove the integrity rule; it only moves responsibility to ETL and Data Quality.**
-
----
-
-## Questions and answers
-
 ### How would you briefly explain Constraints and integrity to a colleague who knows SQL, but not this area?
 
 Constraints and integrity cover PRIMARY KEY, UNIQUE, FOREIGN KEY, CHECK and NOT NULL, entity and referential integrity, immediate vs deferred constraints. In practice, first determine what data enter and what result to achieve, then check implementation, execution plan and effects on flow.
@@ -1538,7 +1525,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 

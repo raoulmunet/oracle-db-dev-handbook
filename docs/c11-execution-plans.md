@@ -50,7 +50,7 @@ There are three close but different concepts.
 
 ### Estimated execution plan
 
-Optimizer's estimated plan.
+optimizer's estimated plan.
 
 ```sql
 EXPLAIN PLAN FOR
@@ -217,7 +217,7 @@ INDEX RANGE SCAN
 HASH JOIN
 NESTED LOOPS
 SORT
-HASH BY
+HASH GROUP BY
 ```
 
 ---
@@ -324,7 +324,7 @@ or:
 
 ```sql
 SELECT *
-FROM
+FROM employees
 WHERE salary > 1000;
 ```
 
@@ -354,7 +354,7 @@ Example:
 
 ```sql
 SELECT *
-FROM
+FROM employees
 WHERE employee_id = 100;
 ```
 
@@ -396,7 +396,7 @@ Example:
 
 ```sql
 SELECT *
-FROM
+FROM employees
 WHERE department_id = 50;
 ```
 
@@ -404,7 +404,7 @@ or:
 
 ```sql
 SELECT *
-FROM
+FROM employees
 WHERE salary BETWEEN 5000 AND 8000;
 ```
 
@@ -463,7 +463,7 @@ INDEX RANGE SCAN
 Conceptual example:
 
 ```sql
-SELECT COUNT *
+SELECT COUNT(*)
 FROM employees;
 ```
 
@@ -612,7 +612,7 @@ COUNTRIES
 → ORDERS
 ```
 
-even if SQL- is written:
+even if SQL is written:
 
 ```
 ORDERS
@@ -629,8 +629,8 @@ The order in FROM does not normally dictate the physical order of execution.
 Operations such as:
 
 ```
-SORT BY
-SORT BY
+SORT ORDER BY
+SORT GROUP BY
 SORT UNIQUE
 ```
 
@@ -638,14 +638,14 @@ Example:
 
 ```sql
 SELECT *
-FROM
+FROM employees
 ORDER BY salary;
 ```
 
 It can produce:
 
 ```
-SORT BY
+SORT ORDER BY
 TABLE ACCESS FULL EMPLOYEES
 ```
 
@@ -669,15 +669,15 @@ Example:
 
 ```sql
 SELECT department_id,
-COUNT *
-FROM
+COUNT(*)
+FROM employees
 GROUP BY department_id;
 ```
 
 Possible plan:
 
 ```
-HASH BY
+HASH GROUP BY
 TABLE ACCESS FULL EMPLOYEES
 ```
 
@@ -777,7 +777,7 @@ We execute:
 ```sql
 SELECT /*+ GATHER_PLAN_STATISTICS */
 *
-FROM
+FROM employees
 WHERE department_id = 50;
 ```
 
@@ -830,9 +830,9 @@ For example, Oracle can choose:
 NESTED LOOPS
 ```
 
-thinking he's processing 10 rows.
+estimating that it will process 10 rows.
 
-But he gets to execute the lookup:
+The lookup actually processes:
 
 ```
 100,000
@@ -842,7 +842,7 @@ times.
 
 ---
 
-## 11.17. Cardinal
+## 11.17. Cardinality
 
 **Cardinality** is the estimated number of rows produced by an operation.
 
@@ -855,10 +855,10 @@ WHERE status = 'FAILED'
 The optimizer must estimate:
 
 ```
-How many lines have FAILED status?
+How many rows have `status = 'FAILED'`?
 ```
 
-If he estimates cardinality wrong, he can make wrong decisions about:
+If the optimizer estimates cardinality incorrectly, it can make poor decisions about:
 
 ```
 index vs full scan
@@ -876,7 +876,7 @@ Therefore, it is often said:
 
 ## 11.18. Statistics
 
-The optimizer bases his decisions on statistics.
+The optimizer bases its decisions on statistics.
 
 Examples:
 
@@ -1014,7 +1014,7 @@ may be a much more relevant sign than:
 Cost = 200
 ```
 
-to investigate the real SQL-.
+to investigate the real SQL.
 
 ---
 
@@ -1081,7 +1081,7 @@ HASH JOIN
         /
 4 FACT_SALES
        ↓
-HASH BY
+HASH GROUP BY
        ↓
 SELECT
 ```
@@ -1111,7 +1111,7 @@ We would have investigated statistics and selectivity right away.
 We have the index:
 
 ```sql
-CREATE idx_orders_date
+m=>m_orders_date
 ON orders (order_date);
 ```
 
@@ -1320,7 +1320,7 @@ and can reduce the amount of data read enormously.
 
 ## 11.29. Bloom Filters
 
-In DWH and Parallel Execution workshops we can meet:
+In DWH and Parallel Execution workloads we can meet:
 
 ```
 JOIN CREATE
@@ -1346,7 +1346,7 @@ In certain situations Oracle can prepare alternatives for execution and adapt so
 In DBMS_XPLAN we can meet information such as:
 
 ```
-plane adaptive
+adaptive plan
 ```
 
 or inactive operations.
@@ -1378,13 +1378,13 @@ Reason:
 EXPLAIN PLAN shows:
 
 ```
-what Oracle thinks he would do
+what Oracle estimates the operation will do
 ```
 
 DISPLAY_CURSOR... ALLSTATS LAST may show:
 
 ```
-what he actually did
+what the operation actually did
 ```
 
 ---
@@ -1521,7 +1521,7 @@ NVL(...)
 Ask:
 
 ```
-How many lines are in?
+How many rows are in the result?
 How many are out?
 Where are they reduced?
 ```
@@ -1540,7 +1540,7 @@ Don't automatically try to remove Full Table Scan.
 
 ---
 
-### 10. Only then changes SQL- / indexes
+### 10. Only then changes SQL / indexes
 
 ---
 
@@ -1628,7 +1628,7 @@ TABLE ACCESS FULL DIM_DATE
 HASH JOIN
 PARTITION RANGE ITERATOR FACT_TRANSACTION
 HASH DIM_CUSTOMER
-HASH BY
+HASH GROUP BY
 ```
 
 It shouldn't scare us:
@@ -1639,119 +1639,6 @@ HASH JOIN
 ```
 
 In DWH these are very common exactly the right operations.
-
----
-
-## Questions and answers
-
-### What's an Execution Plan?
-
-It is the representation of the strategy chosen by the Oracle Optimizer for the execution of an SQL: access paths, join order, join methods, sorting, filtering and estimates of cardinality and cost.
-
----
-
-### How do you read an Execution Plan?
-
-Mainly:
-
-```
-bottom to top
-and from the inside out
-```
-
-watching operations produce data for their parents.
-
----
-
-#### Cost is time?
-
-No.
-
-The cost is an estimated internal value of Optimizer for comparing alternatives.
-
----
-
-### Full Table Scan is bad?
-
-No.
-
-It can be the most effective strategy when a large proportion of the table needs to be read.
-
----
-
-### The difference between INDEX UNIQUE SCAN and INDEX RANGE SCAN?
-
-INDEX UNIQUE SCAN:
-
-```
-not more than one row
-```
-
-usually for equality on a single key.
-
-INDEX RANGE SCAN:
-
-```
-zero, one or many rows
-```
-
-for non-unique intervals or values.
-
----
-
-### How do you identify a wrong estimate?
-
-Compare:
-
-```
-E-Rows
-```
-
-with:
-
-```
-A-Rows
-```
-
----
-
-### What can cause the wrong estimates?
-
-Among other things:
-
-```
-stale statistics
-data skew
-missing histograms
-correlated columns
-complex predicates
-function
-bind-sensitive date
-```
-
----
-
-### Nested Loops or Hash Join?
-
-In general:
-
-```
-Nested Loops
-→ small set + efficient index
-
-Hash Join
-→ Large sets + equity joins
-```
-
-But choice depends on volumes and costs.
-
----
-
-### What are you after in a slow SQL?
-
-Good technical review response:
-
-> I start with the real plan, I check E-Rows versus A-Rows, then Starts, Buffers and Predicate Information. I follow the order of the joins and data volumes, I check the statistics and selectivity of the conditions, and then I decide whether the problem comes from SQL, indexation, statistics, partitioning or estimation of Optimizer.
 
 ---
 
@@ -1883,42 +1770,34 @@ When you see a plan, ask in this order:
 The most important ideas in the module are:
 
 ```
-Implementation Plan
+Execution plan
     │
-- access path
-Č eská republika rod
-Č eská republika rod
-ed INDEX RANGE SCAN
-    │
-¶ ¶ Join method ¶
-Č eská republika NESTED LOOPS
-Č eská republika HASH JOIN
-ed MERGE JOIN
-    │
-* * * * * *
-* * *
-Č eská republika A-Rows
-    │
-- - work performed.
-- Starts.
-- - "Buffers"
-* * * * * * * * * * * * * *
-    │
-* * * * * * *
-* * *
-* * * *
-    │
-- DWH
-* * * * * * *
-- - Full Scan
-"Partition Pounding"
-- "Parallel Execution"
-- "Bloom Filters"
+├── Access path
+│   ├── TABLE ACCESS FULL
+│   └── INDEX RANGE SCAN
+│
+├── Join method
+│   ├── NESTED LOOPS
+│   ├── HASH JOIN
+│   └── MERGE JOIN
+│
+├── Cardinality
+│   ├── E-Rows (estimated rows)
+│   └── A-Rows (actual rows)
+│
+├── Work performed
+│   ├── Starts
+│   └── Buffers
+│
+└── DWH operations
+    ├── Partition pruning
+    ├── Parallel execution
+    └── Bloom filters
 ```
 
 The central rule is:
 
-> **Do not judge an Execution Plan by whether or not it uses an index. Watch how much work Oracle does, how many lines it estimates, how many it actually processes and where the difference between estimation and reality occurs.**
+> **Do not judge an Execution Plan by whether or not it uses an index. Watch how much work Oracle does, how many rows it estimates and how many it actually processes and where the difference between estimation and reality occurs.**
 
 And for practical diagnosis, the combination worth memorizing is:
 
@@ -1938,6 +1817,117 @@ These four elements explain a large part of the real SQL performance problems.
 
 ## Questions and answers
 
+### What's an Execution Plan?
+
+It is the representation of the strategy chosen by the Oracle Optimizer for the execution of a SQL statement: access paths, join order, join methods, sorting, filtering and estimates of cardinality and cost.
+
+---
+
+### How do you read an Execution Plan?
+
+Mainly:
+
+```
+bottom to top
+and from the inside out
+```
+
+watching operations produce data for their parents.
+
+---
+
+#### Cost is time?
+
+No.
+
+The cost is an estimated internal value of Optimizer for comparing alternatives.
+
+---
+
+### Full Table Scan is bad?
+
+No.
+
+It can be the most effective strategy when a large proportion of the table needs to be read.
+
+---
+
+### The difference between INDEX UNIQUE SCAN and INDEX RANGE SCAN?
+
+INDEX UNIQUE SCAN:
+
+```
+not more than one row
+```
+
+usually for equality on a single key.
+
+INDEX RANGE SCAN:
+
+```
+zero, one or many rows
+```
+
+for non-unique intervals or values.
+
+---
+
+### How do you identify a wrong estimate?
+
+Compare:
+
+```
+E-Rows
+```
+
+with:
+
+```
+A-Rows
+```
+
+---
+
+### What can cause the wrong estimates?
+
+Among other things:
+
+```
+stale statistics
+data skew
+missing histograms
+correlated columns
+complex predicates
+function
+bind-sensitive date
+```
+
+---
+
+### Nested Loops or Hash Join?
+
+In general:
+
+```
+Nested Loops
+→ small set + efficient index
+
+Hash Join
+→ Large sets + equity joins
+```
+
+But choice depends on volumes and costs.
+
+---
+
+### What are you after in a slow SQL?
+
+Good technical review response:
+
+> I start with the real plan, I check E-Rows versus A-Rows, then Starts, Buffers and Predicate Information. I follow the order of the joins and data volumes, I check the statistics and selectivity of the conditions, and then I decide whether the problem comes from the SQL, indexing, statistics, partitioning, or the optimizer's estimates.
+
+---
+
 ### How would you briefly explain Execution Plans to a colleague who knows SQL, but not this area?
 
 Execution Plans covers reading plans from the inside out, operation, object, rows, cost and predicates, E-Rows vs A-Rows and Starts. In practice, I first determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
@@ -1952,7 +1942,7 @@ I compare the number of rows, amounts and keys with the source or with a referen
 
 ### What information did you collect before you modified an existing solution?
 
-I collect functional requirement, grain, scheme and keys, volume, data distribution, dependencies, plans and time, errors / lobes and acceptance criteria. I note how to return to the previous state.
+I collect functional requirement, grain, schema and keys, volume, data distribution, dependencies, plans and time, errors / logs and acceptance criteria. I note how to return to the previous state.
 
 ### Give an example of a DWH or banking flow where this concept changes design.
 
