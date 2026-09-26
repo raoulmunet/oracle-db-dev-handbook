@@ -8,9 +8,10 @@ html[data-theme='dark']{--ifm-background-color:#101923;--ifm-background-surface-
 .pagination-nav__link{border-color:#d6e0ea}.footer--dark{background:#132b48}@media(max-width:996px){.markdown{font-size:1rem}.markdown h1{font-size:2rem}}
 
 
+.markdown h2[id*='questions-and-answers'] + h3,
 .markdown h2[id*='questions-and-answers'] ~ h3{
-  background:#fff6cc;
-  border-left:5px solid #d6b84c;
+  background:#fff6cc !important;
+  border-left:5px solid #d6b84c !important;
   padding:.8rem 1rem;
   border-radius:0 10px 10px 0;
   color:#315e91;
