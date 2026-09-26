@@ -2014,14 +2014,14 @@ A natural next step would be a separate **advanced / expert PL/SQL** chapter cov
 ---
 
 ## Questions and answers
-
+<div className="qa-section">
 ### How would you briefly explain PL/SQL from fundamentals to advanced to a colleague who knows SQL?
 
 PL/SQL covers anonymous blocks, variables, records and control flow, procedures, functionss, packages and scopes, explicit and implicit cursors. In practice, first, I determine what data enter and what result must be obtained, then I check implementation, execution plan and effects on flow.
 
 ### What are two common practical problems related to PL/SQL?
 
-Two recurring problems are misinterpretation of data or granularity and degradation of performance at real volume. For PL/SQL, I explicitly follow anonymous blocks, variables, records and control flow, procedures, functionss, packages and scopes, explicit and implicit cursors and compare the result with a control set.
+Two recurring problems are misinterpretation of data or granularity and degradation of performance at real volume. For PL/SQL, I explicitly follow anonymous blocks, variables, records and control flow, procedures, functions, packages and scopes, explicit and implicit cursors and compare the result with a control set.
 
 ### How do you check that the result is correct and not just fast?
 
@@ -2034,3 +2034,4 @@ I collect functionsal requirement, grain, scheme and keys, volume, data distribu
 ### Give an example of a DWH or banking flow where this concept changes design.
 
 In a banking flow, PL/SQL is often combined with logging, auditing, reconciliation, transaction control, and impact analysis.
+</div>
