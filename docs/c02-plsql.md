@@ -715,7 +715,7 @@ END;
 
 ## 20. IN, OUT, and IN OUT parameters
 
-## IN
+### IN
 
 Input value.
 
@@ -723,7 +723,7 @@ Input value.
 p_employee_id IN NUMBER
 ```
 
-## OUT
+### OUT
 
 The procedure returns a value:
 
@@ -731,7 +731,7 @@ The procedure returns a value:
 p_salary OUT NUMBER
 ```
 
-## IN OUT
+### IN OUT
 
 Receives and can modify the same variable:
 
