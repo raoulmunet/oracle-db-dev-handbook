@@ -1809,7 +1809,7 @@ row-level / statement-level
 
 ---
 
-## Further questions and answers
+## Questions and answers
 
 ### What is the difference between procedure and functions?
 
