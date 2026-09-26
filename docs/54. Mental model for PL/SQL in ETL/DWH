@@ -1897,25 +1897,25 @@ For the Data Developer job, imagine PL/SQL as follows:
 
 ```
 SOURCE
-   │
-   ▼
+  |
+  v
 STAGING
-   │
-   ▼
+  |
+  v
 PL/SQL PACKAGE
-   │
-- data validation
-- transformations
-- business rules
-- error handling
-- Logging
-- * batch control *
-   │
-   ▼
+  |
+  +-- Data validation
+  +-- Transformations
+  +-- Business rules
+  +-- Error handling
+  +-- Logging
+  +-- Batch control
+  |
+  v
 DWH
-   │
-- - Dimensions
-¶ ¶ facts ¶
+  |
+  +-- Dimensions
+  +-- Facts
 ```
 
 And for volumes:
