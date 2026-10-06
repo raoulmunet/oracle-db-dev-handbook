@@ -16,6 +16,11 @@ const config = {
   projectName: repository,
   trailingSlash: false,
   onBrokenLinks: 'throw',
+  scripts: [{
+    src: isUserSite ? '/js/site-counter.js' : `/${repository}/js/site-counter.js`,
+    defer: true,
+    'data-site-id': repository,
+  }],
   markdown: {mermaid: true},
   themes: ['@docusaurus/theme-mermaid'],
   presets: [[
